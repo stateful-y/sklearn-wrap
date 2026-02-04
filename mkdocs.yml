@@ -1,0 +1,140 @@
+site_name: Sklearn-Wrap
+site_description: A Package for wrapping Python classes into Scikit-Learn estimators
+site_url: https://sklearn-wrap.readthedocs.io/
+repo_url: https://github.com/stateful-y/sklearn-wrap
+repo_name: stateful-y/sklearn-wrap
+edit_uri: edit/main/docs/
+
+hooks:
+  - docs/hooks.py
+
+theme:
+  name: material
+  custom_dir: docs/material/overrides
+  favicon: assets/favicon.png
+  logo: assets/logo.png
+
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - content.code.annotate
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - toc.integrate
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - meta
+  - sane_lists
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - class: mermaid
+          name: mermaid
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Exclude exported marimo files from mkdocs processing (copied manually in noxfile)
+
+exclude_docs: |
+  examples/**/index.html
+  examples/**/CLAUDE.md
+
+
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+    absolute_links: warn
+  links:
+    not_found: warn
+    anchors: warn
+    absolute_links: warn
+    unrecognized_links: warn
+
+plugins:
+  - search
+  - tags
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+  - marimo:
+      enabled: true
+      display_code: false
+      display_output: true
+      is_reactive: true
+
+
+nav:
+  - Home: index.md
+  - Getting Started: pages/getting-started.md
+  - User Guide: pages/user-guide.md
+  - Examples: pages/examples.md
+  - API Reference: pages/api-reference.md
+  - Contributing: pages/contributing.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/stateful-y/sklearn-wrap
+
+watch:
+  - mkdocs.yml
+  - docs
+  - examples

@@ -1,0 +1,18 @@
+# This file is used by Copier to track the template version
+# and enable template updates in generated projects
+
+_commit: aac9b7414e860cb5f733bf1ef1899a35e8e203ae
+_src_path: gh:stateful-y/python-package-copier
+author_email: gtauzin@stateful-y.io
+author_name: Guillaume Tauzin
+description: A Package for wrapping Python classes into Scikit-Learn estimators
+github_username: stateful-y
+include_actions: True
+include_examples: True
+license: Apache-2.0
+max_python_version: '3.14'
+min_python_version: '3.11'
+package_name: sklearn_wrap
+project_name: Sklearn-Wrap
+project_slug: sklearn-wrap
+version: 0.1.0-beta.1
