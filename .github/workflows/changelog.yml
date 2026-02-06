@@ -53,7 +53,7 @@ jobs:
           uvx pre-commit run --files CHANGELOG.md || true
 
       - name: Create Pull Request for CHANGELOG
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.CHANGELOG_AUTOMATION_TOKEN }}
           add-paths: |
