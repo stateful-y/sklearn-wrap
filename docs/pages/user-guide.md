@@ -54,7 +54,7 @@ class MyWrapper(BaseClassWrapper):
 ```
 
 !!! example "Interactive Example"
-    See [**First Wrapper**](../../examples/first_wrapper/) for an interactive demonstration of creating your first wrapper.
+    See [**First Wrapper**](/examples/first_wrapper/) for an interactive demonstration of creating your first wrapper.
 
 ### The instantiate() Method
 
@@ -99,7 +99,7 @@ def fit(self, X, y):
 ```
 
 !!! example "Interactive Example"
-    See [**Fit Context**](../../examples/fit_context/) for an interactive demonstration of the `_fit_context` decorator.
+    See [**Fit Context**](/examples/fit_context/) for an interactive demonstration of the `_fit_context` decorator.
 
 ### Parameter Interface
 
@@ -122,9 +122,9 @@ wrapper.set_params(nested__alpha=0.5)
 ```
 
 !!! example "Interactive Examples"
-    - [**Parameter Interface**](../../examples/parameter_interface/) demonstrates `get_params()`/`set_params()` usage
-    - [**Nested Wrappers**](../../examples/nested_wrappers/) shows nested parameter syntax with `__` delimiter
-    - [**GridSearch**](../../examples/grid_search/) illustrates parameter tuning with `GridSearchCV`
+    - [**Parameter Interface**](/examples/parameter_interface/) demonstrates `get_params()`/`set_params()` usage
+    - [**Nested Wrappers**](/examples/nested_wrappers/) shows nested parameter syntax with `__` delimiter
+    - [**GridSearch**](/examples/grid_search/) illustrates parameter tuning with `GridSearchCV`
 
 ## Configuration
 
@@ -234,7 +234,7 @@ class MyWrapper(BaseClassWrapper):
 ```
 
 !!! example "Interactive Example"
-    See [**Validation**](../../examples/validation/) for an interactive demonstration of parameter validation and error handling.
+    See [**Validation**](/examples/validation/) for an interactive demonstration of parameter validation and error handling.
 
 ### 4. Handle Nested Estimators Carefully
 
@@ -283,7 +283,7 @@ class XGBoostWrapper(BaseClassWrapper):
 ```
 
 !!! example "Interactive Example"
-    See [**XGBoost**](../../examples/xgboost_wrapper/) for a complete implementation of an XGBoost wrapper.
+    See [**XGBoost**](/examples/xgboost_wrapper/) for a complete implementation of an XGBoost wrapper.
 
 ## Limitations and Considerations
 
@@ -296,7 +296,7 @@ Understanding the limitations helps you make informed decisions:
 3. **Metadata routing to nested estimators**: Sklearn-wrap does not currently implement metadata routing to nested estimators within the wrapper. The wrapper itself can consume metadata (e.g., `sample_weight` in `fit()`), but cannot automatically route it to nested wrapped estimators. You must handle routing manually in your wrapper's methods if needed.
 
 !!! example "Additional Example"
-    See [**Serialization**](../../examples/serialization/) for an interactive demonstration of saving and loading wrapped estimators with `joblib`.
+    See [**Serialization**](/examples/serialization/) for an interactive demonstration of saving and loading wrapped estimators with `joblib`.
 
 ## Next Steps
 

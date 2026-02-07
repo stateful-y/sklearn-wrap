@@ -52,9 +52,7 @@ docs = [
     "mkdocs>=1.6.0",
     "mkdocs-material>=9.7",
     "mkdocstrings[python]>=0.26.0",
-    "mkdocs-marimo @ git+https://github.com/marimo-team/mkdocs-marimo.git@main",
     "pymdown-extensions>=10.20.1",
-
 ]
 fix = [
   "pre-commit-uv>=4.1",

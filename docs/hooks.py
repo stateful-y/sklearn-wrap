@@ -1,7 +1,6 @@
 """MkDocs hooks for post-build processing."""
 
 import fnmatch
-import os
 import re
 import shutil
 import subprocess
@@ -13,35 +12,21 @@ from pathlib import Path
 def on_page_markdown(markdown, page, config, files):
     """Rewrite example links to work in both local and RTD environments.
 
-    Read the Docs uses /en/latest/ prefix, while local builds don't.
-    We detect the environment and rewrite links appropriately.
+    Converts absolute paths like /examples/ to relative paths based on page depth.
+    This works on both local builds and Read the Docs.
     """
-    # Detect if we're building on Read the Docs
-    is_readthedocs = os.environ.get("READTHEDOCS") == "True"
+    # Calculate relative path based on page depth
+    src_parts = page.file.src_path.split("/")
 
-    if is_readthedocs:
-        # On RTD, use absolute paths from site root
-        # RTD will automatically prefix with /en/latest/
-        # Pattern: ](/examples/ should stay as-is
-        return markdown
-    else:
-        # Local build: calculate relative path based on page depth
-        # Page depth = number of directory levels in output path
-        src_parts = page.file.src_path.split("/")
+    # Calculate depth (pages/examples.md has depth 2, index.md has depth 0)
+    depth = len(src_parts) if src_parts[-1] != "index.md" else len(src_parts) - 1
 
-        # Calculate depth:
-        # - index.md stays as index.html (depth = 0)
-        # - other files become directories: pages/file.md -> pages/file/index.html
-        depth = len(src_parts)
-        if src_parts[-1] == "index.md":
-            depth = depth - 1
+    # Build relative prefix: '../' repeated for each directory level
+    prefix = "../" * depth
 
-        # Build relative prefix: '../' for each level
-        prefix = "../" * depth
-
-        # Replace absolute paths with relative paths
-        markdown = re.sub(r"\]\(/examples/", f"]({prefix}examples/", markdown)
-        return markdown
+    # Replace absolute paths with relative paths
+    markdown = re.sub(r"\]\(/examples/", f"]({prefix}examples/", markdown)
+    return markdown
 
 
 def on_pre_build(config):
@@ -70,8 +55,6 @@ def on_pre_build(config):
         output_dir.mkdir(parents=True, exist_ok=True)
 
         try:
-            # Use static HTML export instead of WASM for Read the Docs compatibility
-            # Static HTML doesn't require special server configuration or WASM support
             subprocess.run(
                 [
                     sys.executable,
@@ -80,10 +63,12 @@ def on_pre_build(config):
                     "-y",
                     "-q",
                     "export",
-                    "html",
+                    "html-wasm",
                     str(notebook),
                     "-o",
                     str(output_file),
+                    "--mode",
+                    "edit",
                 ],
                 check=True,
                 capture_output=True,
@@ -402,10 +387,19 @@ def on_post_build(config):
             target_dir = site_dir / "examples" / html_dir.name
             target_dir.mkdir(parents=True, exist_ok=True)
 
-            # Copy only index.html (static HTML files load assets from CDN)
-            if index_html.exists():
-                target_file = target_dir / "index.html"
-                shutil.copy2(index_html, target_file)
+            # Copy index.html
+            target_file = target_dir / "index.html"
+            shutil.copy2(index_html, target_file)
+
+            # Copy assets directory if it exists (marimo export includes JS/CSS assets)
+            assets_dir = html_dir / "assets"
+            if assets_dir.exists() and assets_dir.is_dir():
+                target_assets = target_dir / "assets"
+                if target_assets.exists():
+                    shutil.rmtree(target_assets)
+                shutil.copytree(assets_dir, target_assets)
+                print(f"[hooks] copied examples/{html_dir.name}/ (with assets) to site")
+            else:
                 print(f"[hooks] copied examples/{html_dir.name}/index.html to site")
 
     # Get exclude patterns from config

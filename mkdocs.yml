@@ -94,8 +94,8 @@ validation:
   links:
     not_found: warn
     anchors: warn
-    absolute_links: warn
-    unrecognized_links: warn
+    absolute_links: ignore  # Ignore absolute links - we handle them in hooks
+    unrecognized_links: ignore  # Ignore unrecognized links - examples HTML is generated
 
 plugins:
   - search
@@ -111,12 +111,6 @@ plugins:
             show_symbol_type_heading: true
             show_symbol_type_toc: true
             members_order: source
-  - marimo:
-      enabled: true
-      display_code: false
-      display_output: true
-      is_reactive: true
-
 
 nav:
   - Home: index.md
