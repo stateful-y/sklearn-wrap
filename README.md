@@ -1,4 +1,11 @@
-![Sklearn-Wrap](https://raw.githubusercontent.com/stateful-y/sklearn-wrap/main/docs/assets/logo_dark.png)
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/stateful-y/sklearn-wrap/main/docs/assets/logo_light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/stateful-y/sklearn-wrap/main/docs/assets/logo_dark.png">
+    <img src="https://raw.githubusercontent.com/stateful-y/sklearn-wrap/main/docs/assets/logo_light.png" alt="Sklearn-Wrap">
+  </picture>
+</p>
+
 
 [![Python Version](https://img.shields.io/pypi/pyversions/sklearn_wrap)](https://pypi.org/project/sklearn_wrap/)
 [![License](https://img.shields.io/github/license/stateful-y/sklearn-wrap)](https://github.com/stateful-y/sklearn-wrap/blob/main/LICENSE)
@@ -129,6 +136,8 @@ For questions and discussions, you can also open a [discussion](https://github.c
 
 This project is licensed under the terms of the [Apache-2.0 License](https://github.com/stateful-y/sklearn-wrap/blob/main/LICENSE).
 
-## Acknowledgements
-
-Sklearn-Wrap is developed and maintained by [stateful-y](https://github.com/stateful-y).
+<p align="center">
+  <a href="https://stateful-y.io">
+    <img src="docs/assets/made_by_stateful-y.png" alt="Made by stateful-y" width="200">
+  </a>
+</p>
