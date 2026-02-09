@@ -4,5 +4,5 @@ contact_links:
     url: https://github.com/stateful-y/sklearn-wrap/discussions
     about: Please use GitHub Discussions for questions and general discussions
   - name: Documentation
-    url: https://stateful-y.github.io/sklearn-wrap/
+    url: https://sklearn-wrap.readthedocs.io/
     about: Check the documentation for guides and API references
