@@ -124,10 +124,7 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
             if default_cls is not None:
                 params[name] = default_cls
             else:
-                raise TypeError(
-                    f"{self.__class__.__name__}.__init__() missing required "
-                    f"keyword argument: '{name}'"
-                )
+                raise TypeError(f"{self.__class__.__name__}.__init__() missing required keyword argument: '{name}'")
         estimator_class = params.pop(name)
 
         self.estimator_class = self._validate_estimator_class(estimator_class)
