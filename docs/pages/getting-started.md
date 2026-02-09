@@ -112,7 +112,7 @@ y = 2 + 3*X.ravel() + 0.5*X.ravel()**2 + np.random.randn(100)
 
 # Create wrapped estimator
 wrapper = PolynomialWrapper(
-    estimator_class=PolynomialRegressor,
+    regressor=PolynomialRegressor,
     degree=2,
     learning_rate=0.01,
     n_iterations=1000

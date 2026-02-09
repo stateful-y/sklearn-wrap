@@ -95,7 +95,7 @@ class PolynomialWrapper(BaseClassWrapper, RegressorMixin):
 
 # Use with sklearn tools
 wrapper = PolynomialWrapper(
-    estimator_class=PolynomialRegressor,
+    regressor=PolynomialRegressor,
     degree=2,
     learning_rate=0.01
 )

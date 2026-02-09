@@ -161,12 +161,12 @@ def _(DecoratorWrapper, ManualWrapper, SimpleModel, np):
     y = np.array([10, 20, 30])
 
     # Manual approach
-    manual = ManualWrapper(estimator_class=SimpleModel, alpha=2.0)
+    manual = ManualWrapper(model=SimpleModel, alpha=2.0)
     manual.fit(X, y)
     manual_pred = manual.predict(X)
 
     # Decorator approach
-    decorator = DecoratorWrapper(estimator_class=SimpleModel, alpha=2.0)
+    decorator = DecoratorWrapper(model=SimpleModel, alpha=2.0)
     decorator.fit(X, y)
     decorator_pred = decorator.predict(X)
     return X, decorator_pred, manual_pred, y
@@ -250,7 +250,7 @@ def _(BaseClassWrapper, np, _fit_context):
 
 @app.cell
 def _(IncrementalModel, IncrementalWrapper, X, y):
-    incr = IncrementalWrapper(estimator_class=IncrementalModel)
+    incr = IncrementalWrapper(model=IncrementalModel)
 
     # Multiple partial_fit calls
     incr.partial_fit(X[:2], y[:2])

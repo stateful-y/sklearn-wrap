@@ -125,7 +125,7 @@ def generate_regression_data(n_samples=300, n_features=2, noise=20, test_size=0.
 def _(ConfigurableRegressor, ConfigurableWrapper, alpha_slider, beta_slider, generate_regression_data, np):
     # Create wrapper with slider values
     est = ConfigurableWrapper(
-        estimator_class=ConfigurableRegressor,
+        model=ConfigurableRegressor,
         alpha=alpha_slider.value,
         beta=beta_slider.value,
     )
@@ -247,7 +247,7 @@ def _(mo):
 @app.cell
 def _(ConfigurableWrapper, ConfigurableRegressor, X_test, X_train, y_train):
     # Create, update, and fit
-    est2 = ConfigurableWrapper(estimator_class=ConfigurableRegressor, alpha=1.0, beta=0.0)
+    est2 = ConfigurableWrapper(model=ConfigurableRegressor, alpha=1.0, beta=0.0)
 
     # set_params() returns self for method chaining
     est2.set_params(alpha=2.5, beta=-1.0)

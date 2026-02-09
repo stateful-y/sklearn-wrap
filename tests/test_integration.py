@@ -118,7 +118,7 @@ class TestPipelineIntegration:
         """Test that wrapper works as a step in Pipeline."""
         X, y = make_regression(n_samples=100, n_features=10, random_state=42)
 
-        wrapper = RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=1.0)
+        wrapper = RegressorWrapper(regressor=SimpleRegressorClass, alpha=1.0)
 
         pipeline = Pipeline([("scaler", StandardScaler()), ("regressor", wrapper)])
 
@@ -133,7 +133,7 @@ class TestPipelineIntegration:
         """Test setting nested parameters in Pipeline."""
         X, y = make_regression(n_samples=100, n_features=10, random_state=42)
 
-        wrapper = RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=1.0)
+        wrapper = RegressorWrapper(regressor=SimpleRegressorClass, alpha=1.0)
         pipeline = Pipeline([("scaler", StandardScaler()), ("regressor", wrapper)])
 
         # Set nested parameter
@@ -159,7 +159,7 @@ class TestGridSearchCVIntegration:
         """Test GridSearchCV with wrapped estimator."""
         X, y = make_regression(n_samples=100, n_features=10, random_state=42)
 
-        wrapper = RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=1.0)
+        wrapper = RegressorWrapper(regressor=SimpleRegressorClass, alpha=1.0)
 
         param_grid = {"alpha": [0.5, 1.0, 2.0]}
 
@@ -175,7 +175,7 @@ class TestGridSearchCVIntegration:
         """Test GridSearchCV with wrapper in Pipeline."""
         X, y = make_regression(n_samples=100, n_features=10, random_state=42)
 
-        wrapper = RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=1.0)
+        wrapper = RegressorWrapper(regressor=SimpleRegressorClass, alpha=1.0)
         pipeline = Pipeline([("scaler", StandardScaler()), ("regressor", wrapper)])
 
         param_grid = {"regressor__alpha": [0.5, 1.0, 2.0]}
@@ -189,7 +189,7 @@ class TestGridSearchCVIntegration:
         """Test that GridSearchCV preserves the best estimator correctly."""
         X, y = make_regression(n_samples=100, n_features=10, random_state=42)
 
-        wrapper = RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=1.0)
+        wrapper = RegressorWrapper(regressor=SimpleRegressorClass, alpha=1.0)
 
         param_grid = {"alpha": [0.5, 1.0, 2.0, 5.0]}
 
@@ -214,7 +214,7 @@ class TestCrossValScoreIntegration:
         """Test cross_val_score with wrapped estimator."""
         X, y = make_regression(n_samples=100, n_features=10, random_state=42)
 
-        wrapper = RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=1.0)
+        wrapper = RegressorWrapper(regressor=SimpleRegressorClass, alpha=1.0)
 
         scores = cross_val_score(wrapper, X, y, cv=3)
 
@@ -226,7 +226,7 @@ class TestCrossValScoreIntegration:
         """Test cross_val_score with wrapper in Pipeline."""
         X, y = make_regression(n_samples=100, n_features=10, random_state=42)
 
-        wrapper = RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=1.0)
+        wrapper = RegressorWrapper(regressor=SimpleRegressorClass, alpha=1.0)
         pipeline = Pipeline([("scaler", StandardScaler()), ("regressor", wrapper)])
 
         scores = cross_val_score(pipeline, X, y, cv=3)
@@ -249,8 +249,8 @@ class TestEnsembleIntegration:
         X, y = make_regression(n_samples=100, n_features=10, random_state=42)
 
         # Create wrapped estimators
-        wrapper1 = RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=0.5)
-        wrapper2 = RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=2.0)
+        wrapper1 = RegressorWrapper(regressor=SimpleRegressorClass, alpha=0.5)
+        wrapper2 = RegressorWrapper(regressor=SimpleRegressorClass, alpha=2.0)
 
         # Use sklearn's Ridge as final estimator
         stacking = StackingRegressor(estimators=[("w1", wrapper1), ("w2", wrapper2)], final_estimator=Ridge())
@@ -265,8 +265,8 @@ class TestEnsembleIntegration:
         X, y = make_classification(n_samples=100, n_features=10, random_state=42)
 
         # Create wrapped estimators
-        wrapper1 = ClassifierWrapper(estimator_class=SimpleClassifierClass, threshold=0.3)
-        wrapper2 = ClassifierWrapper(estimator_class=SimpleClassifierClass, threshold=0.7)
+        wrapper1 = ClassifierWrapper(classifier=SimpleClassifierClass, threshold=0.3)
+        wrapper2 = ClassifierWrapper(classifier=SimpleClassifierClass, threshold=0.7)
 
         # Use voting classifier
         voting = VotingClassifier(estimators=[("w1", wrapper1), ("w2", wrapper2)], voting="hard")
@@ -283,11 +283,11 @@ class TestEnsembleIntegration:
         # Create pipelines with wrappers
         pipe1 = Pipeline([
             ("scaler", StandardScaler()),
-            ("regressor", RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=0.5)),
+            ("regressor", RegressorWrapper(regressor=SimpleRegressorClass, alpha=0.5)),
         ])
         pipe2 = Pipeline([
             ("scaler", StandardScaler()),
-            ("regressor", RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=2.0)),
+            ("regressor", RegressorWrapper(regressor=SimpleRegressorClass, alpha=2.0)),
         ])
 
         stacking = StackingRegressor(estimators=[("p1", pipe1), ("p2", pipe2)], final_estimator=Ridge())
@@ -316,7 +316,7 @@ class TestRealWorldScenarios:
         y_train, _y_test = y[:80], y[80:]
 
         # Create pipeline
-        wrapper = RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=1.0)
+        wrapper = RegressorWrapper(regressor=SimpleRegressorClass, alpha=1.0)
         pipeline = Pipeline([("scaler", StandardScaler()), ("regressor", wrapper)])
 
         # Grid search
@@ -336,7 +336,7 @@ class TestRealWorldScenarios:
         """Test nested cross-validation scenario."""
         X, y = make_regression(n_samples=100, n_features=10, random_state=42)
 
-        wrapper = RegressorWrapper(estimator_class=SimpleRegressorClass, alpha=1.0)
+        wrapper = RegressorWrapper(regressor=SimpleRegressorClass, alpha=1.0)
 
         param_grid = {"alpha": [0.5, 1.0, 2.0]}
         grid_search = GridSearchCV(wrapper, param_grid, cv=3)

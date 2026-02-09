@@ -80,7 +80,7 @@ def create_error_demo(operation, error_title, explanation):
 @app.cell
 def _(SimpleModel, SimpleWrapper):
     def invalid_param_operation():
-        wrapper = SimpleWrapper(estimator_class=SimpleModel, valid_param=1.0)
+        wrapper = SimpleWrapper(model=SimpleModel, valid_param=1.0)
         wrapper.set_params(nonexistent_param=999)
     return (invalid_param_operation,)
 
@@ -125,7 +125,7 @@ def _():
 @app.cell
 def _(NotSklearnClass, StrictWrapper):
     def wrong_base_operation():
-        StrictWrapper(estimator_class=NotSklearnClass)
+        StrictWrapper(estimator=NotSklearnClass)
     return (wrong_base_operation,)
 
 
@@ -163,7 +163,7 @@ def _():
 def _(ModelWithRequired, SimpleWrapper, np):
     def missing_required_operation():
         # Create wrapper without required_param
-        wrapper = SimpleWrapper(estimator_class=ModelWithRequired, optional_param=20)
+        wrapper = SimpleWrapper(model=ModelWithRequired, optional_param=20)
         # Error happens during instantiate()
         wrapper.fit(np.array([[1, 2]]), np.array([1]))
     return (missing_required_operation,)
@@ -193,7 +193,7 @@ def _(mo):
 @app.cell
 def _(SimpleModel, SimpleWrapper):
     def reserved_delimiter_operation():
-        SimpleWrapper(estimator_class=SimpleModel, param__invalid=1.0)
+        SimpleWrapper(model=SimpleModel, param__invalid=1.0)
     return (reserved_delimiter_operation,)
 
 
@@ -298,7 +298,7 @@ def _(EnsembleModel, EnsembleWrapper, SimpleRegressor):
     def non_wrapper_constraint_operation():
         # This fails: SimpleRegressor is not a BaseClassWrapper
         raw_estimator = SimpleRegressor(scale=1.0)
-        EnsembleWrapper(estimator_class=EnsembleModel, inner_estimator=raw_estimator)
+        EnsembleWrapper(ensemble=EnsembleModel, inner_estimator=raw_estimator)
     return (non_wrapper_constraint_operation,)
 
 
@@ -324,8 +324,8 @@ def _(mo):
 @app.cell
 def _(EnsembleModel, EnsembleWrapper, RegressorWrapper, SimpleRegressor, np):
     # This works: inner_estimator is a BaseClassWrapper
-    inner_wrapper = RegressorWrapper(estimator_class=SimpleRegressor, scale=1.5)
-    valid_ensemble = EnsembleWrapper(estimator_class=EnsembleModel, inner_estimator=inner_wrapper)
+    inner_wrapper = RegressorWrapper(regressor=SimpleRegressor, scale=1.5)
+    valid_ensemble = EnsembleWrapper(ensemble=EnsembleModel, inner_estimator=inner_wrapper)
 
     # Test it
     X_ensemble = np.array([[1], [2], [3]])

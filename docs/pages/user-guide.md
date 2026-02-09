@@ -32,11 +32,11 @@ The solution fits into Scikit-Learn's ecosystem by implementing the estimator in
 
 ### The Wrapper Pattern
 
-At its heart, Sklearn-Wrap uses a **delegation pattern**: your wrapper class holds a reference to the class you want to wrap (`estimator_class`) and its constructor parameters (`params`). When `instantiate()` is called, it creates the actual instance by calling `estimator_class(**params)` and stores it in `instance_`.
+At its heart, Sklearn-Wrap uses a **delegation pattern**: your wrapper class holds a reference to the class you want to wrap (passed as the `_estimator_name` keyword argument) and its constructor parameters. When `instantiate()` is called, it creates the actual instance by calling `estimator_class(**params)` and stores it in `instance_`.
 
 This separation enables Scikit-Learn's parameter interface to work: `get_params()` returns the constructor parameters as a dictionary, and `set_params()` updates them. The wrapper then delegates method calls (like `fit()`, `predict()`) to the wrapped instance.
 
-The pattern requires two class attributes: `_estimator_name` (the parameter name used in `get_params()`) and `_estimator_base_class` (used to validate that `estimator_class` inherits from the expected base). This validation prevents runtime errors from incompatible classes.
+The pattern requires two class attributes: `_estimator_name` (defines the keyword argument name for the wrapped class, also used as the key in `get_params()`) and `_estimator_base_class` (used to validate that the wrapped class inherits from the expected base). This validation prevents runtime errors from incompatible classes.
 
 ```python
 from sklearn_wrap.base import BaseClassWrapper
@@ -84,7 +84,7 @@ class MyWrapper(BaseClassWrapper):
 
 The `_fit_context` decorator wraps your `fit()` method to handle three tasks automatically:
 
-1. **Instantiation**: Calls `instantiate()` to create `instance_` from `estimator_class` and `params`
+1. **Instantiation**: Calls `instantiate()` to create `instance_` from the wrapped class and `params`
 2. **Validation**: Runs parameter validation unless globally disabled (`skip_parameter_validation` config)
 3. **Nested validation control**: Sets up a context manager to optionally skip validation of nested estimators
 
@@ -109,8 +109,8 @@ For example, if your wrapper contains a nested estimator (or another wrapper), y
 
 ```python
 wrapper = MyWrapper(
-    estimator_class=MyClass,
-    nested=AnotherWrapper(estimator_class=AnotherClass, alpha=1.0)
+    model=MyClass,
+    nested=AnotherWrapper(model=AnotherClass, alpha=1.0)
 )
 
 # Get all parameters (including nested)
@@ -136,14 +136,14 @@ Every concrete wrapper must define two class attributes:
 
 **`_estimator_name`**: The parameter name used in `get_params()` to identify the wrapped class. Choose a descriptive name like `"regressor"`, `"classifier"`, or `"model"`.
 
-**`_estimator_base_class`**: The base class that `estimator_class` must inherit from. This validates that the wrapped class has the expected interface. Use `object` for minimal validation, or a specific base class (e.g., `XGBModel`) for stricter checks.
+**`_estimator_base_class`**: The base class that the wrapped class must inherit from. This validates that the wrapped class has the expected interface. Use `object` for minimal validation, or a specific base class (e.g., `XGBModel`) for stricter checks.
 
 ```python
 from sklearn_wrap.base import BaseClassWrapper
 
 class MyWrapper(BaseClassWrapper):
     _estimator_name = "regressor"  # Shows as 'regressor' in get_params()
-    _estimator_base_class = object  # Validates estimator_class inheritance
+    _estimator_base_class = object  # Validates wrapped class inheritance
 ```
 
 ### Optional: Parameter Constraints
@@ -271,7 +271,7 @@ class XGBoostWrapper(BaseClassWrapper):
 
     Parameters
     ----------
-    estimator_class : class
+    booster : class
         Should be xgboost.Booster
     max_depth : int, default=6
         Maximum tree depth
@@ -289,7 +289,7 @@ class XGBoostWrapper(BaseClassWrapper):
 
 Understanding the limitations helps you make informed decisions:
 
-1. **Estimator class immutability**: Once a wrapper is instantiated, you cannot change `estimator_class` via `set_params()`. To wrap a different class, create a new wrapper instance. This prevents ambiguity about which class's parameters are being configured.
+1. **Estimator class immutability**: Once a wrapper is instantiated, you cannot change the wrapped class via `set_params()`. To wrap a different class, create a new wrapper instance. This prevents ambiguity about which class's parameters are being configured.
 
 2. **Parameter validation overhead**: Sklearn-wrap validates parameters before instantiation, which adds overhead. For performance-critical applications, consider setting `Scikit-Learn.set_config(skip_parameter_validation=True)` after validating inputs once.
 

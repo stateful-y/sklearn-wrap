@@ -31,10 +31,10 @@ class TestDeepNesting:
             def __init__(self, inner=None):
                 self.inner = inner
 
-        level1 = SimpleWrapper(estimator_class=SimpleEstimator, required_param=1)
-        level2 = SimpleWrapper(estimator_class=ClassWithNested, inner=level1)
-        level3 = SimpleWrapper(estimator_class=ClassWithNested, inner=level2)
-        level4 = SimpleWrapper(estimator_class=ClassWithNested, inner=level3)
+        level1 = SimpleWrapper(simple=SimpleEstimator, required_param=1)
+        level2 = SimpleWrapper(simple=ClassWithNested, inner=level1)
+        level3 = SimpleWrapper(simple=ClassWithNested, inner=level2)
+        level4 = SimpleWrapper(simple=ClassWithNested, inner=level3)
 
         # Get deep params
         params = level4.get_params(deep=True)
@@ -56,11 +56,11 @@ class TestDeepNesting:
             def __init__(self, inner=None):
                 self.inner = inner
 
-        level1 = SimpleWrapper(estimator_class=SimpleEstimator, required_param=1, optional_param=10)
-        level2 = SimpleWrapper(estimator_class=ClassWithNested, inner=level1)
-        level3 = SimpleWrapper(estimator_class=ClassWithNested, inner=level2)
-        level4 = SimpleWrapper(estimator_class=ClassWithNested, inner=level3)
-        level5 = SimpleWrapper(estimator_class=ClassWithNested, inner=level4)
+        level1 = SimpleWrapper(simple=SimpleEstimator, required_param=1, optional_param=10)
+        level2 = SimpleWrapper(simple=ClassWithNested, inner=level1)
+        level3 = SimpleWrapper(simple=ClassWithNested, inner=level2)
+        level4 = SimpleWrapper(simple=ClassWithNested, inner=level3)
+        level5 = SimpleWrapper(simple=ClassWithNested, inner=level4)
 
         # Set deeply nested parameter
         level5.set_params(inner__inner__inner__inner__optional_param=555)
@@ -87,7 +87,7 @@ class TestSlotsClasses:
                 self.param1 = param1
                 self.param2 = param2
 
-        wrapper = SimpleWrapper(estimator_class=SlottedClass, param1=5, param2=20)
+        wrapper = SimpleWrapper(simple=SlottedClass, param1=5, param2=20)
 
         # Should work normally
         assert wrapper.params["param1"] == 5
@@ -110,7 +110,7 @@ class TestSlotsClasses:
                     self.__dict__["dynamic_param"] = dynamic_param
 
         # Note: This class has __slots__ but also allows __dict__ for additional attrs
-        wrapper = SimpleWrapper(estimator_class=MixedSlottedClass, fixed_param=10, dynamic_param="test")
+        wrapper = SimpleWrapper(simple=MixedSlottedClass, fixed_param=10, dynamic_param="test")
 
         wrapper.instantiate()
         assert wrapper.instance_.fixed_param == 10
@@ -140,7 +140,7 @@ class TestPropertyBasedParams:
             def value(self, val):
                 self._value = val * 2  # Property transforms value
 
-        wrapper = SimpleWrapper(estimator_class=PropertyClass, value=5)
+        wrapper = SimpleWrapper(simple=PropertyClass, value=5)
 
         wrapper.instantiate()
         # Value should be transformed by property setter
@@ -157,7 +157,7 @@ class TestPropertyBasedParams:
             def computed_value(self):
                 return self.base_value * 2
 
-        wrapper = SimpleWrapper(estimator_class=ReadOnlyPropertyClass, base_value=15)
+        wrapper = SimpleWrapper(simple=ReadOnlyPropertyClass, base_value=15)
 
         wrapper.instantiate()
         assert wrapper.instance_.base_value == 15
@@ -182,7 +182,7 @@ class TestDynamicClasses:
         # Create class dynamically
         DynamicClass = type("DynamicClass", (BaseTestClass,), {"__init__": __init__})
 
-        wrapper = SimpleWrapper(estimator_class=DynamicClass, param1=10, param2=30)
+        wrapper = SimpleWrapper(simple=DynamicClass, param1=10, param2=30)
 
         assert wrapper.params["param1"] == 10
         assert wrapper.params["param2"] == 30
@@ -204,7 +204,7 @@ class TestDynamicClasses:
 
         BaseClass.custom_method = custom_method
 
-        wrapper = SimpleWrapper(estimator_class=BaseClass, value=15)
+        wrapper = SimpleWrapper(simple=BaseClass, value=15)
         wrapper.instantiate()
 
         # Dynamically added method should work
@@ -223,7 +223,7 @@ class TestParamDictMutationSafety:
         """Test that modifying external dict doesn't affect wrapper params."""
         params_dict = {"required_param": 5, "optional_param": 20}
 
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, **params_dict)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, **params_dict)
 
         # Modify external dict
         params_dict["optional_param"] = 999
@@ -235,7 +235,7 @@ class TestParamDictMutationSafety:
 
     def test_get_params_dict_mutation_doesnt_affect_wrapper(self):
         """Test that modifying returned params dict doesn't affect wrapper."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5, optional_param=20)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5, optional_param=20)
 
         # Get params
         params = wrapper.get_params()
@@ -248,7 +248,7 @@ class TestParamDictMutationSafety:
 
     def test_params_attribute_mutation_safety(self):
         """Test that wrapper.params modifications are handled correctly."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5, optional_param=20)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5, optional_param=20)
 
         # Direct modification of params dict (not recommended but testing safety)
         wrapper.params["optional_param"] = 999
@@ -277,7 +277,7 @@ class TestCallableDefaults:
                 self.value = value
                 self.factory = factory if factory is not None else (lambda: [])
 
-        wrapper = SimpleWrapper(estimator_class=ClassWithCallableDefault, value=15)
+        wrapper = SimpleWrapper(simple=ClassWithCallableDefault, value=15)
 
         wrapper.instantiate()
         assert wrapper.instance_.value == 15
@@ -294,7 +294,7 @@ class TestCallableDefaults:
                 self.value = value
                 self.func = func
 
-        wrapper = SimpleWrapper(estimator_class=ClassWithFunctionDefault, value=20)
+        wrapper = SimpleWrapper(simple=ClassWithFunctionDefault, value=20)
 
         wrapper.instantiate()
         assert wrapper.instance_.value == 20
@@ -321,7 +321,7 @@ class TestAbstractBaseClasses:
                 self.value = value
 
         # Creating wrapper should work (abstract check happens at instantiation)
-        wrapper = SimpleWrapper(estimator_class=AbstractClass, value=15)
+        wrapper = SimpleWrapper(simple=AbstractClass, value=15)
 
         # But instantiating should fail
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
@@ -342,7 +342,7 @@ class TestAbstractBaseClasses:
             def abstract_method(self):
                 return self.value * 2
 
-        wrapper = SimpleWrapper(estimator_class=ConcreteClass, value=15)
+        wrapper = SimpleWrapper(simple=ConcreteClass, value=15)
 
         wrapper.instantiate()
         assert wrapper.instance_.value == 15
@@ -368,7 +368,7 @@ class TestMultipleInheritance:
             def __init__(self, value=10):
                 self.value = value
 
-        wrapper = SimpleWrapper(estimator_class=MultipleInheritanceClass, value=25)
+        wrapper = SimpleWrapper(simple=MultipleInheritanceClass, value=25)
 
         wrapper.instantiate()
         assert wrapper.instance_.value == 25
@@ -389,7 +389,7 @@ class TestMultipleInheritance:
             def __init__(self, value=10):
                 self.value = value
 
-        wrapper = SimpleWrapper(estimator_class=ComplexMRO, value=30)
+        wrapper = SimpleWrapper(simple=ComplexMRO, value=30)
 
         wrapper.instantiate()
         # Should use Base1's method (first in MRO)
@@ -412,7 +412,7 @@ class TestSpecialParameterNames:
                 self.required = required
                 self.kwargs = kwargs
 
-        wrapper = SimpleWrapper(estimator_class=ClassWithKwargs, required=5, extra1="value1", extra2="value2")
+        wrapper = SimpleWrapper(simple=ClassWithKwargs, required=5, extra1="value1", extra2="value2")
 
         wrapper.instantiate()
         assert wrapper.instance_.required == 5
@@ -428,7 +428,7 @@ class TestSpecialParameterNames:
 
         # Note: *args in constructor signature can't be easily filled from kwargs
         # This tests that the wrapper handles the signature correctly
-        wrapper = SimpleWrapper(estimator_class=ClassWithArgs)
+        wrapper = SimpleWrapper(simple=ClassWithArgs)
 
         # Should instantiate with no args
         wrapper.instantiate()
@@ -462,9 +462,9 @@ class TestEdgeCaseCombinations:
             def __init__(self, inner=None):
                 self.inner = inner
 
-        level1 = SimpleWrapper(estimator_class=PropertyClass, value=5)
-        level2 = SimpleWrapper(estimator_class=ClassWithNested, inner=level1)
-        level3 = SimpleWrapper(estimator_class=ClassWithNested, inner=level2)
+        level1 = SimpleWrapper(simple=PropertyClass, value=5)
+        level2 = SimpleWrapper(simple=ClassWithNested, inner=level1)
+        level3 = SimpleWrapper(simple=ClassWithNested, inner=level2)
 
         # Set nested parameter
         level3.set_params(inner__inner__value=100)
@@ -485,8 +485,8 @@ class TestEdgeCaseCombinations:
             def __init__(self, inner=None):
                 self.inner = inner
 
-        inner = SimpleWrapper(estimator_class=SlottedClass, value=50)
-        outer = SimpleWrapper(estimator_class=ClassWithNested, inner=inner)
+        inner = SimpleWrapper(simple=SlottedClass, value=50)
+        outer = SimpleWrapper(simple=ClassWithNested, inner=inner)
 
         # Get nested params
         params = outer.get_params(deep=True)
