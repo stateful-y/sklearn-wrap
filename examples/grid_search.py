@@ -128,7 +128,7 @@ def _(GridSearchCV, KNNClassifier, KNNWrapper):
     }
 
     # Create wrapper and run grid search
-    wrapper = KNNWrapper(estimator_class=KNNClassifier)
+    wrapper = KNNWrapper(knn=KNNClassifier)
     grid_search = GridSearchCV(wrapper, param_grid, cv=3, scoring="accuracy", return_train_score=True)
     grid_search.fit(X_train, y_train)
 

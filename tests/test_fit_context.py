@@ -24,8 +24,8 @@ def test_fit_context_decorator_basic():
     """Test the _fit_context decorator functionality."""
 
     class FittableWrapper(SimpleWrapper):
-        def __init__(self, estimator_class, **params):
-            super().__init__(estimator_class, **params)
+        def __init__(self, simple, **params):
+            super().__init__(simple=simple, **params)
             self.fit_called = False
 
         @_fit_context(prefer_skip_nested_validation=True)
@@ -33,7 +33,7 @@ def test_fit_context_decorator_basic():
             self.fit_called = True
             return self
 
-    wrapper = FittableWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
     X = [[1, 2], [3, 4]]
     y = [0, 1]
 
@@ -53,7 +53,7 @@ def test_fit_context_sets_fitted_flag():
         def fit(self, X, y=None):
             return self
 
-    wrapper = FittableWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
     X = [[1, 2], [3, 4]]
 
     # Before fit
@@ -73,8 +73,8 @@ def test_fit_context_decorator_partial_fit():
     """Test _fit_context decorator with partial_fit when already fitted."""
 
     class PartialFittableWrapper(SimpleWrapper):
-        def __init__(self, estimator_class, **params):
-            super().__init__(estimator_class, **params)
+        def __init__(self, simple, **params):
+            super().__init__(simple=simple, **params)
             self.partial_fit_count = 0
             self.instantiate_count = 0
 
@@ -87,7 +87,7 @@ def test_fit_context_decorator_partial_fit():
             self.partial_fit_count += 1
             return self
 
-    wrapper = PartialFittableWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = PartialFittableWrapper(simple=SimpleEstimator, required_param=5)
     X = [[1, 2], [3, 4]]
     y = [0, 1]
 
@@ -110,8 +110,8 @@ def test_fit_context_partial_fit_reinstantiates_when_not_fitted():
     """Test that partial_fit reinstantiates if estimator is not fitted."""
 
     class PartialFittableWrapper(SimpleWrapper):
-        def __init__(self, estimator_class, **params):
-            super().__init__(estimator_class, **params)
+        def __init__(self, simple, **params):
+            super().__init__(simple=simple, **params)
             self.instantiate_count = 0
 
         def instantiate(self):
@@ -122,7 +122,7 @@ def test_fit_context_partial_fit_reinstantiates_when_not_fitted():
         def partial_fit(self, X, y=None):
             return self
 
-    wrapper = PartialFittableWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = PartialFittableWrapper(simple=SimpleEstimator, required_param=5)
     X = [[1, 2], [3, 4]]
 
     # First call - should instantiate
@@ -170,8 +170,8 @@ def test_fit_context_decorator_with_skip_validation_config():
     """Test _fit_context decorator with global skip_parameter_validation config."""
 
     class FittableWrapper(SimpleWrapper):
-        def __init__(self, estimator_class, **params):
-            super().__init__(estimator_class, **params)
+        def __init__(self, simple, **params):
+            super().__init__(simple=simple, **params)
             self.fit_called = False
             self.validate_params_called = False
 
@@ -184,7 +184,7 @@ def test_fit_context_decorator_with_skip_validation_config():
             self.fit_called = True
             return self
 
-    wrapper = FittableWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
     X = [[1, 2], [3, 4]]
     y = [0, 1]
 
@@ -204,7 +204,7 @@ def test_fit_context_prefer_skip_nested_validation():
         def fit(self, X, y=None):
             return self
 
-    wrapper = FittableWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
     X = [[1, 2], [3, 4]]
 
     # Should work with prefer_skip_nested_validation=True
@@ -220,7 +220,7 @@ def test_fit_context_without_prefer_skip_nested_validation():
         def fit(self, X, y=None):
             return self
 
-    wrapper = FittableWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
     X = [[1, 2], [3, 4]]
 
     # Should still work
@@ -241,7 +241,7 @@ def test_fit_context_with_exception():
         def fit(self, X, y=None):
             raise ValueError("Intentional error")
 
-    wrapper = FittableWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
     X = [[1, 2], [3, 4]]
 
     # Fit raises exception
@@ -256,8 +256,8 @@ def test_fit_context_multiple_fits():
     """Test calling fit multiple times with _fit_context."""
 
     class FittableWrapper(SimpleWrapper):
-        def __init__(self, estimator_class, **params):
-            super().__init__(estimator_class, **params)
+        def __init__(self, simple, **params):
+            super().__init__(simple=simple, **params)
             self.fit_count = 0
 
         @_fit_context(prefer_skip_nested_validation=True)
@@ -265,7 +265,7 @@ def test_fit_context_multiple_fits():
             self.fit_count += 1
             return self
 
-    wrapper = FittableWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
     X = [[1, 2], [3, 4]]
 
     # First fit
@@ -292,7 +292,7 @@ def test_fit_context_validates_estimator_class():
             return self
 
     # Create wrapper with valid class
-    wrapper = FittableWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
 
     # Manually change to invalid class (bypass __init__ validation)
     wrapper.estimator_class = NotBaseClass

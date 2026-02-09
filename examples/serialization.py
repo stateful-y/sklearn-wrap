@@ -97,7 +97,7 @@ def __(SimpleRegressor, SimpleWrapper, generate_regression_data):
     # Train and fit
     X_train, X_test, y_train, y_test = generate_regression_data()
 
-    estimator = SimpleWrapper(estimator_class=SimpleRegressor, multiplier=2.0)
+    estimator = SimpleWrapper(regressor=SimpleRegressor, multiplier=2.0)
     estimator.fit(X_train, y_train)
 
     original_predictions = estimator.predict(X_test)
@@ -150,7 +150,7 @@ def __(SimpleRegressor, SimpleWrapper, StandardScaler, Pipeline, X_test, X_train
     # Create and fit pipeline
     pipeline = Pipeline([
         ("scaler", StandardScaler()),
-        ("regressor", SimpleWrapper(estimator_class=SimpleRegressor, multiplier=1.5))
+        ("regressor", SimpleWrapper(regressor=SimpleRegressor, multiplier=1.5))
     ])
 
     pipeline.fit(X_train, y_train)
@@ -201,7 +201,7 @@ def __(mo):
 def __(SimpleRegressor, SimpleWrapper, GridSearchCV, X_test, X_train, y_train):
     # Run grid search
     grid = GridSearchCV(
-        SimpleWrapper(estimator_class=SimpleRegressor),
+        SimpleWrapper(regressor=SimpleRegressor),
         param_grid={"multiplier": [0.5, 1.0, 1.5, 2.0]},
         cv=3,
         scoring="neg_mean_squared_error"

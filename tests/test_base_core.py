@@ -15,6 +15,7 @@ from sklearn_wrap.base import REQUIRED_PARAM_VALUE
 
 from .conftest import (
     BaseTestClass,
+    DefaultClassWrapper,
     MissingBaseClassWrapper,
     MissingNameWrapper,
     NoRequiredParams,
@@ -41,7 +42,7 @@ def test_required_param_value_constant():
 
 def test_wrapper_init_with_valid_params():
     """Test wrapper initialization with valid parameters."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5, optional_param=20)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5, optional_param=20)
     assert wrapper.estimator_class == SimpleEstimator
     assert wrapper.params["required_param"] == 5
     assert wrapper.params["optional_param"] == 20
@@ -49,21 +50,49 @@ def test_wrapper_init_with_valid_params():
 
 def test_wrapper_init_only_estimator_class():
     """Test initialization with only estimator_class parameter."""
-    wrapper = SimpleWrapper(estimator_class=NoRequiredParams)
+    wrapper = SimpleWrapper(simple=NoRequiredParams)
     assert wrapper.estimator_class == NoRequiredParams
     assert wrapper.params["param1"] == 1
     assert wrapper.params["param2"] == "test"
 
 
 def test_wrapper_init_missing_estimator_class():
-    """Test that missing estimator_class raises TypeError."""
-    with pytest.raises(TypeError, match="missing 1 required positional argument"):
+    """Test that missing estimator class raises TypeError."""
+    with pytest.raises(TypeError, match="missing required keyword argument: 'simple'"):
         SimpleWrapper()
+
+
+def test_wrapper_init_default_class():
+    """Test that _estimator_default_class is used when no class is passed."""
+    wrapper = DefaultClassWrapper(param1=99)
+    assert wrapper.estimator_class == NoRequiredParams
+    assert wrapper.params["param1"] == 99
+
+
+def test_wrapper_init_default_class_no_params():
+    """Test construction with default class and no extra params."""
+    wrapper = DefaultClassWrapper()
+    assert wrapper.estimator_class == NoRequiredParams
+    assert wrapper.params["param1"] == 1
+    assert wrapper.params["param2"] == "test"
+
+
+def test_wrapper_init_default_class_override():
+    """Test that default class can be overridden explicitly."""
+    wrapper = DefaultClassWrapper(simple=SimpleEstimator, required_param=5)
+    assert wrapper.estimator_class == SimpleEstimator
+    assert wrapper.params["required_param"] == 5
+
+
+def test_wrapper_default_class_not_required():
+    """Test that _required_parameters is empty when a default class exists."""
+    assert DefaultClassWrapper._required_parameters == []
+    assert SimpleWrapper._required_parameters == ["simple"]
 
 
 def test_wrapper_inherits_base_estimator():
     """Test that BaseClassWrapper inherits from sklearn's BaseEstimator."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
     assert isinstance(wrapper, BaseEstimator)
 
 
@@ -74,27 +103,34 @@ def test_wrapper_inherits_base_estimator():
 
 def test_estimator_name_property():
     """Test that estimator_name property returns the correct value."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
     assert wrapper.estimator_name == "simple"
 
 
 def test_estimator_name_not_defined():
     """Test that accessing estimator_name raises error when not defined."""
-    wrapper = MissingNameWrapper(estimator_class=SimpleEstimator, required_param=5)
+    with pytest.raises(ValueError, match="Class should define a static `_estimator_name`"):
+        MissingNameWrapper(simple=SimpleEstimator, required_param=5)
+
+
+def test_estimator_name_property_raises_when_unset():
+    """Test that estimator_name property raises when _estimator_name is not a string."""
+    wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
+    wrapper._estimator_name = None  # Manually unset after construction
     with pytest.raises(ValueError, match="Class should define a static `_estimator_name`"):
         _ = wrapper.estimator_name
 
 
 def test_estimator_base_class_property():
     """Test that estimator_base_class property returns the correct value."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
     assert wrapper.estimator_base_class == BaseTestClass
 
 
 def test_estimator_base_class_not_defined():
     """Test that initialization raises error when base class not defined."""
     with pytest.raises(ValueError, match="Class should define a static `_estimator_base_class`"):
-        MissingBaseClassWrapper(estimator_class=SimpleEstimator, required_param=5)
+        MissingBaseClassWrapper(simple=SimpleEstimator, required_param=5)
 
 
 # ============================================================================
@@ -105,7 +141,7 @@ def test_estimator_base_class_not_defined():
 def test_validate_estimator_params_all_provided():
     """Test parameter validation with all parameters provided."""
     wrapper = SimpleWrapper(
-        estimator_class=SimpleEstimator,
+        simple=SimpleEstimator,
         required_param=5,
         optional_param=15,
         another_optional="custom",
@@ -117,7 +153,7 @@ def test_validate_estimator_params_all_provided():
 
 def test_validate_estimator_params_with_defaults():
     """Test that default parameters are correctly filled in."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
     assert wrapper.params["required_param"] == 5
     assert wrapper.params["optional_param"] == 10
     assert wrapper.params["another_optional"] == "default"
@@ -125,7 +161,7 @@ def test_validate_estimator_params_with_defaults():
 
 def test_validate_estimator_params_required_marked():
     """Test that missing required parameters are marked with sentinel."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, optional_param=15)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, optional_param=15)
     assert wrapper.params["required_param"] == REQUIRED_PARAM_VALUE
     assert wrapper.params["optional_param"] == 15
 
@@ -133,12 +169,12 @@ def test_validate_estimator_params_required_marked():
 def test_validate_estimator_params_invalid_param():
     """Test that invalid parameter names raise ValueError."""
     with pytest.raises(ValueError, match="'invalid_param' is not a valid parameter for class 'SimpleEstimator'"):
-        SimpleWrapper(estimator_class=SimpleEstimator, required_param=5, invalid_param=100)
+        SimpleWrapper(simple=SimpleEstimator, required_param=5, invalid_param=100)
 
 
 def test_validate_estimator_params_empty():
     """Test validation with no parameters provided."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator)
+    wrapper = SimpleWrapper(simple=SimpleEstimator)
     assert wrapper.params["required_param"] == REQUIRED_PARAM_VALUE
     assert wrapper.params["optional_param"] == 10
     assert wrapper.params["another_optional"] == "default"
@@ -151,19 +187,19 @@ def test_validate_estimator_params_empty():
 
 def test_validate_params_valid_subclass():
     """Test that _validate_params succeeds with valid subclass."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
     wrapper._validate_params()  # Should not raise
 
 
 def test_validate_params_invalid_subclass():
     """Test that _validate_params raises error with invalid subclass."""
     with pytest.raises(ValueError, match="should be derived from"):
-        SimpleWrapper(estimator_class=NotBaseClass)
+        SimpleWrapper(simple=NotBaseClass)
 
 
 def test_validate_params_base_class_itself():
     """Test that base class itself is valid."""
-    wrapper = SimpleWrapper(estimator_class=BaseTestClass)
+    wrapper = SimpleWrapper(simple=BaseTestClass)
     wrapper._validate_params()  # Should not raise
 
 
@@ -173,7 +209,7 @@ def test_validate_params_not_a_class():
     not_a_class = SimpleEstimator(required_param=5)
 
     with pytest.raises(TypeError, match="is not a class"):
-        SimpleWrapper(estimator_class=not_a_class, required_param=10)
+        SimpleWrapper(simple=not_a_class, required_param=10)
 
 
 # ============================================================================
@@ -183,7 +219,7 @@ def test_validate_params_not_a_class():
 
 def test_instantiate_creates_instance():
     """Test that instantiate creates an instance of the wrapped class."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=42, optional_param=99)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=42, optional_param=99)
     result = wrapper.instantiate()
 
     assert result is wrapper
@@ -195,7 +231,7 @@ def test_instantiate_creates_instance():
 
 def test_instantiate_with_defaults():
     """Test instantiate with default parameter values."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=7)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=7)
     wrapper.instantiate()
 
     assert wrapper.instance_.required_param == 7
@@ -205,14 +241,14 @@ def test_instantiate_with_defaults():
 
 def test_instantiate_missing_required_param():
     """Test that instantiate raises error when required param is missing."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, optional_param=15)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, optional_param=15)
     with pytest.raises(ValueError, match="Class 'SimpleEstimator' requires parameter 'required_param'"):
         wrapper.instantiate()
 
 
 def test_instantiate_validates_subclass():
     """Test that instantiate calls _validate_params."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, optional_param=15)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, optional_param=15)
     wrapper.estimator_class = NotBaseClass  # Bypass __init__ check
     with pytest.raises(ValueError, match="should be derived from"):
         wrapper.instantiate()
@@ -221,7 +257,7 @@ def test_instantiate_validates_subclass():
 def test_instantiate_all_params_provided():
     """Test instantiate when all parameters are explicitly provided."""
     wrapper = SimpleWrapper(
-        estimator_class=SimpleEstimator,
+        simple=SimpleEstimator,
         required_param="test",
         optional_param=50,
         another_optional="modified",
@@ -235,7 +271,7 @@ def test_instantiate_all_params_provided():
 
 def test_instantiate_multiple_times():
     """Test that instantiate can be called multiple times."""
-    wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+    wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
 
     instance1 = wrapper.instantiate()
     instance2 = wrapper.instantiate()
@@ -261,7 +297,7 @@ def test_wrapper_with_complex_class_signature():
             self.d = d
             self.e = e if e is not None else []
 
-    wrapper = SimpleWrapper(estimator_class=ComplexClass, a="required_value", b=2, c="custom")
+    wrapper = SimpleWrapper(simple=ComplexClass, a="required_value", b=2, c="custom")
 
     assert wrapper.params["a"] == "required_value"
     assert wrapper.params["b"] == 2
@@ -280,7 +316,7 @@ def test_wrapper_preserves_param_types():
             self.list_param = list_param if list_param is not None else []
 
     wrapper = SimpleWrapper(
-        estimator_class=TypedClass,
+        simple=TypedClass,
         int_param=10,
         str_param="custom",
         list_param=[1, 2, 3],
@@ -294,4 +330,4 @@ def test_wrapper_preserves_param_types():
 
 def test_required_parameters_class_attribute():
     """Test that _required_parameters class attribute is set correctly."""
-    assert SimpleWrapper._required_parameters == ["estimator_class"]
+    assert SimpleWrapper._required_parameters == ["simple"]

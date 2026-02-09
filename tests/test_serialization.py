@@ -60,7 +60,7 @@ class TestPickleUnfitted:
 
     def test_pickle_unfitted_wrapper(self):
         """Test pickling and unpickling an unfitted wrapper."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5, optional_param=20)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5, optional_param=20)
 
         # Pickle
         pickled = pickle.dumps(wrapper)
@@ -76,7 +76,7 @@ class TestPickleUnfitted:
     def test_pickle_preserves_parameters(self):
         """Test that pickling preserves all parameters."""
         wrapper = SimpleWrapper(
-            estimator_class=SimpleEstimator,
+            simple=SimpleEstimator,
             required_param=42,
             optional_param=100,
             another_optional="custom",
@@ -90,7 +90,7 @@ class TestPickleUnfitted:
 
     def test_pickle_unfitted_can_be_instantiated(self):
         """Test that unpickled unfitted wrapper can be instantiated."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
 
         unpickled = pickle.loads(pickle.dumps(wrapper))
 
@@ -110,7 +110,7 @@ class TestPickleFitted:
 
     def test_pickle_fitted_wrapper(self):
         """Test pickling and unpickling a fitted wrapper."""
-        wrapper = SerializableWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SerializableWrapper(serializable=SimpleEstimator, required_param=5)
 
         # Fit the wrapper
         X = np.array([[1, 2], [3, 4], [5, 6]])
@@ -133,7 +133,7 @@ class TestPickleFitted:
 
     def test_pickle_fitted_can_predict(self):
         """Test that unpickled fitted wrapper can predict."""
-        wrapper = SerializableWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SerializableWrapper(serializable=SimpleEstimator, required_param=5)
 
         # Fit
         X_train = np.array([[1, 2], [3, 4], [5, 6]])
@@ -151,7 +151,7 @@ class TestPickleFitted:
 
     def test_pickle_fitted_preserves_instance(self):
         """Test that pickling preserves the fitted instance."""
-        wrapper = SerializableWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SerializableWrapper(serializable=SimpleEstimator, required_param=5)
 
         X = np.array([[1, 2], [3, 4]])
         wrapper.fit(X)
@@ -177,8 +177,8 @@ class TestPickleNested:
 
     def test_pickle_nested_wrappers(self):
         """Test pickling wrapper with nested wrapper parameter."""
-        inner = SimpleWrapper(estimator_class=SimpleEstimator, required_param=10, optional_param=20)
-        outer = SimpleWrapper(estimator_class=ClassWithNested, estimator=inner, value=15)
+        inner = SimpleWrapper(simple=SimpleEstimator, required_param=10, optional_param=20)
+        outer = SimpleWrapper(simple=ClassWithNested, estimator=inner, value=15)
 
         # Pickle and unpickle
         unpickled = pickle.loads(pickle.dumps(outer))
@@ -191,9 +191,9 @@ class TestPickleNested:
 
     def test_pickle_deep_nested_wrappers(self):
         """Test pickling deeply nested wrapper structure (3 levels)."""
-        level1 = SimpleWrapper(estimator_class=SimpleEstimator, required_param=1)
-        level2 = SimpleWrapper(estimator_class=ClassWithInner, inner=level1)
-        level3 = SimpleWrapper(estimator_class=ClassWithInner, inner=level2)
+        level1 = SimpleWrapper(simple=SimpleEstimator, required_param=1)
+        level2 = SimpleWrapper(simple=ClassWithInner, inner=level1)
+        level3 = SimpleWrapper(simple=ClassWithInner, inner=level2)
 
         # Pickle and unpickle
         unpickled = pickle.loads(pickle.dumps(level3))
@@ -214,7 +214,7 @@ class TestJoblibPersistence:
 
     def test_joblib_save_load_unfitted(self):
         """Test joblib save and load with unfitted wrapper."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5, optional_param=20)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5, optional_param=20)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = Path(tmpdir) / "wrapper.joblib"
@@ -232,7 +232,7 @@ class TestJoblibPersistence:
 
     def test_joblib_save_load_fitted(self):
         """Test joblib save and load with fitted wrapper."""
-        wrapper = SerializableWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SerializableWrapper(serializable=SimpleEstimator, required_param=5)
 
         # Fit
         X = np.array([[1, 2], [3, 4], [5, 6]])
@@ -260,8 +260,8 @@ class TestJoblibPersistence:
 
     def test_joblib_with_nested_wrappers(self):
         """Test joblib persistence with nested wrappers."""
-        inner = SimpleWrapper(estimator_class=SimpleEstimator, required_param=10)
-        outer = SimpleWrapper(estimator_class=ClassWithNested, estimator=inner, value=15)
+        inner = SimpleWrapper(simple=SimpleEstimator, required_param=10)
+        outer = SimpleWrapper(simple=ClassWithNested, estimator=inner, value=15)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = Path(tmpdir) / "nested_wrapper.joblib"
@@ -279,7 +279,7 @@ class TestJoblibPersistence:
 
     def test_joblib_compression(self):
         """Test joblib save with compression."""
-        wrapper = SerializableWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SerializableWrapper(serializable=SimpleEstimator, required_param=5)
 
         # Fit to create more data
         X = np.array([[1, 2], [3, 4], [5, 6]] * 100)
@@ -310,7 +310,7 @@ class TestSerializationEdgeCases:
 
     def test_pickle_wrapper_with_none_params(self):
         """Test pickling wrapper with None parameter values."""
-        wrapper = SimpleWrapper(estimator_class=ClassWithOptional, param1=None, param2="value")
+        wrapper = SimpleWrapper(simple=ClassWithOptional, param1=None, param2="value")
 
         unpickled = pickle.loads(pickle.dumps(wrapper))
 
@@ -319,7 +319,7 @@ class TestSerializationEdgeCases:
 
     def test_pickle_wrapper_after_set_params(self):
         """Test pickling after modifying parameters with set_params."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
 
         # Modify params
         wrapper.set_params(optional_param=50, another_optional="modified")
@@ -333,7 +333,7 @@ class TestSerializationEdgeCases:
 
     def test_roundtrip_multiple_times(self):
         """Test multiple pickle/unpickle cycles."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
 
         # First cycle
         unpickled1 = pickle.loads(pickle.dumps(wrapper))

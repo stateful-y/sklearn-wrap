@@ -113,12 +113,12 @@ def _(BaseClassWrapper, BaseRegressor, BaseWrapper, EnsembleRegressor):
             return self.instance_.compute_blend(X)
 
     # Create two inner estimators with different scales
-    inner1 = BaseWrapper(estimator_class=BaseRegressor, scale=0.8)
-    inner2 = BaseWrapper(estimator_class=BaseRegressor, scale=1.2)
+    inner1 = BaseWrapper(regressor=BaseRegressor, scale=0.8)
+    inner2 = BaseWrapper(regressor=BaseRegressor, scale=1.2)
 
     # Create ensemble with nested estimators
     ensemble = EnsembleWrapper(
-        estimator_class=EnsembleRegressor,
+        ensemble=EnsembleRegressor,
         estimator1=inner1,
         estimator2=inner2,
         blend=0.5
@@ -183,9 +183,9 @@ def _(create_slider, mo):
 def _(BaseRegressor, BaseWrapper, EnsembleRegressor, EnsembleWrapper, blend_slider, scale1_slider, scale2_slider):
     # Create ensemble with slider-controlled parameters using nested syntax
     ensemble_interactive = EnsembleWrapper(
-        estimator_class=EnsembleRegressor,
-        estimator1=BaseWrapper(estimator_class=BaseRegressor, scale=scale1_slider.value),
-        estimator2=BaseWrapper(estimator_class=BaseRegressor, scale=scale2_slider.value),
+        ensemble=EnsembleRegressor,
+        estimator1=BaseWrapper(regressor=BaseRegressor, scale=scale1_slider.value),
+        estimator2=BaseWrapper(regressor=BaseRegressor, scale=scale2_slider.value),
         blend=blend_slider.value
     )
 

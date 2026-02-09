@@ -95,18 +95,20 @@ def _(BaseClassWrapper, xgb):
             dtest = xgb.DMatrix(X)
             return self.booster_.predict(dtest)
 
-    class XGBoostBoosterWrapper(BaseClassWrapper):
+    class XGBoostTrainerWrapper(BaseClassWrapper):
         """Wrap XGBoost's training process with nested callback support.
 
         This wrapper demonstrates:
         1. Wrapping an adapter class (XGBoostTrainer) that bridges procedural APIs
         2. Nested wrappers for callbacks with automatic parameter handling
-        3. No need to override get_params/set_params - it all works automatically!
+        3. No need to override __init__/get_params/set_params - it all works automatically!
         4. Using _parameter_constraints to validate nested wrapper parameters
+        5. Using _estimator_default_class to avoid passing the class every time
         """
 
         _estimator_name = "trainer"
         _estimator_base_class = object
+        _estimator_default_class = XGBoostTrainer
         _parameter_constraints = {
             # Validates that callbacks is None or a BaseClassWrapper wrapping a class
             # that inherits from xgb.callback.TrainingCallback (the base for XGBoost callbacks)
@@ -121,7 +123,7 @@ def _(BaseClassWrapper, xgb):
         def predict(self, X):
             return self.instance_.predict_output(X)
 
-    return XGBoostBoosterWrapper, XGBoostCallbackWrapper, XGBoostTrainer
+    return XGBoostCallbackWrapper, XGBoostTrainer, XGBoostTrainerWrapper
 
 
 @app.function(hide_code=True)
@@ -150,23 +152,21 @@ def generate_regression_data(n_samples=300, n_features=2, noise=20, test_size=0.
 
 @app.cell
 def _(
-    XGBoostBoosterWrapper,
     XGBoostCallbackWrapper,
-    XGBoostTrainer,
+    XGBoostTrainerWrapper,
     depth_slider,
     eta_slider,
     xgb,
 ):
     # Create wrapped evaluation monitor callback (doesn't require validation set)
     eval_callback = XGBoostCallbackWrapper(
-        estimator_class=xgb.callback.EvaluationMonitor,
+        callback=xgb.callback.EvaluationMonitor,
         period=10,
         show_stdv=False
     )
 
     # Use single callback (not list) to demonstrate nested parameter syntax
-    wrapper = XGBoostBoosterWrapper(
-        estimator_class=XGBoostTrainer,
+    wrapper = XGBoostTrainerWrapper(
         num_boost_round=50,
         callbacks=eval_callback,  # Single callback for nested params demo
         max_depth=depth_slider.value,

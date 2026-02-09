@@ -91,6 +91,14 @@ class MissingBaseClassWrapper(BaseClassWrapper):
     _estimator_name = "simple"
 
 
+class DefaultClassWrapper(BaseClassWrapper):
+    """Wrapper with a default estimator class."""
+
+    _estimator_name = "simple"
+    _estimator_base_class = BaseTestClass
+    _estimator_default_class = NoRequiredParams
+
+
 # ============================================================================
 # Constants
 # ============================================================================

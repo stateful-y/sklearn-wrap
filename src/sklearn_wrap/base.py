@@ -25,7 +25,7 @@ Examples
 >>> class MyWrapper(BaseClassWrapper):
 ...     _estimator_name = "estimator"
 ...     _estimator_base_class = object
->>> wrapper = MyWrapper(estimator_class=dict, key="value")
+>>> wrapper = MyWrapper(estimator=dict, key="value")
 >>> wrapper.params
 {'key': 'value'}
 """
@@ -43,15 +43,14 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
     - data validation;
     - metadata routing.
 
-    Read more in the :ref:`User Guide <rolling_your_own_estimator>`.
 
     Parameters
     ----------
-    estimator_class : class
-        Class to be wrapped into an estimator.
-
     **params
-        Parameters to the constructor of the class to be wrapped.
+        The keyword argument matching ``_estimator_name`` provides the class
+        to wrap (optional when ``_estimator_default_class`` is set).
+        Remaining keyword arguments are passed as constructor parameters to
+        the wrapped class.
 
     Examples
     --------
@@ -85,7 +84,7 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
     ...         return self.instance_.predict(X)
     >>>
     >>> # Use it like any sklearn estimator with parameter management
-    >>> estimator = MyEstimator(SimpleRegressor, multiplier=2.0, offset=1.0)
+    >>> estimator = MyEstimator(regressor=SimpleRegressor, multiplier=2.0, offset=1.0)
     >>> params = estimator.get_params()
     >>> params["multiplier"]
     2.0
@@ -102,16 +101,37 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
     array([3.5, 3.5, 3.5])
     """
 
-    _required_parameters = ["estimator_class"]
+    _required_parameters: list[str] = []
     _estimator_name: str | None = None
     _estimator_base_class = None
+    _estimator_default_class: type | None = None
     _parameter_constraints: dict[str, list] = {}  # For validating parameter types
 
-    def __init__(self, estimator_class, **params):
-        self._validate_estimator_class(estimator_class)
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        name = getattr(cls, "_estimator_name", None)
+        if isinstance(name, str):
+            has_default = getattr(cls, "_estimator_default_class", None) is not None
+            cls._required_parameters = [] if has_default else [name]
+
+    def __init__(self, **params):
+        name = self._estimator_name
+        if not isinstance(name, str):
+            raise ValueError("Class should define a static `_estimator_name`.")
+
+        if name not in params:
+            default_cls = self._estimator_default_class
+            if default_cls is not None:
+                params[name] = default_cls
+            else:
+                raise TypeError(
+                    f"{self.__class__.__name__}.__init__() missing required "
+                    f"keyword argument: '{name}'"
+                )
+        estimator_class = params.pop(name)
 
         self.estimator_class = self._validate_estimator_class(estimator_class)
-        self.params = self._validate_estimator_params(dict(params))
+        self.params = self._validate_estimator_params(params)
 
         # Validate parameter constraints (including nested wrappers)
         for param_name, param_value in self.params.items():
@@ -361,7 +381,15 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         Returns
         -------
         params : dict
-                Parameter names mapped to their values.
+            Parameter names mapped to their values.
+
+        Notes
+        -----
+        The estimator class is always returned under the ``_estimator_name`` key
+        (e.g. ``"regressor"``, ``"classifier"``). This ensures that
+        ``sklearn.base.clone()`` can reconstruct the wrapper correctly, since
+        ``clone()`` passes the dict returned by ``get_params(deep=False)`` as
+        keyword arguments to the constructor.
         """
         out = {}
         for key, value in self.params.items():
@@ -370,18 +398,12 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
                 # Exclude the estimator class parameter from nested params
                 # to prevent roundtrip issues (estimator class can't be set via set_params)
                 if isinstance(value, BaseClassWrapper):
-                    # Exclude both 'estimator_class' and the wrapper's _estimator_name
                     estimator_name = value._estimator_name
-                    deep_items = [(k, v) for k, v in deep_items if k not in ("estimator_class", estimator_name)]
+                    deep_items = [(k, v) for k, v in deep_items if k != estimator_name]
                 out.update((key + "__" + k, val) for k, val in deep_items)
             out[key] = value
 
-        # For deep=True, use the descriptive name (_estimator_name) for display
-        # For deep=False (used by sklearn's clone), use 'estimator_class' for __init__
-        if deep:
-            out[self._estimator_name] = self.estimator_class
-        else:
-            out["estimator_class"] = self.estimator_class
+        out[self._estimator_name] = self.estimator_class
 
         return out
 
@@ -407,8 +429,8 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
             # Simple optimization to gain speed (inspect is slow)
             return self
 
-        # Check if trying to change estimator class (both possible keys)
-        if self._estimator_name in params or "estimator_class" in params:
+        # Check if trying to change estimator class
+        if self._estimator_name in params:
             raise ValueError(
                 f"Cannot change estimator class via set_params. "
                 f"The '{self._estimator_name}' parameter cannot be set. Redeclare the "

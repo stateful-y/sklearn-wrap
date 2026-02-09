@@ -26,13 +26,13 @@ class TestHTMLRepresentation:
 
     def test_html_repr_method_exists(self):
         """Test that _repr_html_ method exists (inherited from BaseEstimator)."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
         assert hasattr(wrapper, "_repr_html_")
         assert callable(wrapper._repr_html_)
 
     def test_html_repr_renders(self):
         """Test that _repr_html_ returns a string with HTML content."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5, optional_param=20)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5, optional_param=20)
         html = wrapper._repr_html_()
 
         assert isinstance(html, str)
@@ -43,7 +43,7 @@ class TestHTMLRepresentation:
     def test_html_repr_with_nested_wrapper(self):
         """Test HTML representation with nested BaseClassWrapper instances."""
         # Create nested wrapper structure
-        inner_wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=10)
+        inner_wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=10)
 
         class ClassWithNestedParam:
             def __init__(self, nested_estimator, value=5):
@@ -54,7 +54,7 @@ class TestHTMLRepresentation:
             _estimator_name = "outer"
             _estimator_base_class = object
 
-        outer_wrapper = OuterWrapper(estimator_class=ClassWithNestedParam, nested_estimator=inner_wrapper, value=15)
+        outer_wrapper = OuterWrapper(outer=ClassWithNestedParam, nested_estimator=inner_wrapper, value=15)
 
         # Should not raise and should produce HTML
         html = outer_wrapper._repr_html_()
@@ -72,7 +72,7 @@ class TestCloning:
 
     def test_clone_creates_independent_copy(self):
         """Test that clone() creates an independent copy of the wrapper."""
-        original = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5, optional_param=20)
+        original = SimpleWrapper(simple=SimpleEstimator, required_param=5, optional_param=20)
         cloned = clone(original)
 
         # Should be different objects
@@ -81,7 +81,7 @@ class TestCloning:
 
     def test_clone_preserves_estimator_class(self):
         """Test that clone() preserves the estimator_class."""
-        original = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        original = SimpleWrapper(simple=SimpleEstimator, required_param=5)
         cloned = clone(original)
 
         assert cloned.estimator_class is original.estimator_class
@@ -90,7 +90,7 @@ class TestCloning:
     def test_clone_preserves_parameters(self):
         """Test that clone() preserves all parameters."""
         original = SimpleWrapper(
-            estimator_class=SimpleEstimator,
+            simple=SimpleEstimator,
             required_param=42,
             optional_param=100,
             another_optional="custom",
@@ -106,7 +106,7 @@ class TestCloning:
     def test_clone_resets_fitted_state(self):
         """Test that clone() removes instance_ attribute (unfits the estimator)."""
         # Create and instantiate wrapper
-        original = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        original = SimpleWrapper(simple=SimpleEstimator, required_param=5)
         original.instantiate()
 
         # Verify original has instance_
@@ -119,7 +119,7 @@ class TestCloning:
     def test_clone_resets_fitted_flag(self):
         """Test that clone() resets the _fitted flag."""
         # Create wrapper and mark as fitted
-        original = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        original = SimpleWrapper(simple=SimpleEstimator, required_param=5)
         original._fitted = True
 
         assert original.__sklearn_is_fitted__() is True
@@ -132,7 +132,7 @@ class TestCloning:
     def test_clone_with_nested_wrappers(self):
         """Test cloning with nested BaseClassWrapper instances."""
         # Create nested structure
-        inner = SimpleWrapper(estimator_class=SimpleEstimator, required_param=10)
+        inner = SimpleWrapper(simple=SimpleEstimator, required_param=10)
 
         class ClassWithNestedParam:
             def __init__(self, nested, value=5):
@@ -143,7 +143,7 @@ class TestCloning:
             _estimator_name = "outer"
             _estimator_base_class = object
 
-        original = OuterWrapper(estimator_class=ClassWithNestedParam, nested=inner, value=15)
+        original = OuterWrapper(outer=ClassWithNestedParam, nested=inner, value=15)
 
         cloned = clone(original)
 
@@ -157,6 +157,31 @@ class TestCloning:
         # But should have same parameters
         assert cloned.params["nested"].get_params() == inner.get_params()
 
+    def test_clone_with_custom_init_parameter(self):
+        """Test cloning with wrapper that uses custom __init__ parameter matching _estimator_name."""
+
+        # Create a wrapper with custom __init__ that uses _estimator_name as parameter
+        class CustomInitWrapper(BaseClassWrapper):
+            _estimator_name = "sampler"
+            _estimator_base_class = BaseTestClass
+
+            def __init__(self, sampler=SimpleEstimator, **params):
+                # Custom parameter name 'sampler' matches _estimator_name
+                super().__init__(sampler=sampler, **params)
+
+        original = CustomInitWrapper(sampler=SimpleEstimator, required_param=5, optional_param=20)
+
+        # Verify get_params uses custom parameter name
+        params_shallow = original.get_params(deep=False)
+        assert "sampler" in params_shallow
+
+        # Clone should work with custom parameter name
+        cloned = clone(original)
+        assert cloned is not original
+        assert cloned.estimator_class == SimpleEstimator
+        assert cloned.params["required_param"] == 5
+        assert cloned.params["optional_param"] == 20
+
 
 # ============================================================================
 # Fitted State Detection Tests
@@ -168,18 +193,18 @@ class TestFittedStateDetection:
 
     def test_sklearn_is_fitted_method_exists(self):
         """Test that __sklearn_is_fitted__() method exists."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
         assert hasattr(wrapper, "__sklearn_is_fitted__")
         assert callable(wrapper.__sklearn_is_fitted__)
 
     def test_unfitted_wrapper_not_fitted(self):
         """Test that newly created wrapper is not fitted."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
         assert wrapper.__sklearn_is_fitted__() is False
 
     def test_instantiated_wrapper_not_fitted(self):
         """Test that instantiate() alone does not mark wrapper as fitted."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
         wrapper.instantiate()
 
         # Should have instance_ but not be fitted
@@ -199,7 +224,7 @@ class TestFittedStateDetection:
                 self._fitted = True
                 return self
 
-        wrapper = WrapperWithFit(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = WrapperWithFit(simple=SimpleEstimator, required_param=5)
 
         with pytest.raises(NotFittedError):
             check_is_fitted(wrapper)
@@ -216,7 +241,7 @@ class TestFittedStateDetection:
                 self._fitted = True
                 return self
 
-        wrapper = WrapperWithFit(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = WrapperWithFit(simple=SimpleEstimator, required_param=5)
         wrapper.instantiate()
 
         # Still should raise because _fitted flag is not set
@@ -225,7 +250,7 @@ class TestFittedStateDetection:
 
     def test_fitted_after_setting_flag(self):
         """Test that wrapper is fitted after setting _fitted flag."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
         wrapper.instantiate()
         wrapper._fitted = True
 
@@ -243,7 +268,7 @@ class TestFittedStateDetection:
                 self._fitted = True
                 return self
 
-        wrapper = WrapperWithFit(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = WrapperWithFit(simple=SimpleEstimator, required_param=5)
         wrapper.instantiate()
         wrapper._fitted = True
 
@@ -252,7 +277,7 @@ class TestFittedStateDetection:
 
     def test_fitted_flag_persists(self):
         """Test that _fitted flag persists across calls."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
 
         assert wrapper.__sklearn_is_fitted__() is False
 
@@ -265,7 +290,7 @@ class TestFittedStateDetection:
 
     def test_instantiate_resets_fitted_flag(self):
         """Test that instantiate() resets the _fitted flag."""
-        wrapper = SimpleWrapper(estimator_class=SimpleEstimator, required_param=5)
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=5)
 
         # Fit and mark as fitted
         wrapper.instantiate()

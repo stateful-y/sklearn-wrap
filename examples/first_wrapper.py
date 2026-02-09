@@ -171,7 +171,7 @@ def generate_regression_data(n_samples=300, n_features=2, noise=20, test_size=0.
 def _(PolyWrapper, PolynomialRegressor, degree_slider, lr_slider, np):
     # Create wrapper with slider values
     wrapper = PolyWrapper(
-        estimator_class=PolynomialRegressor,
+        poly_regressor=PolynomialRegressor,
         degree=degree_slider.value,
         learning_rate=lr_slider.value,
     )
