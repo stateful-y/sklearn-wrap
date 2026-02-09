@@ -28,7 +28,7 @@ body:
       description: Show how you'd like to use this feature (optional)
       render: python
       placeholder: |
-        from {{ package_name }} import new_feature
+        from sklearn_wrap import new_feature
         result = new_feature()
 
   - type: textarea
