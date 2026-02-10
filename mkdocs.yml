@@ -82,9 +82,6 @@ markdown_extensions:
   - pymdownx.tilde
   - pymdownx.emoji
 
-extra_css:
-  - stylesheets/readthedocs.css
-
 extra_javascript:
   - javascripts/readthedocs.js
 
