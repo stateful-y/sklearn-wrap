@@ -17,8 +17,8 @@ build:
       # Create the virtual environment using uv
       - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
     install:
-      # Sync doc-dependencies (the group “docs”), then install the project itself
-      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --group docs
+      # Sync doc-dependencies (the group "docs") without installing the project
+      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --group docs --no-install-project
 
 # MkDocs configuration
 mkdocs:
