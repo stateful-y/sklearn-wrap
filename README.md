@@ -113,7 +113,7 @@ Full documentation is available at [https://sklearn-wrap.readthedocs.io/](https:
 Interactive examples are available in the `examples/` directory:
 
 - **Online**: [https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/)
-- **Locally**: Run `marimo edit examples/hello.py` to open an interactive notebook
+- **Locally**: Run `just example first_wrapper.py` or `uv run marimo edit examples/first_wrapper.py` to open an interactive notebook
 
 ## Can I contribute?
 
@@ -123,7 +123,7 @@ We welcome contributions, feedback, and questions:
 - **Join the discussion**: [GitHub Discussions](https://github.com/stateful-y/sklearn-wrap/discussions)
 - **Contributing Guide**: [CONTRIBUTING.md](https://github.com/stateful-y/sklearn-wrap/blob/main/CONTRIBUTING.md)
 
-If you are interested in becoming a maintainer or taking a more active role, please reach out to Guillaume Tauzin on [stateful-y.io](https://stateful-y.io/contact).
+If you are interested in becoming a maintainer or taking a more active role, please reach out to Guillaume Tauzin on [stateful-y.io contact page](https://stateful-y.io/contact).
 
 ## Where can I learn more?
 
