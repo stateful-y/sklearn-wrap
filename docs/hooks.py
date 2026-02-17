@@ -366,6 +366,56 @@ def _is_excluded(relative_posix: str, patterns: list[str]) -> bool:
     return any(fnmatch.fnmatch(relative_posix, pattern) for pattern in patterns)
 
 
+def _fix_marimo_filename(html_file: Path, notebook_name: str) -> None:
+    """Replace the default 'notebook.py' filename in marimo HTML exports.
+
+    Marimo exports always use 'notebook.py' as the default filename. This function
+    replaces it with the actual notebook name to show the correct title in browser tabs.
+    """
+    if not html_file.exists():
+        return
+
+    html_content = html_file.read_text(encoding="utf-8")
+
+    # Replace both the marimo-filename tag and the config filename
+    html_content = html_content.replace(
+        "<marimo-filename hidden>notebook.py</marimo-filename>",
+        f"<marimo-filename hidden>{notebook_name}.py</marimo-filename>",
+    )
+    html_content = html_content.replace(
+        '"filename": "notebook.py"',
+        f'"filename": "{notebook_name}.py"',
+    )
+
+    html_file.write_text(html_content, encoding="utf-8")
+
+
+def _inject_rtd_css(html_file: Path) -> None:
+    """Inject CSS to hide Read The Docs version menu flyout in marimo notebooks.
+
+    This ensures marimo notebooks have the same clean appearance as other documentation
+    pages by hiding the RTD version selector that appears in the bottom right corner.
+    """
+    if not html_file.exists():
+        return
+
+    html_content = html_file.read_text(encoding="utf-8")
+
+    # CSS to hide the RTD flyout menu
+    rtd_css = """
+  <style>
+    readthedocs-flyout {
+      display: none;
+    }
+  </style>
+"""
+
+    # Inject the CSS before the closing </head> tag
+    if "</head>" in html_content:
+        html_content = html_content.replace("</head>", f"{rtd_css}</head>", 1)
+        html_file.write_text(html_content, encoding="utf-8")
+
+
 def on_post_build(config):
     """Copy markdown files for LLM consumption after build completes."""
     site_dir = Path(config["site_dir"])
@@ -387,20 +437,21 @@ def on_post_build(config):
             target_dir = site_dir / "examples" / html_dir.name
             target_dir.mkdir(parents=True, exist_ok=True)
 
-            # Copy index.html
-            target_file = target_dir / "index.html"
-            shutil.copy2(index_html, target_file)
+            # Copy index.html and all other files in the directory
+            for file in html_dir.iterdir():
+                if file.name == "CLAUDE.md":
+                    continue
+                target_file = target_dir / file.name
+                if file.is_file():
+                    shutil.copy2(file, target_file)
 
-            # Copy assets directory if it exists (marimo export includes JS/CSS assets)
-            assets_dir = html_dir / "assets"
-            if assets_dir.exists() and assets_dir.is_dir():
-                target_assets = target_dir / "assets"
-                if target_assets.exists():
-                    shutil.rmtree(target_assets)
-                shutil.copytree(assets_dir, target_assets)
-                print(f"[hooks] copied examples/{html_dir.name}/ (with assets) to site")
-            else:
-                print(f"[hooks] copied examples/{html_dir.name}/index.html to site")
+            # Fix the marimo filename to show the actual notebook name in browser tabs
+            _fix_marimo_filename(target_dir / "index.html", html_dir.name)
+
+            # Inject CSS to hide RTD version menu in marimo notebooks
+            _inject_rtd_css(target_dir / "index.html")
+
+            print(f"[hooks] copied examples/{html_dir.name}/ to site")
 
     # Get exclude patterns from config
     # Note: mkdocs converts exclude_docs to a GitIgnoreSpec object, so we use an empty list
