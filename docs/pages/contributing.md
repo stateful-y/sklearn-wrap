@@ -422,7 +422,7 @@ Create a new marimo notebook in `examples/<name>.py`:
        return
    ```
 
-   **`hide_code=True` guidance** — mark these cells as hidden:
+   **`hide_code=True` guidance:** mark these cells as hidden:
 
    | Cell type | Why hidden |
    |-----------|-----------|
