@@ -48,11 +48,50 @@ def on_pre_build(config):
     docs_examples = project_root / "docs" / "examples"
     docs_examples.mkdir(parents=True, exist_ok=True)
 
-    # Export each notebook
+    # Export each notebook in both static HTML and interactive WASM formats
     for notebook in notebooks:
         output_dir = docs_examples / notebook.stem
-        output_file = output_dir / "index.html"
+
+        # Clean previous export artifacts before re-exporting
+        if output_dir.exists():
+            shutil.rmtree(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Export static HTML (read-only view)
+        static_file = output_dir / "index.html"
+        try:
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "marimo",
+                    "-y",
+                    "-q",
+                    "export",
+                    "html",
+                    str(notebook),
+                    "-o",
+                    str(static_file),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            print(
+                f"[hooks] exported html {notebook.relative_to(project_root)} -> {static_file.relative_to(project_root)}"
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"[hooks] Error exporting html {notebook.name}: {e}", file=sys.stderr)
+            if e.stderr:
+                print(e.stderr, file=sys.stderr)
+        except FileNotFoundError:
+            print("[hooks] marimo not found, skipping notebook export", file=sys.stderr)
+            break
+
+        # Export interactive WASM (editable in-browser)
+        edit_dir = output_dir / "edit"
+        edit_file = edit_dir / "index.html"
+        edit_dir.mkdir(parents=True, exist_ok=True)
 
         try:
             subprocess.run(
@@ -66,7 +105,7 @@ def on_pre_build(config):
                     "html-wasm",
                     str(notebook),
                     "-o",
-                    str(output_file),
+                    str(edit_file),
                     "--mode",
                     "edit",
                 ],
@@ -74,9 +113,11 @@ def on_pre_build(config):
                 capture_output=True,
                 text=True,
             )
-            print(f"[hooks] exported {notebook.relative_to(project_root)} -> {output_file.relative_to(project_root)}")
+            print(
+                f"[hooks] exported html-wasm {notebook.relative_to(project_root)} -> {edit_file.relative_to(project_root)}"
+            )
         except subprocess.CalledProcessError as e:
-            print(f"[hooks] Error exporting {notebook.name}: {e}", file=sys.stderr)
+            print(f"[hooks] Error exporting html-wasm {notebook.name}: {e}", file=sys.stderr)
             if e.stderr:
                 print(e.stderr, file=sys.stderr)
         except FileNotFoundError:
@@ -423,7 +464,7 @@ def on_post_build(config):
     project_root = Path(__file__).parent.parent
     docs_examples = project_root / "docs" / "examples"
 
-    # Copy standalone HTML example files
+    # Copy standalone HTML example files (both static and WASM/edit)
     if docs_examples.exists():
         for html_dir in docs_examples.iterdir():
             if not html_dir.is_dir() or html_dir.name.startswith("."):
@@ -437,25 +478,43 @@ def on_post_build(config):
             target_dir = site_dir / "examples" / html_dir.name
             target_dir.mkdir(parents=True, exist_ok=True)
 
-            # Copy index.html and all other files in the directory
+            # Copy top-level files (static HTML export)
             for file in html_dir.iterdir():
-                if file.name == "CLAUDE.md":
+                if file.name == "CLAUDE.md" or file.is_dir():
                     continue
-                target_file = target_dir / file.name
-                if file.is_file():
-                    shutil.copy2(file, target_file)
+                shutil.copy2(file, target_dir / file.name)
 
-            # Fix the marimo filename to show the actual notebook name in browser tabs
-            _fix_marimo_filename(target_dir / "index.html", html_dir.name)
-
-            # Inject CSS to hide RTD version menu in marimo notebooks
+            # Inject CSS to hide RTD version menu in static HTML
             _inject_rtd_css(target_dir / "index.html")
+
+            # Copy edit/ subdirectory (WASM export) if it exists
+            edit_src = html_dir / "edit"
+            if edit_src.exists() and edit_src.is_dir():
+                edit_target = target_dir / "edit"
+                if edit_target.exists():
+                    shutil.rmtree(edit_target)
+                shutil.copytree(
+                    edit_src,
+                    edit_target,
+                    ignore=shutil.ignore_patterns("CLAUDE.md"),
+                )
+
+                # Remove CLAUDE.md if MkDocs copied it from docs/ during build
+                claude_md = edit_target / "CLAUDE.md"
+                if claude_md.exists():
+                    claude_md.unlink()
+
+                # Fix the marimo filename in WASM export only
+                _fix_marimo_filename(edit_target / "index.html", html_dir.name)
+
+                # Inject CSS to hide RTD version menu in WASM export
+                _inject_rtd_css(edit_target / "index.html")
 
             print(f"[hooks] copied examples/{html_dir.name}/ to site")
 
     # Get exclude patterns from config
-    # Note: mkdocs converts exclude_docs to a GitIgnoreSpec object, so we use an empty list
-    exclude_patterns = []
+    # Note: mkdocs converts exclude_docs to a GitIgnoreSpec object, so we hardcode patterns
+    exclude_patterns = ["examples/**/CLAUDE.md"]
 
     # Remove legacy llm/ directory if it exists
     legacy_dir = site_dir / "llm"
