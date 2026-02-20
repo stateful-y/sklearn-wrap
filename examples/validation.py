@@ -24,19 +24,31 @@ async def _():
 @app.cell(hide_code=True)
 def _():
     import marimo as mo
+    return (mo,)
+
+
+@app.cell(hide_code=True)
+def _():
     import numpy as np
     from sklearn.base import BaseEstimator
 
     from sklearn_wrap import BaseClassWrapper
-    return BaseClassWrapper, BaseEstimator, mo, np
+    return BaseClassWrapper, BaseEstimator, np
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Overview
+    ## What You'll Learn
 
-    Learn common error patterns when wrapping classes and how BaseClassWrapper provides early validation to catch mistakes before runtime. This notebook covers invalid parameters, wrong base classes, missing required parameters, reserved delimiters, and parameter constraints for type safety.
+    - Five common error patterns when wrapping classes and how to diagnose them
+    - How BaseClassWrapper validates parameters against the wrapped class's constructor
+    - How to enforce base class requirements with `_estimator_base_class`
+    - How to use `_parameter_constraints` for type-safe nested wrapper composition
+
+    ## Prerequisites
+
+    Familiarity with first_wrapper.py.
     """)
     return
 
@@ -44,7 +56,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Error Pattern 1: Invalid Parameters
+    ## 1. Invalid Parameters
 
     BaseClassWrapper validates against the wrapped class's constructor signature.
     """)
@@ -110,7 +122,7 @@ def _(create_error_demo, invalid_param_operation):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Error Pattern 2: Wrong Base Class
+    ## 2. Wrong Base Class
 
     Enforce that wrapped classes inherit from required base classes.
     """)
@@ -154,7 +166,7 @@ def _(create_error_demo, wrong_base_operation):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Error Pattern 3: Missing Required Parameters
+    ## 3. Missing Required Parameters
 
     Parameters without defaults must be provided during instantiation.
     """)
@@ -194,7 +206,7 @@ def _(create_error_demo, missing_required_operation):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Error Pattern 4: Double Underscore Reserved
+    ## 4. Double Underscore Reserved
 
     The `__` delimiter is reserved for nested parameter syntax.
     """)
@@ -222,7 +234,7 @@ def _(create_error_demo, reserved_delimiter_operation):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Error Pattern 5: Parameter Constraints
+    ## 5. Parameter Constraints
 
     Use `_parameter_constraints` to enforce type and inheritance requirements on parameters.
     """)
@@ -349,7 +361,7 @@ def _(EnsembleModel, EnsembleWrapper, RegressorWrapper, SimpleRegressor, np):
 @app.cell(hide_code=True)
 def _(mo, ensemble_predictions):
     mo.md(f"""
-    ✓ Valid ensemble created and fitted successfully
+    Valid ensemble created and fitted successfully
 
     **Predictions:** {ensemble_predictions}
 
@@ -361,13 +373,13 @@ def _(mo, ensemble_predictions):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Best Practices
+    ## Key Takeaways
 
-    - Define `_estimator_base_class` to enforce inheritance requirements
-    - Use `_parameter_constraints` for nested wrapper validation
-    - Use `get_params()` to inspect available parameters
-    - Let BaseClassWrapper validate before `instantiate()` is called
-    - Provide default values in wrapped class for optional parameters
+    - **`_estimator_base_class`** enforces inheritance requirements on the wrapped class
+    - **`_parameter_constraints`** enables type-safe validation for nested wrapper parameters
+    - **Parameter validation** catches invalid, missing, and reserved parameter names early
+    - **`get_params()`** helps inspect available parameters before setting them
+    - **Default values** should be provided in the wrapped class for optional parameters
     """)
     return
 

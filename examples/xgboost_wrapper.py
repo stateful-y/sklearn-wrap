@@ -24,22 +24,32 @@ async def _():
 @app.cell(hide_code=True)
 def _():
     import marimo as mo
+    return (mo,)
+
+
+@app.cell(hide_code=True)
+def _():
     import numpy as np
     import xgboost as xgb
 
     from sklearn_wrap import BaseClassWrapper
 
-    return BaseClassWrapper, mo, np, xgb
+    return BaseClassWrapper, np, xgb
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Overview
+    ## What You'll Learn
 
-    Wrap XGBoost's low-level Booster API to make it sklearn-compatible. XGBoost's native API uses DMatrix objects and doesn't follow sklearn conventions. This notebook shows how to bridge the gap by creating an adapter class that wraps `xgb.train()`, enabling XGBoost to work with GridSearchCV, Pipelines, and other sklearn tools.
+    - How to wrap XGBoost's low-level Booster API for sklearn compatibility
+    - How to create an adapter class to bridge procedural APIs (`xgb.train()`) to a class-based interface
+    - How nested wrappers enable callback parameter control via `__` syntax
+    - How `_parameter_constraints` and `_estimator_default_class` simplify wrapper configuration
 
-    This example also demonstrates **nested wrappers** by wrapping XGBoost callbacks. The nested parameter syntax (`callbacks__period=5`) works automatically through BaseClassWrapper's built-in `get_params`/`set_params` - no manual override needed!
+    ## Prerequisites
+
+    Familiarity with first_wrapper.py.
     """)
     return
 
@@ -135,6 +145,14 @@ def _(BaseClassWrapper, xgb):
             return self.instance_.predict_output(X)
 
     return XGBoostCallbackWrapper, XGBoostTrainer, XGBoostTrainerWrapper
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
+    ## 2. Interactive Demo
+    """)
+    return
 
 
 @app.function(hide_code=True)
@@ -236,7 +254,7 @@ def _(
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## HTML Representation
+    ## 4. HTML Representation
 
     Wrapped XGBoost models display correctly.
     """)
@@ -260,7 +278,7 @@ def _(wrapper):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 4. Nested Parameter Control
+    ## 5. Nested Parameter Control
 
     Use the `__` syntax to control callback parameters.
     """)
@@ -304,12 +322,12 @@ def _(mo):
     mo.md("""
     ## Key Takeaways
 
-    - Low-level XGBoost API now sklearn-compatible
+    - **Low-level XGBoost API** becomes sklearn-compatible through an adapter class pattern
     - **Nested wrapper pattern** enables callback control via `__` syntax
-    - Works with GridSearchCV for hyperparameter tuning (including callback params)
-    - Can be used in sklearn Pipelines
-    - Custom DMatrix handling integrated seamlessly
-    - Clean HTML representation with nested structure
+    - **`_parameter_constraints`** validates that callbacks inherit from `TrainingCallback`
+    - **`_estimator_default_class`** eliminates the need to pass the wrapped class every time
+    - **DMatrix handling** is integrated seamlessly inside the adapter class
+    - **HTML representation** shows the complete nested structure
     """)
     return
 

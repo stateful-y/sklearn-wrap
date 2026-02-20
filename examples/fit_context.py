@@ -24,19 +24,31 @@ async def _():
 @app.cell(hide_code=True)
 def _():
     import marimo as mo
+    return (mo,)
+
+
+@app.cell(hide_code=True)
+def _():
     import numpy as np
 
     from sklearn_wrap import BaseClassWrapper
     from sklearn_wrap.base import _fit_context
-    return BaseClassWrapper, mo, np, _fit_context
+    return BaseClassWrapper, np, _fit_context
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Overview
+    ## What You'll Learn
 
-    Understand how the `_fit_context` decorator automates parameter validation and instantiation in fit methods. This decorator is sklearn-wrap's implementation of sklearn's fit context management pattern, handling validation, instantiation, nested validation control, and fitted state management automatically. Learn when to use `prefer_skip_nested_validation=True` versus `False`.
+    - What the `_fit_context` decorator automates: validation, instantiation, and fitted state management
+    - The difference between manual `instantiate()`/`_validate_params()` calls and the decorator approach
+    - When to use `prefer_skip_nested_validation=True` versus `False`
+    - How the decorator handles `partial_fit` for incremental learning
+
+    ## Prerequisites
+
+    Familiarity with first_wrapper.py.
     """)
     return
 
@@ -81,7 +93,7 @@ def _(np):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Manual Approach (Explicit Calls)
+    ### Manual Approach (Explicit Calls)
     """)
     return
 
@@ -111,7 +123,7 @@ def _(BaseClassWrapper):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Decorator Approach (Automatic)
+    ### Decorator Approach (Automatic)
 
     The decorator accepts `prefer_skip_nested_validation` parameter.
     """)
@@ -132,7 +144,6 @@ def _(BaseClassWrapper, _fit_context):
 
         def predict(self, X):
             return self.instance_.get_predictions(X)
-            return self.instance_.predict(X)
     return (DecoratorWrapper,)
 
 
@@ -161,7 +172,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Compare Both Approaches
+    ### Compare Both Approaches
     """)
     return
 
@@ -190,11 +201,11 @@ def _(decorator_pred, manual_pred, mo):
 
     **Decorator Predictions:** {decorator_pred}
 
-    ✓ Both produce identical results
+    Both produce identical results.
 
-    ✓ Decorator approach reduces boilerplate
+    The decorator approach reduces boilerplate.
 
-    ✓ Validation happens automatically
+    Validation happens automatically.
     """)
     return
 
@@ -202,7 +213,7 @@ def _(decorator_pred, manual_pred, mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Decorator Benefits
+    ### Decorator Benefits
 
     **Automatic instantiation:** No need to call `instantiate()` explicitly
 
@@ -288,11 +299,11 @@ def _(mo):
     mo.md("""
     ## Key Takeaways
 
-    - `_fit_context` decorator automates validation and instantiation
-    - Use `prefer_skip_nested_validation=True` for most wrappers (performance)
-    - Use `prefer_skip_nested_validation=False` for meta-estimators (safety)
-    - Decorator handles `partial_fit` specially for incremental learning
-    - Automatically sets `fitted_` attribute after successful fit
+    - **`_fit_context`** automates validation, instantiation, and fitted state management
+    - **`prefer_skip_nested_validation=True`** is recommended for most wrappers to avoid redundant checks
+    - **`prefer_skip_nested_validation=False`** is appropriate for meta-estimators that accept user-provided estimator objects
+    - **`partial_fit`** is handled specially: the decorator skips re-instantiation on subsequent calls
+    - **`fitted_` attribute** is set automatically after successful fit when using the decorator
     """)
     return
 
