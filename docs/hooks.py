@@ -412,20 +412,22 @@ def _fix_marimo_filename(html_file: Path, notebook_name: str) -> None:
 
     Marimo exports always use 'notebook.py' as the default filename. This function
     replaces it with the actual notebook name to show the correct title in browser tabs.
+
+    Note: Only the <marimo-filename> display tag is replaced. The config
+    ``"filename"`` field must stay as ``"notebook.py"`` because the marimo WASM
+    worker has that name hard-coded and writes the notebook source to
+    ``/marimo/notebook.py``. Changing the config value would cause a
+    ``FileNotFoundError`` at runtime.
     """
     if not html_file.exists():
         return
 
     html_content = html_file.read_text(encoding="utf-8")
 
-    # Replace both the marimo-filename tag and the config filename
+    # Replace the display tag
     html_content = html_content.replace(
         "<marimo-filename hidden>notebook.py</marimo-filename>",
         f"<marimo-filename hidden>{notebook_name}.py</marimo-filename>",
-    )
-    html_content = html_content.replace(
-        '"filename": "notebook.py"',
-        f'"filename": "{notebook_name}.py"',
     )
 
     html_file.write_text(html_content, encoding="utf-8")
@@ -509,7 +511,6 @@ def on_post_build(config):
 
                 # Inject CSS to hide RTD version menu in WASM export
                 _inject_rtd_css(edit_target / "index.html")
-
             print(f"[hooks] copied examples/{html_dir.name}/ to site")
 
     # Get exclude patterns from config
