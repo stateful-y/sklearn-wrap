@@ -60,6 +60,8 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -86,17 +88,17 @@ jobs:
         run: nox -s test --python ${{ matrix.python-version }}
 
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() && matrix.python-version == '3.11' && secrets.CODECOV_TOKEN != '' }}
+        if: ${{ !cancelled() && matrix.python-version == '3.11' && env.CODECOV_TOKEN != '' }}
         uses: codecov/test-results-action@v1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           file: '${{ github.workspace }}/junit.${{ matrix.python-version }}.xml'
 
       - name: Upload coverage report to Codecov
         uses: codecov/codecov-action@v5
-        if: ${{ matrix.python-version == '3.11' && secrets.CODECOV_TOKEN != '' }}
+        if: ${{ matrix.python-version == '3.11' && env.CODECOV_TOKEN != '' }}
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           files: '${{ github.workspace }}/coverage.${{ matrix.python-version }}.xml'
           env_vars: OS,PYTHON
           fail_ci_if_error: true
