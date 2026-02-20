@@ -17,7 +17,7 @@
 
 Sklearn-wrap enables you to wrap any Python class into a scikit-learn compatible estimator without rewriting your code. Whether you're integrating XGBoost's Booster API, custom gradient descent algorithms, or third-party machine learning libraries, sklearn-wrap provides the glue layer that makes them work seamlessly with sklearn's ecosystem.
 
-With sklearn-wrap, you gain immediate access to GridSearchCV for hyperparameter tuning, Pipeline for composable workflows, and joblib for serialization—all while maintaining your original implementation. Perfect for data scientists who want sklearn compatibility without sacrificing custom logic or performance.
+With sklearn-wrap, you gain immediate access to GridSearchCV for hyperparameter tuning, Pipeline for composable workflows, and joblib for serialization, all while maintaining your original implementation. Perfect for data scientists who want sklearn compatibility without sacrificing custom logic or performance.
 
 ## What are the features of Sklearn-Wrap?
 
