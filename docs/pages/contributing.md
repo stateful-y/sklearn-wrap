@@ -402,15 +402,13 @@ Create a new marimo notebook in `examples/<name>.py`:
 === "uv run"
 
 2. Develop your example in the marimo editor, following the standardized structure:
-   - **Overview**: Explain what readers will learn (flexible length)
-   - **Pyodide install cell**: Immediately after the overview, add a hidden cell that installs packages when running in the browser via pyodide (see template below)
    - **Numbered sections**: Main concepts as `## 1.`, `## 2.`, `## 3.`
    - **Key Takeaways**: Bullet points summarizing important lessons
    - **Next Steps**: Links to related notebooks for progression
    - Isolate utilities and markdown in separate cells
    - Use `hide_code=True` for infrastructure cells: `import marimo`, pyodide install, library imports, utilities, and markdown cells
 
-   **Pyodide install cell template** (place right after the overview cell):
+   **Pyodide install cell template** (place right after `import marimo as mo`):
 
    ```python
    @app.cell(hide_code=True)
