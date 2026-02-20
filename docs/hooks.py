@@ -511,7 +511,6 @@ def on_post_build(config):
 
                 # Inject CSS to hide RTD version menu in WASM export
                 _inject_rtd_css(edit_target / "index.html")
-
             print(f"[hooks] copied examples/{html_dir.name}/ to site")
 
     # Get exclude patterns from config
