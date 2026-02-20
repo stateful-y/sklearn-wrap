@@ -24,21 +24,32 @@ async def _():
 
 @app.cell(hide_code=True)
 def _():
-    # Imports
     import marimo as mo
+    return (mo,)
+
+
+@app.cell(hide_code=True)
+def _():
     import numpy as np
 
     from sklearn_wrap import BaseClassWrapper
 
-    return BaseClassWrapper, mo, np
+    return BaseClassWrapper, np
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Overview
+    ## What You'll Learn
 
-    Learn how to wrap any Python class into a scikit-learn compatible estimator using `BaseClassWrapper`. This notebook demonstrates the core pattern by wrapping a custom polynomial regression algorithm that uses gradient descent and doesn't follow sklearn conventions.
+    - How to wrap a non-sklearn Python class into a scikit-learn compatible estimator
+    - The three essential components every wrapper needs: `_estimator_name`, `_estimator_base_class`, and `fit`/`predict`
+    - How to bridge custom method names (e.g., `train`/`compute_predictions`) to sklearn's `fit`/`predict` interface
+    - Interactive hyperparameter control with wrapped estimators
+
+    ## Prerequisites
+
+    None -- this is the starting point.
     """)
     return
 
@@ -232,7 +243,7 @@ def create_regression_scatter(X_train, y_train, X_test, y_test, X_plot, y_pred_p
     return fig
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     X_plot,
     X_test,
@@ -293,12 +304,11 @@ def _(mo):
     mo.md("""
     ## Key Takeaways
 
-    - Custom algorithm now works with sklearn ecosystem
-    - Works with `GridSearchCV` for hyperparameter tuning
-    - Compatible with `Pipeline` for preprocessing chains
-    - Supports `joblib` serialization
-    - Automatic parameter validation
-    - Clean HTML representation in interactive notebooks
+    - **BaseClassWrapper** bridges any Python class to sklearn's interface
+    - **`_estimator_name` and `_estimator_base_class`** are required class attributes for every wrapper
+    - **Method delegation** maps custom method names to sklearn's `fit`/`predict` convention
+    - **sklearn ecosystem** integration (GridSearchCV, Pipeline, joblib) works automatically
+    - **Parameter validation** and HTML representation come for free
     """)
     return
 

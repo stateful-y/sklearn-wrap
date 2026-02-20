@@ -24,20 +24,32 @@ async def _():
 @app.cell(hide_code=True)
 def _():
     import marimo as mo
+    return (mo,)
+
+
+@app.cell(hide_code=True)
+def _():
     import numpy as np
     from sklearn.model_selection import GridSearchCV
 
     from sklearn_wrap import BaseClassWrapper
 
-    return BaseClassWrapper, GridSearchCV, mo, np
+    return BaseClassWrapper, GridSearchCV, np
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Overview
+    ## What You'll Learn
 
-    Use GridSearchCV to automatically find optimal hyperparameters for wrapped estimators. This notebook demonstrates how BaseClassWrapper's parameter interface integrates seamlessly with sklearn's hyperparameter search tools, enabling exhaustive grid search with cross-validation.
+    - How to use GridSearchCV with wrapped estimators for automated hyperparameter tuning
+    - How BaseClassWrapper's parameter interface integrates seamlessly with sklearn's search tools
+    - How to define parameter grids and interpret cross-validation results
+    - How wrapped estimators display in sklearn meta-estimator HTML representations
+
+    ## Prerequisites
+
+    Familiarity with first_wrapper.py and parameter_interface.py.
     """)
     return
 
@@ -221,7 +233,7 @@ def _(cv_results, np):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## HTML Representation
+    ## 4. HTML Representation
 
     GridSearchCV meta-estimators display correctly with wrapped estimators.
     """)
@@ -261,10 +273,10 @@ def _(mo):
     mo.md("""
     ## Key Takeaways
 
-    - GridSearchCV works seamlessly with wrapped estimators
-    - All sklearn tools (cross-validation, scoring) integrate automatically
-    - Parameter validation happens through BaseClassWrapper
-    - HTML representations display correctly for meta-estimators
+    - **GridSearchCV** works seamlessly with wrapped estimators through the parameter interface
+    - **Cross-validation** and scoring integrate automatically with no extra code in the wrapper
+    - **Parameter validation** happens through BaseClassWrapper during each grid search iteration
+    - **HTML representations** display correctly for meta-estimators containing wrappers
     """)
     return
 

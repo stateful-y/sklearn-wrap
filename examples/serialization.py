@@ -23,8 +23,13 @@ async def _():
 
 
 @app.cell(hide_code=True)
-def __():
+def _():
     import marimo as mo
+    return (mo,)
+
+
+@app.cell(hide_code=True)
+def _():
     import numpy as np
     import tempfile
     from pathlib import Path
@@ -40,17 +45,23 @@ def __():
 
 
 @app.cell(hide_code=True)
-def __(mo):
+def _(mo):
     mo.md("""
-    ## Overview
+    ## What You'll Learn
 
-    Save and load wrapped estimators using joblib, just like any sklearn estimator. Serialization preserves all state including fitted parameters, wrapped instances, and nested structures. This notebook demonstrates persistence for simple estimators, pipelines, and GridSearchCV meta-estimators.
+    - How to save and load wrapped estimators using joblib
+    - How pipelines containing wrapped estimators serialize correctly
+    - How GridSearchCV meta-estimators preserve all state including cross-validation results
+
+    ## Prerequisites
+
+    Familiarity with first_wrapper.py.
     """)
     return
 
 
 @app.cell(hide_code=True)
-def __(mo):
+def _(mo):
     mo.md("""
     ## 1. Estimator Serialization
 
@@ -60,7 +71,7 @@ def __(mo):
 
 
 @app.cell
-def __(np):
+def _(np):
     class SimpleRegressor:
         """A simple regressor without sklearn conventions."""
 
@@ -79,7 +90,7 @@ def __(np):
 
 
 @app.cell
-def __(BaseClassWrapper):
+def _(BaseClassWrapper):
     class SimpleWrapper(BaseClassWrapper):
         _estimator_name = "regressor"
         _estimator_base_class = object
@@ -95,7 +106,7 @@ def __(BaseClassWrapper):
     return (SimpleWrapper,)
 
 
-@app.function
+@app.function(hide_code=True)
 def generate_regression_data(n_samples=100, n_features=1, noise=1.0, random_state=42):
     from sklearn.datasets import make_regression
     from sklearn.model_selection import train_test_split
@@ -104,7 +115,7 @@ def generate_regression_data(n_samples=100, n_features=1, noise=1.0, random_stat
 
 
 @app.cell
-def __(SimpleRegressor, SimpleWrapper, generate_regression_data):
+def _(SimpleRegressor, SimpleWrapper, generate_regression_data):
     # Train and fit
     X_train, X_test, y_train, y_test = generate_regression_data()
 
@@ -117,7 +128,7 @@ def __(SimpleRegressor, SimpleWrapper, generate_regression_data):
 
 
 @app.cell
-def __(estimator, joblib, tempfile):
+def _(estimator, joblib, tempfile):
     # Save to file
     temp_dir = tempfile.mkdtemp()
     estimator_path = f"{temp_dir}/estimator.pkl"
@@ -129,7 +140,7 @@ def __(estimator, joblib, tempfile):
 
 
 @app.cell
-def __(loaded_estimator, X_test, y_test, original_predictions, original_score, mo, np):
+def _(loaded_estimator, X_test, y_test, original_predictions, original_score, mo, np):
     # Verify loaded estimator works
     loaded_predictions = loaded_estimator.predict(X_test)
     loaded_score = np.mean((loaded_predictions - y_test) ** 2)
@@ -147,7 +158,7 @@ def __(loaded_estimator, X_test, y_test, original_predictions, original_score, m
 
 
 @app.cell(hide_code=True)
-def __(mo):
+def _(mo):
     mo.md("""
     ## 2. Pipeline Serialization
 
@@ -157,7 +168,7 @@ def __(mo):
 
 
 @app.cell
-def __(SimpleRegressor, SimpleWrapper, StandardScaler, Pipeline, X_test, X_train, y_train):
+def _(SimpleRegressor, SimpleWrapper, StandardScaler, Pipeline, X_test, X_train, y_train):
     # Create and fit pipeline
     pipeline = Pipeline([
         ("scaler", StandardScaler()),
@@ -170,7 +181,7 @@ def __(SimpleRegressor, SimpleWrapper, StandardScaler, Pipeline, X_test, X_train
 
 
 @app.cell
-def __(pipeline, joblib, temp_dir):
+def _(pipeline, joblib, temp_dir):
     # Save and load pipeline
     pipeline_path = f"{temp_dir}/pipeline.pkl"
     joblib.dump(pipeline, pipeline_path)
@@ -179,14 +190,14 @@ def __(pipeline, joblib, temp_dir):
 
 
 @app.cell
-def __(loaded_pipeline, X_test):
+def _(loaded_pipeline, X_test):
     # Verify pipeline
     loaded_pipeline_predictions = loaded_pipeline.predict(X_test)
     return loaded_pipeline_predictions
 
 
 @app.cell(hide_code=True)
-def __(mo, np, pipeline_predictions, loaded_pipeline_predictions, loaded_pipeline):
+def _(mo, np, pipeline_predictions, loaded_pipeline_predictions, loaded_pipeline):
     mo.md(f"""
     ### Pipeline Serialization
 
@@ -199,7 +210,7 @@ def __(mo, np, pipeline_predictions, loaded_pipeline_predictions, loaded_pipelin
 
 
 @app.cell(hide_code=True)
-def __(mo):
+def _(mo):
     mo.md("""
     ## 3. GridSearchCV Serialization
 
@@ -209,7 +220,7 @@ def __(mo):
 
 
 @app.cell
-def __(SimpleRegressor, SimpleWrapper, GridSearchCV, X_test, X_train, y_train):
+def _(SimpleRegressor, SimpleWrapper, GridSearchCV, X_test, X_train, y_train):
     # Run grid search
     grid = GridSearchCV(
         SimpleWrapper(regressor=SimpleRegressor),
@@ -225,7 +236,7 @@ def __(SimpleRegressor, SimpleWrapper, GridSearchCV, X_test, X_train, y_train):
 
 
 @app.cell(hide_code=True)
-def __(grid, joblib, temp_dir):
+def _(grid, joblib, temp_dir):
     # Save and load grid search
     grid_path = f"{temp_dir}/grid.pkl"
     joblib.dump(grid, grid_path)
@@ -234,14 +245,14 @@ def __(grid, joblib, temp_dir):
 
 
 @app.cell
-def __(loaded_grid, X_test, grid_predictions, best_params, mo, np):
+def _(loaded_grid, X_test, grid_predictions, best_params, mo, np):
     # Verify grid search
     loaded_grid_predictions = loaded_grid.predict(X_test)
     return loaded_grid_predictions
 
 
 @app.cell(hide_code=True)
-def __(loaded_grid, best_params, grid_predictions, loaded_grid_predictions,  mo, np):
+def _(loaded_grid, best_params, grid_predictions, loaded_grid_predictions,  mo, np):
     mo.md(f"""
     ### GridSearchCV Serialization
 
@@ -256,19 +267,19 @@ def __(loaded_grid, best_params, grid_predictions, loaded_grid_predictions,  mo,
 
 
 @app.cell(hide_code=True)
-def __(mo):
+def _(mo):
     mo.md("""
     ## Key Takeaways
 
-    - Wrapped estimators serialize with `joblib.dump()` and `pickle`
-    - Pipelines containing wrappers persist correctly
-    - Meta-estimators like GridSearchCV save all state
+    - **`joblib.dump()`** and `joblib.load()` work seamlessly with wrapped estimators
+    - **Pipelines** containing wrappers persist and restore all preprocessing steps correctly
+    - **GridSearchCV** saves complete state including best estimator and all cross-validation results
     """)
     return
 
 
 @app.cell(hide_code=True)
-def __(mo):
+def _(mo):
     mo.md("""
     ## Next Steps
 
