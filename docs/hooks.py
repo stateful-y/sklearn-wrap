@@ -424,7 +424,7 @@ def _fix_marimo_filename(html_file: Path, notebook_name: str) -> None:
 
     html_content = html_file.read_text(encoding="utf-8")
 
-    # Only replace the display tag – NOT the config "filename" field
+    # Replace the display tag
     html_content = html_content.replace(
         "<marimo-filename hidden>notebook.py</marimo-filename>",
         f"<marimo-filename hidden>{notebook_name}.py</marimo-filename>",
