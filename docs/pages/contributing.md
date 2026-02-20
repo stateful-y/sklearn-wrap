@@ -387,58 +387,131 @@ just --list
 
 ### Adding Examples
 
-All examples are interactive [marimo](https://marimo.io) notebooks that combine code, markdown, and visualizations. Follow these guidelines:
+All examples are interactive [marimo](https://marimo.io) notebooks that combine code, markdown, and visualizations.
 
-1. Create a new marimo notebook in `examples/<name>.py`:
+#### Creating a Notebook
 
-   === "just"
+Create a new marimo notebook in `examples/<name>.py`:
 
-       ```bash
-       just example <name>.py
-       ```
+=== "just"
 
-   === "uv run"
+    ```bash
+    just example <name>.py
+    ```
 
-       ```bash
-       uv run marimo new examples/<name>.py
-       ```
+=== "uv run"
 
-2. Develop your example in the marimo editor, ollowing the standardized structure:
+2. Develop your example in the marimo editor, following the standardized structure:
    - **Overview**: Explain what readers will learn (flexible length)
+   - **Pyodide install cell**: Immediately after the overview, add a hidden cell that installs packages when running in the browser via pyodide (see template below)
    - **Numbered sections**: Main concepts as `## 1.`, `## 2.`, `## 3.`
    - **Key Takeaways**: Bullet points summarizing important lessons
-   - **Next Steps**: Context for progression to related notebooks
-   - Use `hide_code=True` for utility functions (sliders, data generation, visualization)
+   - **Next Steps**: Links to related notebooks for progression
+   - Isolate utilities and markdown in separate cells
+   - Use `hide_code=True` for infrastructure cells: `import marimo`, pyodide install, library imports, utilities, and markdown cells
 
-3. Run the example test suite to verify it passes:
+   **Pyodide install cell template** (place right after the overview cell):
 
-   === "just"
+   ```python
+   @app.cell(hide_code=True)
+   async def _():
+       import sys
 
-       ```bash
-       just test-examples
-       ```
+       if "pyodide" in sys.modules:
+           import micropip
 
-   === "nox"
-
-       ```bash
-       uvx nox -s test_examples
-       ```
-
-   === "uv run"
-
-       ```bash
-       uv run pytest tests/test_examples.py -m example
-       ```
-
-4. Add a link to your example in `docs/pages/examples.md`:
-
-   ```markdown
-   - [Example Name](../examples/<name>/) - Brief description
+           await micropip.install(["scikit-learn"]) # List all packages needed to run the example
+       return
    ```
 
-5. The mkdocs hooks automatically exports notebooks to HTML during docs build
+   **`hide_code=True` guidance** — mark these cells as hidden:
 
-All notebooks in `examples/` are automatically discovered and tested by `test_examples.py` using pytest's parametrization feature, which runs them in parallel for fast validation.
+   | Cell type | Why hidden |
+   |-----------|-----------|
+   | `import marimo as mo` | Boilerplate, not instructive |
+   | Pyodide install | Infrastructure, not tutorial content |
+   | Library imports | Setup, readers focus on usage |
+   | Utilities | Not the lesson |
+   | Markdown cells | Purely structural |
+
+   Leave these cells **visible**:
+
+   | Cell type | Why visible |
+   |-----------|------------|
+   | Model construction / `MyEstimator(...)` | Core teaching content |
+   | `search.fit(...)` calls | Demonstrates usage |
+   | Results display | Shows output interpretation |
+
+#### Required Structure
+
+Every example notebook **must** follow this structure in order:
+
+1. **Title**: A top-level `# Title` heading describing the notebook topic
+2. **What You'll Learn**: A `## What You'll Learn` section with a bulleted list of concrete learning goals
+3. **Prerequisites**: A `## Prerequisites` section stating required prior knowledge (one-liner or short bullet list). For standalone dataset explorations, use "None -- this is a standalone dataset exploration."
+4. **Numbered sections**: Main content as `## 1. Section Name`, `## 2. Section Name`, etc.
+5. **Key Takeaways**: A `## Key Takeaways` section with bullet points summarizing important lessons learned
+6. **Next Steps**: A `## Next Steps` section with bullet points linking to related notebooks or documentation
+
+**Example intro cell**:
+
+```markdown
+# Reduction Forecasting with sklearn
+
+## What You'll Learn
+
+- How `PointReductionForecaster` tabularizes time series data using lag features
+- The difference between `target_transformer` and `feature_transformer` parameters
+- Tuning hyperparameters with `GridSearchCV`
+
+## Prerequisites
+
+Basic familiarity with sklearn's fit/predict API and time series concepts (trend, seasonality).
+```
+
+#### Marimo Cell Conventions
+
+- Use `hide_code=True` on all markdown cells, import cells, and utility/helper cells
+- Use `r"""..."""` (raw triple-quoted strings) for markdown cell content
+- The second cell (after `import marimo as mo`) must be the Pyodide/micropip guard for browser compatibility
+- Group all imports into a single hidden cell after the Pyodide guard
+
+#### Content Guidelines
+
+- **Markdown density**: Each numbered section should open with a descriptive markdown cell explaining the concept before any code cells. Consecutive code cells within the same section are acceptable when logically grouped.
+- **No emojis**: Do not use emojis anywhere in notebooks -- not in headings, content bullets, or concluding remarks.
+- **Key Takeaways format**: Use bold for key terms with plain descriptions (e.g., `- **Reduction forecasting** converts time series into tabular regression via lag features`)
+- **Next Steps format**: Use bold labels with brief descriptions (e.g., `- **Naive baselines**: See naive_forecasters.py to compare with simple benchmarks`)
+
+#### Testing and Documentation
+
+Run the example test suite to verify your notebook passes:
+
+=== "just"
+
+    ```bash
+    just test-examples
+    ```
+
+=== "nox"
+
+    ```bash
+    uvx nox -s test_examples
+    ```
+
+=== "uv run"
+
+    ```bash
+    uv run pytest tests/test_examples.py -m example
+    ```
+
+Add a link to your example in `docs/pages/examples.md`:
+
+```markdown
+- [Example Name](../examples/<name>/) - Brief description
+```
+
+The mkdocs hooks automatically export notebooks to HTML during docs build. All notebooks in `examples/` are automatically discovered and tested by `test_examples.py` using pytest's parametrization feature, which runs them in parallel for fast validation.
 
 ## Submitting Changes
 

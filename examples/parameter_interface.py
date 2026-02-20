@@ -25,18 +25,30 @@ async def _():
 @app.cell(hide_code=True)
 def _():
     import marimo as mo
+    return (mo,)
+
+
+@app.cell(hide_code=True)
+def _():
     import numpy as np
 
     from sklearn_wrap import BaseClassWrapper
-    return BaseClassWrapper, mo, np
+    return BaseClassWrapper, np
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Overview
+    ## What You'll Learn
 
-    Master the `get_params()` and `set_params()` interface that makes sklearn's ecosystem work. These methods enable GridSearchCV to search hyperparameters, Pipeline to access nested parameters, and allow interactive parameter updates. Understanding this interface is essential for effective wrapper usage.
+    - How `get_params()` and `set_params()` work under the hood in wrapped estimators
+    - Why sklearn needs this parameter interface for GridSearchCV, Pipeline, and cloning
+    - How to dynamically update parameters and understand when changes take effect
+    - What happens when you pass invalid parameters
+
+    ## Prerequisites
+
+    Familiarity with first_wrapper.py.
     """)
     return
 
@@ -124,7 +136,7 @@ def _(create_slider, mo):
     return alpha_slider, beta_slider
 
 
-@app.function
+@app.function(hide_code=True)
 def generate_regression_data(n_samples=300, n_features=2, noise=20, test_size=0.3, random_state=42, **kwargs):
     from sklearn.datasets import make_regression
     from sklearn.model_selection import train_test_split
@@ -185,7 +197,7 @@ def create_regression_scatter(X_train, y_train, X_test, y_test, X_plot, y_pred_p
     return fig
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     X_plot,
     X_test,
@@ -302,6 +314,20 @@ def _(error_msg, mo, updated_params):
 
     BaseClassWrapper validates against the wrapped class's `__init__` signature.
     Only parameters defined in `ConfigurableRegressor.__init__` are allowed.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
+    ## Key Takeaways
+
+    - **`get_params()`** returns all constructor parameters of the wrapped class plus the estimator class itself
+    - **`set_params()`** validates parameter names against the wrapped class's `__init__` and updates them dynamically
+    - **Parameter changes** only take effect after calling `fit()` again, since the wrapped instance is recreated during `instantiate()`
+    - **Invalid parameters** raise `ValueError` immediately, catching mistakes before runtime
+    - **sklearn integration** depends entirely on this interface for GridSearchCV, Pipeline, and `clone()`
     """)
     return
 

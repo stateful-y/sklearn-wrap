@@ -24,19 +24,31 @@ async def _():
 @app.cell(hide_code=True)
 def _():
     import marimo as mo
+    return (mo,)
+
+
+@app.cell(hide_code=True)
+def _():
     import numpy as np
 
     from sklearn_wrap import BaseClassWrapper
 
-    return BaseClassWrapper, mo, np
+    return BaseClassWrapper, np
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Overview
+    ## What You'll Learn
 
-    Master the double-underscore (`__`) syntax for controlling parameters in nested estimator hierarchies. When wrappers contain other wrappers, sklearn's parameter interface uses `outer__inner__param` notation to access nested parameters. This enables GridSearchCV to search complex parameter spaces and allows precise control over deeply nested structures.
+    - How the double-underscore (`__`) syntax controls parameters in nested estimator hierarchies
+    - How `get_params(deep=True)` expands nested parameter structures
+    - How to use `set_params()` with `__` notation to modify parameters at any nesting depth
+    - How nested estimators display in HTML representations
+
+    ## Prerequisites
+
+    Familiarity with first_wrapper.py and parameter_interface.py.
     """)
     return
 
@@ -246,7 +258,7 @@ def _(
     return fig, train_r2, test_r2
 
 
-@app.function
+@app.function(hide_code=True)
 def generate_regression_data(n_samples=300, n_features=2, noise=20, test_size=0.3, random_state=42, **kwargs):
     from sklearn.datasets import make_regression
     from sklearn.model_selection import train_test_split
@@ -337,11 +349,11 @@ def _(mo):
     mo.md("""
     ## Key Takeaways
 
-    - Use `estimator__param` to access nested parameters
-    - Works with any depth of nesting
-    - GridSearchCV can search nested parameter spaces
-    - `get_params(deep=True)` shows full hierarchy
-    - HTML representation shows complete nested structure
+    - **`estimator__param` syntax** accesses nested parameters at any depth
+    - **`get_params(deep=True)`** reveals the full parameter hierarchy
+    - **GridSearchCV** can search nested parameter spaces using `__` notation
+    - **`set_params()`** with `__` syntax modifies nested parameters without recreating the estimator
+    - **HTML representation** shows the complete nested structure
     """)
     return
 
