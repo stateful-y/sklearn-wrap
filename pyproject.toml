@@ -25,9 +25,6 @@ dependencies = [
     "joblib>=1.2.0",
 ]
 
-[project.scripts]
-pytest = "pytest:console_main"
-
 [dependency-groups]
 dev = [
     {include-group = "tests"},
