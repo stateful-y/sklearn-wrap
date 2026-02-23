@@ -82,7 +82,7 @@ uv.lock
 src/sklearn_wrap/_version.py
 
 # Documentation examples
-docs/examples/*/
+docs/examples/
 
 # AI Assistant Instructions
 CLAUDE.md
