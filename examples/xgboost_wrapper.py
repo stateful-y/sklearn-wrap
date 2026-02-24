@@ -1,3 +1,12 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "numpy",
+#     "scikit-learn",
+#     "sklearn-wrap",
+#     "xgboost",
+# ]
+# ///
 """
 # XGBoost Integration
 
@@ -8,17 +17,6 @@ import marimo
 
 __generated_with = "0.19.8"
 app = marimo.App(width="medium")
-
-
-@app.cell(hide_code=True)
-async def _():
-    import sys
-
-    if "pyodide" in sys.modules:
-        import micropip
-
-        await micropip.install(["numpy", "xgboost", "scikit-learn", "sklearn-wrap"])
-    return
 
 
 @app.cell(hide_code=True)
