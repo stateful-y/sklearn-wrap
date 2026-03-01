@@ -128,8 +128,6 @@ wrapper.set_params(nested__alpha=0.5)
 
 ## Configuration
 
-## Configuration
-
 ### Required Class Attributes
 
 Every concrete wrapper must define two class attributes:

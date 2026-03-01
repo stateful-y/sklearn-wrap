@@ -106,7 +106,7 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
 
     See Also
     --------
-    `_fit_context` : Decorator for automatic instantiation during fit.
+    _fit_context : Decorator for automatic instantiation during fit.
 
     References
     ----------
@@ -552,8 +552,8 @@ def _fit_context(*, prefer_skip_nested_validation):
 
     See Also
     --------
-    `BaseClassWrapper` : The base class whose fit methods this decorator wraps.
-    `BaseClassWrapper.instantiate` : Manual instantiation alternative.
+    BaseClassWrapper : The base class whose fit methods this decorator wraps.
+    BaseClassWrapper.instantiate : Manual instantiation alternative.
 
     References
     ----------
