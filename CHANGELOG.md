@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.1.0-alpha.5] - 2026-03-01
+
+This **minor release** includes 2 commits.
+
+
+### Features
+- Update from template v0.14.0 with PEP 723 and marimo playground links  ([#30](https://github.com/stateful-y/sklearn-wrap/pull/30)) by @gtauzin
+- Update from template v0.15.0 with API auto-gen, gallery system, and docs improvements  ([#33](https://github.com/stateful-y/sklearn-wrap/pull/33)) by @gtauzin
+
+### Contributors
+
+Thanks to all contributors for this release:
+- @gtauzin
+
 ## [0.1.0-alpha.4] - 2026-02-23
 
 This **minor release** includes 8 commits.
