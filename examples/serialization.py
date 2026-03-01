@@ -16,6 +16,10 @@ All sklearn serialization mechanisms work seamlessly with wrapped estimators.
 import marimo
 
 __generated_with = "0.19.8"
+__gallery__ = {
+    "title": "Serialization",
+    "description": "Save and load wrapped estimators with joblib for production deployment.",
+}
 app = marimo.App(width="medium")
 
 

@@ -102,6 +102,7 @@ git commit -m "feat: add my feature"
 We follow [Conventional Commits](https://www.conventionalcommits.org/) for commit messages. The commit message format is enforced by commitizen pre-commit hooks, which will validate your commit messages automatically.
 
 **Valid commit message examples:**
+
 - `feat: add new feature`
 - `fix: resolve bug in calculation`
 - `docs: update installation guide`
@@ -198,6 +199,7 @@ Run tests with coverage:
     uv run pytest --cov=sklearn_wrap --cov-report=html
     ```
 
+
 Run tests across multiple Python versions:
 
 === "nox"
@@ -241,6 +243,7 @@ Mark your tests appropriately to help maintain fast feedback during development:
   - Test multiple components working together
   - Require complex setup or teardown
   - Exercise end-to-end workflows
+
 - `@pytest.mark.example` is used in `tests/test_examples.py` to:
   - Validate example notebooks execute without errors
   - Run notebooks in the `examples/` directory
@@ -261,6 +264,16 @@ def test_end_to_end_workflow():
     # Complex integration test
     pass
 ```
+
+#### Test Organization
+
+Follow these conventions when writing tests:
+
+**Class-based test structure**: Group related tests into classes using the `Test<Component><Scenario>` naming pattern.
+
+**Fixture usage**: Prefer fixtures from `conftest.py` over module-level data. See `tests/conftest.py` for available factories.
+
+**Property-based testing**: [Hypothesis](https://hypothesis.readthedocs.io/) is available for property-based testing of edge cases and invariants.
 
 #### CI Test Strategy
 
@@ -331,6 +344,32 @@ Run all quality checks:
     just fix && just test
     ```
 
+### Docstring Standards
+
+All public functions, methods, and classes require **NumPy-style** docstrings. Coverage is enforced at 100% by `interrogate`.
+
+**Check docstring coverage:**
+
+```bash
+uvx interrogate src
+```
+
+**Required sections** (as applicable):
+
+- `Parameters` - All function/method parameters with types and descriptions
+- `Returns` - Return value type and description
+- `Raises` - Exceptions raised
+- `See Also` - Related classes/functions
+- `References` - Academic references for algorithms or methods used
+- `Notes` - Implementation details, mathematical background
+- `Examples` - Usage examples (tested via `pytest --doctest-modules`)
+
+**`See Also` format:**
+
+Use standard numpydoc format with short backtick names. The `mkdocs-autorefs` plugin automatically links backtick references (e.g., `` `ClassName` ``) to the corresponding API pages in rendered documentation. This means plain backtick-wrapped names in docstrings become clickable links in the docs site without any special syntax.
+
+For hyperlinks, always use Markdown syntax: `[text](url)`.
+
 ### Documentation
 
 Build documentation:
@@ -395,29 +434,9 @@ Create a new marimo notebook in `examples/<name>.py`:
 
 === "uv run"
 
-2. Develop your example in the marimo editor, following the standardized structure:
-   - **Numbered sections**: Main concepts as `## 1.`, `## 2.`, `## 3.`
-   - **Key Takeaways**: Bullet points summarizing important lessons
-   - **Next Steps**: Links to related notebooks for progression
-   - Isolate utilities and markdown in separate cells
-   - Use `hide_code=True` for infrastructure cells: `import marimo`, library imports, utilities, and markdown cells
-
-   **`hide_code=True` guidance:** mark these cells as hidden:
-
-   | Cell type | Why hidden |
-   |-----------|-----------|
-   | `import marimo as mo` | Boilerplate, not instructive |
-   | Library imports | Setup, readers focus on usage |
-   | Utilities | Not the lesson |
-   | Markdown cells | Purely structural |
-
-   Leave these cells **visible**:
-
-   | Cell type | Why visible |
-   |-----------|------------|
-   | Model construction / `MyEstimator(...)` | Core teaching content |
-   | `search.fit(...)` calls | Demonstrates usage |
-   | Results display | Shows output interpretation |
+    ```bash
+    uv run marimo new examples/<name>.py
+    ```
 
 #### Required Structure
 
@@ -425,7 +444,7 @@ Every example notebook **must** follow this structure in order:
 
 1. **Title**: A top-level `# Title` heading describing the notebook topic
 2. **What You'll Learn**: A `## What You'll Learn` section with a bulleted list of concrete learning goals
-3. **Prerequisites**: A `## Prerequisites` section stating required prior knowledge (one-liner or short bullet list). For standalone dataset explorations, use "None -- this is a standalone dataset exploration."
+3. **Prerequisites**: A `## Prerequisites` section stating required prior knowledge (one-liner or short bullet list). For standalone dataset explorations, use "None: this is a standalone dataset exploration."
 4. **Numbered sections**: Main content as `## 1. Section Name`, `## 2. Section Name`, etc.
 5. **Key Takeaways**: A `## Key Takeaways` section with bullet points summarizing important lessons learned
 6. **Next Steps**: A `## Next Steps` section with bullet points linking to related notebooks or documentation
@@ -448,38 +467,34 @@ Basic familiarity with sklearn's fit/predict API and time series concepts (trend
 
 #### Marimo Cell Conventions
 
-- Add [PEP 723](https://peps.python.org/pep-0723/) inline script metadata at the top of each notebook listing its dependencies
 - Use `hide_code=True` on all markdown cells, import cells, and utility/helper cells
 - Use `r"""..."""` (raw triple-quoted strings) for markdown cell content
-- Group all imports into a single hidden cell
+- All notebooks declare dependencies using [PEP 723](https://peps.python.org/pep-0723/) inline script metadata at the top of the file:
 
-**PEP 723 header template** (place at the very top of the file, before `import marimo`):
+    ```python
+    # /// script
+    # requires-python = ">=3.11"
+    # dependencies = [
+    #     "plotly",
+    #     "scikit-learn",
+    # ]
+    # ///
+    ```
 
-```python
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#     "my-dependency",
-# ]
-# ///
-```
-
-**What to include in `dependencies`:**
-
-- Only list packages the notebook **directly imports** (e.g., `numpy`, `plotly`)
-- Include `sklearn_wrap` when the notebook imports from the project itself
-- Do **not** include `marimo` — it is the runner, not a dependency of the script
-- Do **not** include transitive dependencies (packages already pulled in by a listed dependency)
-- Do **not** add `[tool.uv.sources]` — local development uses workspace resolution automatically; published notebooks should resolve from PyPI
-
-When in doubt, run `uv run --script examples/<name>.py` in a clean environment. If it fails with an `ImportError`, add the missing package.
+- Dependencies are sorted alphabetically and only list third-party packages actually imported by the notebook.
+- `marimo` itself is NOT listed as a dependency (it is the runner, not a dependency of the script).
+- To add a dependency: `uv add --script notebook.py <package>` or edit the header manually.
+- To run in an isolated sandbox: `uv run marimo edit --sandbox notebook.py`.
+- Group all imports into a single hidden cell after the metadata header
 
 #### Content Guidelines
 
+- **Gallery metadata**: Every example notebook should include a `__gallery__` variable in the first `@app.cell` defining `title`, `description`, and `category` for the example gallery.
 - **Markdown density**: Each numbered section should open with a descriptive markdown cell explaining the concept before any code cells. Consecutive code cells within the same section are acceptable when logically grouped.
-- **No emojis**: Do not use emojis anywhere in notebooks -- not in headings, content bullets, or concluding remarks.
+- **No emojis**: Do not use emojis anywhere in notebooks whether it is in headings, content bullets, or concluding remarks.
+- **API cross-links**: When mentioning sklearn_wrap classes or functions in markdown cells, wrap them in backtick-link syntax pointing to the API page (e.g., `` [`SeasonalNaive`](/pages/api/generated/sklearn_wrap.point.naive.SeasonalNaive/) ``).
 - **Key Takeaways format**: Use bold for key terms with plain descriptions (e.g., `- **Reduction forecasting** converts time series into tabular regression via lag features`)
-- **Next Steps format**: Use bold labels with brief descriptions (e.g., `- **Naive baselines**: See naive_forecasters.py to compare with simple benchmarks`)
+- **Next Steps format**: Use bold labels with linked notebook references (e.g., `- **Naive baselines**: See [`naive_forecasters.py`](/examples/point/naive_forecasters/) to compare`). Always link to the rendered example page, not the raw file.
 
 #### Testing and Documentation
 
@@ -585,10 +600,11 @@ graph LR
 ### How It Works
 
 1. **Tag a release:**
-   ```bash
+
+    ```bash
    git tag v0.2.0 -m "Release v0.2.0"
    git push origin v0.2.0
-   ```
+    ```
 
 2. **Automated changelog workflow** (`changelog.yml`):
    - Generates changelog from conventional commits using git-cliff

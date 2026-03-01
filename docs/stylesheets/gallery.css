@@ -1,0 +1,15 @@
+/* Gallery: Material "grid cards" overrides.
+ *
+ * Ensures gallery cards maintain a two-column layout even when there
+ * is only a single card (Material's default stretches it full-width).
+ */
+
+.md-typeset .grid.cards {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 600px) {
+  .md-typeset .grid.cards {
+    grid-template-columns: 1fr;
+  }
+}

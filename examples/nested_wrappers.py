@@ -16,6 +16,10 @@ Master the `__` syntax for controlling parameters in nested estimator hierarchie
 import marimo
 
 __generated_with = "0.19.8"
+__gallery__ = {
+    "title": "Nested Wrappers",
+    "description": "Control nested estimator hierarchies with double-underscore parameter syntax.",
+}
 app = marimo.App(width="medium")
 
 

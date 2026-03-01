@@ -17,6 +17,10 @@ Wrap a custom polynomial regression algorithm that doesn't follow sklearn conven
 import marimo
 
 __generated_with = "0.19.8"
+__gallery__ = {
+    "title": "A First Wrapper",
+    "description": "Create a minimal sklearn-compatible wrapper for any Python class using BaseClassWrapper.",
+}
 app = marimo.App(width="medium")
 
 

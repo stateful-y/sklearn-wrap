@@ -35,11 +35,12 @@ dev = [
 
 ]
 tests = [
+    "covdefaults>=2.3",
+    "hypothesis>=6.100",
     "pytest>=8.3",
     "pytest-cov>=7.0",
     "pytest-mock>=3.14",
     "pytest-xdist>=3.8",
-    "covdefaults>=2.3",
 ]
 lint = [
     "ruff>=0.8.0",
@@ -47,6 +48,7 @@ lint = [
 ]
 docs = [
     "mkdocs>=1.6.0",
+    "mkdocs-autorefs>=1.0",
     "mkdocs-material>=9.7",
     "mkdocstrings[python]>=0.26.0",
     "pymdown-extensions>=10.20.1",
@@ -120,7 +122,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*" = ["ARG", "S101", "T201", "PLR2004"]  # Allow assert statements, prints, and magic values in tests
-"docs/**/*" = ["T201", "ARG001"]  # Allow prints and unused args in documentation hooks
+"docs/**/*" = ["T201", "ARG001", "PLW0603", "SIM105", "SIM108"]  # Allow prints, unused args, globals, and simplifiable patterns in documentation hooks
 
 [tool.ruff.lint.isort]
 known-first-party = ["sklearn_wrap"]
@@ -186,7 +188,29 @@ fail_under = 100
 include_namespace_packages = true
 
 [tool.coverage.html]
-show_contexts = true
+
+[tool.rumdl]
+flavor = "mkdocs"
+line-length = 120
+disable = [
+    "MD012",  # Multiple consecutive blank lines (common in generated content)
+    "MD013",  # Line length (handled by formatter, many long URLs/tables)
+    "MD022",  # Heading blank lines (varies by document style)
+    "MD031",  # No blank line before fenced code block
+    "MD032",  # List should be preceded by blank line
+    "MD033",  # Inline HTML (needed for README logo, MkDocs grid cards)
+    "MD034",  # URL/email without angle brackets
+    "MD045",  # Image missing alt text (logos use empty alt intentionally)
+    "MD046",  # Code block style (indented blocks required inside MkDocs tabs)
+    "MD051",  # Link fragments (cross-doc references resolved at MkDocs build time)
+]
+exclude = ["CHANGELOG.md", "site", "htmlcov", ".nox", ".venv"]
+
+[tool.rumdl.per-file-ignores]
+".github/PULL_REQUEST_TEMPLATE.md" = ["MD041"]  # PR template starts with checklist
+"README.md" = ["MD041"]  # README starts with logo, not heading
+"docs/index.md" = ["MD041"]  # Landing page starts with logo, not heading
+"CONTRIBUTING.md" = ["MD057"]  # Relative link to docs/ is valid at project level
 
 
 [tool.commitizen]
