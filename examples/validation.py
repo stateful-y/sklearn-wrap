@@ -15,6 +15,10 @@ Learn common error patterns, parameter constraints, and how BaseClassWrapper cat
 import marimo
 
 __generated_with = "0.19.8"
+__gallery__ = {
+    "title": "Validation",
+    "description": "Explore error patterns and parameter validation for robust wrappers.",
+}
 app = marimo.App(width="medium")
 
 

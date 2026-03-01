@@ -60,8 +60,8 @@ Step-by-step guide to installing and setting up Sklearn-Wrap in your project.
 
 Interactive notebooks demonstrating Sklearn-Wrap features.
 
-- [Quick Start](pages/examples.md#quick-start)
-- [All Examples](pages/examples.md#examples)
+- [Gallery](pages/examples.md#examples)
+- [Running Locally](pages/examples.md#running-examples-locally)
 
 
 ### [User guide](pages/user-guide.md)
@@ -72,7 +72,7 @@ In-depth documentation on the design, architecture, and core concepts.
 - [Configuration](pages/user-guide.md#configuration)
 - [Best Practices](pages/user-guide.md#best-practices)
 
-### [Reference](pages/api-reference.md)
+### [Reference](pages/api-reference/)
 
 Detailed reference for the Sklearn-Wrap API, including classes, functions, and configuration options.
 

@@ -16,6 +16,10 @@ Wrap XGBoost's low-level Booster API for sklearn compatibility.
 import marimo
 
 __generated_with = "0.19.8"
+__gallery__ = {
+    "title": "XGBoost Wrapper",
+    "description": "Wrap XGBoost's low-level Booster API into a scikit-learn compatible estimator.",
+}
 app = marimo.App(width="medium")
 
 

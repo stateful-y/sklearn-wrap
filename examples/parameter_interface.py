@@ -17,6 +17,10 @@ Essential for GridSearchCV and interactive tuning.
 import marimo
 
 __generated_with = "0.19.8"
+__gallery__ = {
+    "title": "Parameter Interface",
+    "description": "Master get_params and set_params for GridSearchCV and Pipeline integration.",
+}
 app = marimo.App(width="medium")
 
 

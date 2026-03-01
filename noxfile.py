@@ -1,5 +1,7 @@
 """Nox sessions for Sklearn-Wrap."""
 
+from pathlib import Path
+
 import nox
 
 # Require Nox version 2024.3.2 or newer to support the 'default_venv_backend' option
@@ -213,6 +215,9 @@ def lint(session: nox.Session) -> None:
     # Run ruff check
     session.run("ruff", "check", "src", "tests", external=True)
 
+    # Run rumdl markdown linter
+    session.run("uvx", "rumdl", "check", ".", external=True)
+
     # Run ty
     session.run("ty", "check", "src", external=True)
 
@@ -270,3 +275,23 @@ def serve_docs(session: nox.Session) -> None:
     # Serve the docs (hooks automatically export notebooks and prepare site)
     session.log("###### Starting local server. Press Control+C to stop server ######")
     session.run("mkdocs", "serve", "-a", "localhost:8080", external=True)
+
+
+@nox.session(venv_backend="uv")
+def link_docs(session: nox.Session) -> None:
+    """Check the built documentation for dead links."""
+    site_dir = Path("site")
+    if not site_dir.exists():
+        session.error("site/ directory not found. Run 'just build' or 'nox -s build_docs' first.")
+
+    session.run(
+        "uvx",
+        "linkchecker",
+        str(site_dir / "index.html"),
+        "--no-status",
+        "--no-warnings",
+        "--ignore-url",
+        "material/overrides",
+        *session.posargs,
+        external=True,
+    )

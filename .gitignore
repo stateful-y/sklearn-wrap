@@ -82,7 +82,10 @@ uv.lock
 src/sklearn_wrap/_version.py
 
 # Documentation examples
-docs/examples/
+docs/examples/*/
+
+# Auto-generated API submodule pages (created by docs/hooks.py)
+docs/pages/api/
 
 # AI Assistant Instructions
 CLAUDE.md

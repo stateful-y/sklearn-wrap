@@ -16,6 +16,10 @@ Use GridSearchCV to automatically find optimal hyperparameters for wrapped estim
 import marimo
 
 __generated_with = "0.19.8"
+__gallery__ = {
+    "title": "Grid Search",
+    "description": "Hyperparameter tuning with GridSearchCV on wrapped estimators.",
+}
 app = marimo.App(width="medium")
 
 

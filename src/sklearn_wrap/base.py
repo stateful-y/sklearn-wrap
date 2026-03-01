@@ -28,6 +28,10 @@ Examples
 >>> wrapper = MyWrapper(estimator=dict, key="value")
 >>> wrapper.params
 {'key': 'value'}
+
+See Also
+--------
+BaseClassWrapper : The base class that uses this sentinel during instantiation.
 """
 
 
@@ -99,6 +103,17 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
     >>> # Parameters can be updated via set_params
     >>> estimator.set_params(multiplier=3.0, offset=0.5).fit(X, y).predict(X)
     array([3.5, 3.5, 3.5])
+
+    See Also
+    --------
+    `_fit_context` : Decorator for automatic instantiation during fit.
+
+    References
+    ----------
+    1. [Scikit-learn developer guide](https://scikit-learn.org/stable/developers/develop.html):
+            conventions for estimator compatibility.
+    2. [Scikit-learn BaseEstimator](https://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html):
+            the parent class providing `get_params` / `set_params`.
     """
 
     _required_parameters: list[str] = []
@@ -534,6 +549,16 @@ def _fit_context(*, prefer_skip_nested_validation):
     This decorator is particularly useful when working with nested estimators
     or meta-estimators, where parameter validation needs to be controlled
     carefully to avoid performance overhead.
+
+    See Also
+    --------
+    `BaseClassWrapper` : The base class whose fit methods this decorator wraps.
+    `BaseClassWrapper.instantiate` : Manual instantiation alternative.
+
+    References
+    ----------
+    1. [Scikit-learn configuration](https://scikit-learn.org/stable/modules/generated/sklearn.config_context.html):
+            the `config_context` used to control nested validation.
     """
 
     def decorator(fit_method):
