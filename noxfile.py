@@ -292,6 +292,8 @@ def link_docs(session: nox.Session) -> None:
         "--no-warnings",
         "--ignore-url",
         "material/overrides",
+        "--ignore-url",
+        "/edit/$",
         *session.posargs,
         external=True,
     )

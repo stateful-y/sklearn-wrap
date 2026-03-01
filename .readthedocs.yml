@@ -21,7 +21,7 @@ build:
       - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --group docs
     post_build:
       # Check for broken links
-      - uvx linkchecker "${READTHEDOCS_OUTPUT}html/index.html" --no-status --no-warnings --ignore-url material/overrides
+      - uvx linkchecker "${READTHEDOCS_OUTPUT}html/index.html" --no-status --no-warnings --ignore-url material/overrides --ignore-url '/edit/$'
 
 # MkDocs configuration
 mkdocs:

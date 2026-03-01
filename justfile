@@ -67,7 +67,7 @@ serve-fast:
 
 # Check built docs for dead links (build first with 'just build' or 'just build-fast')
 link:
-    uvx linkchecker site/index.html --no-status --no-warnings --ignore-url 'material/overrides'
+    uvx linkchecker site/index.html --no-status --no-warnings --ignore-url 'material/overrides' --ignore-url '/edit/$'
 
 # Clean build artifacts
 clean:
