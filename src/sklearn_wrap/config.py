@@ -4,19 +4,7 @@ This module provides ``EstimatorConfig``, a Pydantic model that can save, load,
 and validate scikit-learn estimator configurations from YAML files. It supports
 YAML anchors/merge keys and a custom ``!include`` tag for multi-file composition.
 
-Requires the ``config`` extra: ``pip install sklearn-wrap[config]``.
-
-Examples
---------
->>> from sklearn_wrap.config import EstimatorConfig
->>> config = EstimatorConfig(
-...     estimator_class="sklearn.linear_model.Ridge",
-...     params={"alpha": 1.0, "fit_intercept": True},
-... )
->>> estimator = config.build()
->>> estimator.alpha
-1.0
-"""
+Requires the ``config`` extra: ``pip install sklearn-wrap[config]``."""
 
 from __future__ import annotations
 
