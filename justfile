@@ -29,6 +29,10 @@ test-cov:
 test-docstrings:
     uv run pytest --doctest-modules --doctest-continue-on-failure --no-cov src/sklearn_wrap
 
+# Run fast tests after pinning dependency versions (e.g. just test-compat some-package==1.0.0)
+test-compat +PINS='':
+    uvx nox -s test_compat -- {{PINS}}
+
 # Run marimo example notebook interactively
 example file='':
     uv run marimo edit examples/{{file}}
