@@ -248,6 +248,7 @@ Mark your tests appropriately to help maintain fast feedback during development:
   - Validate example notebooks execute without errors
   - Run notebooks in the `examples/` directory
   - Test interactive documentation and tutorials
+
 Example:
 
 ```python
