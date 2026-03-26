@@ -30,6 +30,8 @@ def test_coverage(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "tests",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -60,6 +62,8 @@ def test(session: nox.Session) -> None:
         "tests",
         "--group",
         "examples",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -87,6 +91,8 @@ def test_fast(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "tests",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -115,6 +121,8 @@ def test_slow(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "tests",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -151,6 +159,8 @@ def test_compat(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "tests",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -190,6 +200,8 @@ def test_examples(session: nox.Session) -> None:
         "tests",
         "--group",
         "examples",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -217,6 +229,8 @@ def test_docstrings(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "tests",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -265,6 +279,8 @@ def fix(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "dev",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
     # Run pre-commit
