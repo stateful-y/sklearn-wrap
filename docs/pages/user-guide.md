@@ -283,6 +283,80 @@ class XGBoostWrapper(BaseClassWrapper):
 !!! example "Interactive Example"
     See **XGBoost** ([View](/examples/xgboost_wrapper/) | [Editable](/examples/xgboost_wrapper/edit/)) for a complete implementation of an XGBoost wrapper.
 
+## YAML Configuration
+
+Sklearn-Wrap ships an optional `EstimatorConfig` Pydantic model that can save, load, and validate any sklearn-compatible estimator's configuration as YAML. Install it with:
+
+```bash
+pip install sklearn-wrap[config]
+```
+
+### Defining a Config
+
+`EstimatorConfig` takes a dotted import path and constructor parameters:
+
+```python
+from sklearn_wrap.config import EstimatorConfig
+
+config = EstimatorConfig(
+    estimator_class="sklearn.linear_model.Ridge",
+    params={"alpha": 2.0, "fit_intercept": True},
+)
+estimator = config.build()
+```
+
+### Capturing from an Existing Estimator
+
+```python
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Ridge
+
+pipe = Pipeline([("scaler", StandardScaler()), ("ridge", Ridge(alpha=0.5))])
+config = EstimatorConfig.from_estimator(pipe)
+config.to_yaml("pipeline.yaml")
+```
+
+### YAML Anchors and Merge Keys
+
+Native YAML anchors define shared defaults without custom syntax:
+
+```yaml
+_defaults: &defaults
+  fit_intercept: true
+  solver: auto
+
+estimator_class: sklearn.linear_model.Ridge
+params:
+  <<: *defaults
+  alpha: 0.5
+```
+
+### Multi-file Composition with `!include`
+
+Split complex pipelines across files. Paths resolve relative to the including file:
+
+```yaml
+estimator_class: sklearn.pipeline.Pipeline
+params:
+  steps:
+    - - scaler
+      - !include preprocessing.yaml
+    - - ridge
+      - !include model.yaml
+```
+
+### Security
+
+By default, only classes from `sklearn` and `sklearn_wrap` can be resolved. Pass `trusted_modules` to `build()` to allow additional packages:
+
+```python
+config.build(trusted_modules=frozenset({"sklearn", "sklearn_wrap", "xgboost"}))
+```
+
+!!! example "Interactive Example"
+    See **YAML Configuration** ([View](/examples/yaml_config/) | [Editable](/examples/yaml_config/edit/)) for an interactive demonstration of YAML config workflows.
+
 ## Limitations and Considerations
 
 Understanding the limitations helps you make informed decisions:

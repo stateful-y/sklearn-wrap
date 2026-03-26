@@ -25,6 +25,12 @@ dependencies = [
     "joblib>=1.2.0",
 ]
 
+[project.optional-dependencies]
+config = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+]
+
 [dependency-groups]
 dev = [
     {include-group = "tests"},
@@ -32,7 +38,11 @@ dev = [
     {include-group = "docs"},
     {include-group = "fix"},
     {include-group = "examples"},
-
+    {include-group = "config"},
+]
+config = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
 ]
 tests = [
     "covdefaults>=2.3",
@@ -63,7 +73,6 @@ examples = [
     "plotly>=6.5.0",
     "xgboost>=2.0.0",
 ]
-
 [project.urls]
 Homepage = "https://github.com/stateful-y/sklearn-wrap"
 Documentation = "https://sklearn-wrap.readthedocs.io"

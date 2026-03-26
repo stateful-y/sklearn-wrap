@@ -10,3 +10,10 @@ __all__ = [
     "__version__",
     "BaseClassWrapper",
 ]
+
+try:
+    from .config import EstimatorConfig
+
+    __all__ += ["EstimatorConfig"]
+except ImportError:  # pydantic / pyyaml not installed
+    pass
