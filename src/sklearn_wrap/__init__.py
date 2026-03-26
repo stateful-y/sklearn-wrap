@@ -15,5 +15,5 @@ try:
     from .config import EstimatorConfig
 
     __all__ += ["EstimatorConfig"]
-except ImportError:  # pydantic / pyyaml not installed
+except ImportError:  # pydantic / pyyaml not installed  # pragma: no cover
     pass

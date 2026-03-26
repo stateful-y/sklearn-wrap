@@ -5,6 +5,7 @@ import textwrap
 
 import pytest
 import yaml
+from pydantic import ValidationError
 from sklearn.linear_model import Ridge
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -13,13 +14,14 @@ from sklearn_wrap.config import (
     DEFAULT_TRUSTED_MODULES,
     EstimatorConfig,
     UntrustedModuleError,
-    _ClassRef,
     _class_to_dotted_path,
+    _ClassRef,
     _import_class,
     _load_yaml,
     _resolve_params,
+    _resolve_value,
+    _serialize_value,
 )
-
 
 # ============================================================================
 # _import_class
@@ -141,6 +143,11 @@ class TestEstimatorConfigValidation:
             params={"meta": {"key": "value", "n": 42}},
         )
         assert config.params["meta"] == {"key": "value", "n": 42}
+
+    def test_model_validate_non_dict_raises(self):
+        """_convert_nested handles non-dict input before pydantic rejects it."""
+        with pytest.raises(ValidationError):
+            EstimatorConfig.model_validate("not a dict")
 
 
 # ============================================================================
@@ -472,3 +479,23 @@ class TestEdgeCases:
         )
         est = config.build()
         assert est.solver is None
+
+    def test_class_ref_invalid_type_path(self):
+        """_ClassRef rejects type_path with invalid identifier segments."""
+        with pytest.raises(ValueError, match="Invalid dotted path"):
+            _ClassRef(type_path="sklearn.123bad")
+
+    def test_resolve_value_plain_dict(self):
+        """_resolve_value passes plain dicts through recursively."""
+        result = _resolve_value({"key": "val"}, trusted_modules=DEFAULT_TRUSTED_MODULES)
+        assert result == {"key": "val"}
+
+    def test_serialize_value_class(self):
+        """_serialize_value converts a class to a __type__ dict."""
+        result = _serialize_value(Ridge)
+        assert result == {"__type__": _class_to_dotted_path(Ridge)}
+
+    def test_serialize_value_dict(self):
+        """_serialize_value recursively handles plain dicts."""
+        result = _serialize_value({"alpha": 1.0})
+        assert result == {"alpha": 1.0}
