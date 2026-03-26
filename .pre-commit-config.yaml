@@ -38,6 +38,13 @@ repos:
       # Run the formatter
       - id: ruff-format
 
+  # Markdown linting and formatting with rumdl
+  - repo: https://github.com/rvben/rumdl-pre-commit
+    rev: v0.1.33
+    hooks:
+      - id: rumdl
+      - id: rumdl-fmt
+
   # Type checking with ty
   - repo: local
     hooks:
@@ -48,10 +55,3 @@ repos:
         types: [python]
         files: ^src/
         pass_filenames: false
-
-  # Markdown linting and formatting with rumdl
-  - repo: https://github.com/rvben/rumdl-pre-commit
-    rev: v0.1.33
-    hooks:
-      - id: rumdl
-      - id: rumdl-fmt
