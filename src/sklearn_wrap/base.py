@@ -141,28 +141,6 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
             cls._required_parameters = [] if has_default else [name]
 
     def __init__(self, **params):
-        """Initialize the wrapper with an estimator class and its parameters.
-
-        Parameters
-        ----------
-        **params
-            Must include the key matching ``_estimator_name`` whose value is
-            the class to wrap. All other keyword arguments are forwarded as
-            constructor parameters for the wrapped class.
-
-        Raises
-        ------
-        ValueError
-            If ``_estimator_name`` is not defined on the class.
-        TypeError
-            If the required estimator-class keyword argument is missing and
-            no ``_estimator_default_class`` is set.
-
-        See Also
-        --------
-        BaseClassWrapper.__init_subclass__ : Sets ``_required_parameters`` for subclasses.
-        BaseClassWrapper.instantiate : Creates the wrapped instance from stored params.
-        """
         name = self._estimator_name
         if not isinstance(name, str):
             raise ValueError("Class should define a static `_estimator_name`.")
