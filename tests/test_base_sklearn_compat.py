@@ -16,10 +16,6 @@ from sklearn_wrap.base import BaseClassWrapper
 
 from .conftest import BaseTestClass, SimpleEstimator, SimpleWrapper
 
-# ============================================================================
-# HTML Representation Tests
-# ============================================================================
-
 
 class TestHTMLRepresentation:
     """Tests for HTML representation in Jupyter notebooks."""
@@ -60,11 +56,6 @@ class TestHTMLRepresentation:
         html = outer_wrapper._repr_html_()
         assert isinstance(html, str)
         assert len(html) > 0
-
-
-# ============================================================================
-# Cloning Tests
-# ============================================================================
 
 
 class TestCloning:
@@ -181,11 +172,6 @@ class TestCloning:
         assert cloned.estimator_class == SimpleEstimator
         assert cloned.params["required_param"] == 5
         assert cloned.params["optional_param"] == 20
-
-
-# ============================================================================
-# Fitted State Detection Tests
-# ============================================================================
 
 
 class TestFittedStateDetection:

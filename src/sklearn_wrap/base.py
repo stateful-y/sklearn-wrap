@@ -123,6 +123,17 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
     _parameter_constraints: dict[str, list] = {}  # For validating parameter types
 
     def __init_subclass__(cls, **kwargs):
+        """Set ``_required_parameters`` automatically for subclasses.
+
+        When a subclass defines ``_estimator_name`` and optionally
+        ``_estimator_default_class``, this hook populates
+        ``_required_parameters`` so that scikit-learn utilities (e.g.
+        ``clone``) know which constructor arguments are mandatory.
+
+        See Also
+        --------
+        BaseClassWrapper.__init__ : Constructor that consumes the required parameter.
+        """
         super().__init_subclass__(**kwargs)
         name = getattr(cls, "_estimator_name", None)
         if isinstance(name, str):
@@ -130,6 +141,28 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
             cls._required_parameters = [] if has_default else [name]
 
     def __init__(self, **params):
+        """Initialize the wrapper with an estimator class and its parameters.
+
+        Parameters
+        ----------
+        **params
+            Must include the key matching ``_estimator_name`` whose value is
+            the class to wrap. All other keyword arguments are forwarded as
+            constructor parameters for the wrapped class.
+
+        Raises
+        ------
+        ValueError
+            If ``_estimator_name`` is not defined on the class.
+        TypeError
+            If the required estimator-class keyword argument is missing and
+            no ``_estimator_default_class`` is set.
+
+        See Also
+        --------
+        BaseClassWrapper.__init_subclass__ : Sets ``_required_parameters`` for subclasses.
+        BaseClassWrapper.instantiate : Creates the wrapped instance from stored params.
+        """
         name = self._estimator_name
         if not isinstance(name, str):
             raise ValueError("Class should define a static `_estimator_name`.")
@@ -159,6 +192,9 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         str
             The estimator name.
 
+        See Also
+        --------
+        BaseClassWrapper.estimator_base_class : The required base class for wrapped estimators.
         """
         if not isinstance(self._estimator_name, str):
             raise ValueError("Class should define a static `_estimator_name`.")
@@ -174,6 +210,9 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         type
             The base class.
 
+        See Also
+        --------
+        BaseClassWrapper.estimator_name : The name key for the wrapped estimator.
         """
         if self._estimator_base_class is None:
             raise ValueError("Class should define a static `_estimator_base_class`.")
@@ -181,8 +220,7 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         return self._estimator_base_class
 
     def _validate_estimator_class(self, estimator_class: type) -> type:
-        """
-        Validate the estimator class.
+        """Validate the estimator class.
 
         Parameters
         ----------
@@ -194,6 +232,10 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         type
             The validated estimator class.
 
+        See Also
+        --------
+        BaseClassWrapper._validate_estimator_params : Validates parameter names and defaults.
+        BaseClassWrapper._validate_params : Full validation combining class and params.
         """
         if not inspect.isclass(estimator_class):
             raise TypeError(
@@ -213,8 +255,7 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         return estimator_class
 
     def _validate_estimator_params(self, params: dict, *, validate_nested: bool = True):
-        """
-        Validate estimator parameters.
+        """Validate estimator parameters.
 
         Check the estimator parameter names and set the omitted ones
         to their default value as per the ``estimator_class``
@@ -224,7 +265,7 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         ----------
         params : dict
             Dictionary of estimator parameters. Keys should be base parameter
-            names (without "__" for nested params).
+            names (without ``"__"`` for nested params).
         validate_nested : bool, default=True
             If False, skip validation and only return the params as-is.
             Used internally when processing already-split nested parameters.
@@ -233,6 +274,11 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         -------
         dict
             Validated dictionary of estimator parameters.
+
+        See Also
+        --------
+        BaseClassWrapper._validate_estimator_class : Validates the estimator class itself.
+        BaseClassWrapper._validate_nested_wrapper_param : Validates nested wrapper constraints.
         """
         if not validate_nested:
             return params
@@ -294,6 +340,11 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
             If the value is not a BaseClassWrapper when required.
         ValueError
             If the wrapped estimator_class doesn't inherit from expected base class.
+
+        See Also
+        --------
+        BaseClassWrapper._validate_estimator_params : Validates parameter names and defaults.
+        BaseClassWrapper._validate_params : Full validation combining class and params.
         """
         if param_name not in self._parameter_constraints:
             return
@@ -323,10 +374,14 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
     def _validate_params(self):
         """Validate types and values of constructor parameters.
 
-        The expected type and values must be defined in the `_parameter_constraints`
-        class attribute, which is a dictionary `param_name: list of constraints`. See
-        the docstring of `validate_parameter_constraints` for a description of the
-        accepted constraints.
+        The expected type and values must be defined in the ``_parameter_constraints``
+        class attribute, which is a dictionary ``param_name: list of constraints``.
+
+        See Also
+        --------
+        BaseClassWrapper._validate_estimator_class : Validates the estimator class.
+        BaseClassWrapper._validate_estimator_params : Validates parameter names and defaults.
+        BaseClassWrapper._validate_nested_wrapper_param : Validates nested wrapper constraints.
         """
         self._validate_estimator_class(self.estimator_class)
         self._validate_estimator_params(self.params)
@@ -351,6 +406,11 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         bool
             True if the estimator has fitted attributes,
             False otherwise.
+
+        See Also
+        --------
+        BaseClassWrapper.instantiate : Creates the wrapped instance (does not mark as fitted).
+        _fit_context : Decorator that sets the fitted state after successful fit.
         """
         # Check internal _fitted flag first (for backward compatibility)
         if getattr(self, "_fitted", False):
@@ -367,6 +427,10 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         -------
         self
 
+        See Also
+        --------
+        _fit_context : Decorator that calls instantiate automatically during fit.
+        BaseClassWrapper._validate_params : Parameter validation called by this method.
         """
         self._validate_params()
 
@@ -402,6 +466,10 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         ``sklearn.base.clone()`` can reconstruct the wrapper correctly, since
         ``clone()`` passes the dict returned by ``get_params(deep=False)`` as
         keyword arguments to the constructor.
+
+        See Also
+        --------
+        BaseClassWrapper.set_params : Set parameters on this estimator.
         """
         out = {}
         for key, value in self.params.items():
@@ -423,9 +491,9 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         """Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
-        (such as :class:`~sklearn.pipeline.Pipeline`). The latter have
-        parameters of the form ``<component>__<parameter>`` so that it's
-        possible to update each component of a nested object.
+        (such as ``Pipeline``). The latter have parameters of the form
+        ``<component>__<parameter>`` so that it's possible to update each
+        component of a nested object.
 
         Parameters
         ----------
@@ -436,6 +504,10 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         -------
         self : estimator instance
             Estimator instance.
+
+        See Also
+        --------
+        BaseClassWrapper.get_params : Get parameters for this estimator.
         """
         if not params:
             # Simple optimization to gain speed (inspect is slow)

@@ -23,7 +23,12 @@ DEFAULT_TRUSTED_MODULES: frozenset[str] = frozenset({"sklearn", "sklearn_wrap"})
 
 
 class UntrustedModuleError(ImportError):
-    """Raised when a dotted path references a module not in the trusted allowlist."""
+    """Raised when a dotted path references a module not in the trusted allowlist.
+
+    See Also
+    --------
+    EstimatorConfig.build : Method that raises this error for untrusted modules.
+    """
 
 
 def _import_class(dotted_path: str, trusted_modules: frozenset[str] = DEFAULT_TRUSTED_MODULES) -> type:
@@ -55,6 +60,11 @@ def _import_class(dotted_path: str, trusted_modules: frozenset[str] = DEFAULT_TR
     >>> cls = _import_class("sklearn.linear_model.Ridge")
     >>> cls.__name__
     'Ridge'
+
+    See Also
+    --------
+    _class_to_dotted_path : Reverse operation, building a dotted path from a class.
+    UntrustedModuleError : Raised when the top-level package is not trusted.
     """
     parts = dotted_path.split(".")
     if not parts or not all(p.isidentifier() for p in parts):
@@ -102,6 +112,10 @@ def _class_to_dotted_path(cls: type) -> str:
     -------
     str
         Dotted path such as ``"sklearn.linear_model.Ridge"``.
+
+    See Also
+    --------
+    _import_class : Reverse operation, importing a class from a dotted path.
     """
     return f"{cls.__module__}.{cls.__qualname__}"
 
@@ -111,11 +125,26 @@ class _IncludeLoader(yaml.SafeLoader):
 
     Included file paths are resolved relative to the including file.
     Circular includes are detected and raise ``yaml.YAMLError``.
+
+    See Also
+    --------
+    _load_yaml : Public function that creates and uses this loader.
+    EstimatorConfig.from_yaml : High-level method that loads YAML configs.
     """
 
     _include_stack: list[str] = []
 
     def __init__(self, stream, *, _base_dir: str | None = None):
+        """Initialize the loader with a base directory for include resolution.
+
+        Parameters
+        ----------
+        stream : IO
+            The YAML stream to load.
+        _base_dir : str or None
+            Base directory for resolving relative ``!include`` paths.
+            Defaults to the current working directory.
+        """
         super().__init__(stream)
         self._base_dir = _base_dir or os.getcwd()
 
@@ -156,6 +185,11 @@ def _load_yaml(path: str | Path) -> Any:
     -------
     Any
         Parsed YAML data.
+
+    See Also
+    --------
+    _IncludeLoader : The custom YAML loader used by this function.
+    EstimatorConfig.from_yaml : High-level method that uses this function.
     """
     path = Path(path).resolve()
     _IncludeLoader._include_stack = []
@@ -172,6 +206,10 @@ class _ClassRef(BaseModel):
 
     Used to represent ``BaseClassWrapper``'s estimator_class parameter in YAML
     via the ``{"__type__": "dotted.path"}`` convention.
+
+    See Also
+    --------
+    EstimatorConfig : The config model that uses this marker during build.
     """
 
     type_path: str
@@ -179,6 +217,18 @@ class _ClassRef(BaseModel):
     @field_validator("type_path")
     @classmethod
     def _validate_path(cls, v: str) -> str:
+        """Validate that the dotted path consists of valid Python identifiers.
+
+        Parameters
+        ----------
+        v : str
+            The dotted path to validate.
+
+        Returns
+        -------
+        str
+            The validated path.
+        """
         parts = v.split(".")
         if not parts or not all(p.isidentifier() for p in parts):
             raise ValueError(f"Invalid dotted path: {v!r}")
@@ -221,6 +271,18 @@ class EstimatorConfig(BaseModel):
     @field_validator("estimator_class")
     @classmethod
     def _validate_estimator_class(cls, v: str) -> str:
+        """Validate that estimator_class is a dotted path with at least two segments.
+
+        Parameters
+        ----------
+        v : str
+            The dotted import path to validate.
+
+        Returns
+        -------
+        str
+            The validated path.
+        """
         parts = v.split(".")
         if len(parts) < 2 or not all(p.isidentifier() for p in parts):
             raise ValueError(
@@ -232,6 +294,18 @@ class EstimatorConfig(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _convert_nested(cls, data: Any) -> Any:
+        """Convert nested dicts with ``estimator_class`` keys into EstimatorConfig.
+
+        Parameters
+        ----------
+        data : Any
+            The raw data to validate.
+
+        Returns
+        -------
+        Any
+            The data with nested dicts converted.
+        """
         if isinstance(data, dict):
             params = data.get("params")
             if isinstance(params, dict):
@@ -260,6 +334,11 @@ class EstimatorConfig(BaseModel):
         >>> est = config.build()
         >>> est.alpha
         2.0
+
+        See Also
+        --------
+        EstimatorConfig.from_estimator : Create a config from an existing estimator.
+        EstimatorConfig.from_yaml : Load a config from a YAML file.
         """
         cls = _import_class(self.estimator_class, trusted_modules)
         resolved = _resolve_params(self.params, trusted_modules=trusted_modules)
@@ -288,6 +367,11 @@ class EstimatorConfig(BaseModel):
         'sklearn.linear_model._ridge.Ridge'
         >>> config.params["alpha"]
         3.0
+
+        See Also
+        --------
+        EstimatorConfig.build : Instantiate an estimator from a config.
+        EstimatorConfig.to_yaml : Serialize a config to YAML.
         """
         dotted = _class_to_dotted_path(type(estimator))
         raw_params = estimator.get_params(deep=False)
@@ -301,6 +385,10 @@ class EstimatorConfig(BaseModel):
         ----------
         path : str or Path
             Destination file path.
+
+        See Also
+        --------
+        EstimatorConfig.from_yaml : Load a config from a YAML file.
         """
         data = self.model_dump()
         with open(path, "w") as f:
@@ -322,6 +410,11 @@ class EstimatorConfig(BaseModel):
         -------
         EstimatorConfig
             The validated configuration.
+
+        See Also
+        --------
+        EstimatorConfig.to_yaml : Write a config to a YAML file.
+        EstimatorConfig.build : Instantiate an estimator from a config.
         """
         data = _load_yaml(path)
         return cls.model_validate(data)

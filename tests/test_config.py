@@ -23,21 +23,20 @@ from sklearn_wrap.config import (
     _serialize_value,
 )
 
-# ============================================================================
-# _import_class
-# ============================================================================
-
 
 class TestImportClass:
     """Tests for _import_class utility."""
 
-    def test_import_sklearn_class(self):
-        cls = _import_class("sklearn.linear_model.Ridge")
-        assert cls is Ridge
-
-    def test_import_nested_module(self):
-        cls = _import_class("sklearn.preprocessing.StandardScaler")
-        assert cls is StandardScaler
+    @pytest.mark.parametrize(
+        "dotted_path,expected_class",
+        [
+            pytest.param("sklearn.linear_model.Ridge", Ridge, id="sklearn_class"),
+            pytest.param("sklearn.preprocessing.StandardScaler", StandardScaler, id="nested_module"),
+        ],
+    )
+    def test_import_success(self, dotted_path, expected_class):
+        cls = _import_class(dotted_path)
+        assert cls is expected_class
 
     def test_untrusted_module_rejected(self):
         with pytest.raises(UntrustedModuleError, match="not in the trusted modules list"):
@@ -47,26 +46,21 @@ class TestImportClass:
         cls = _import_class("builtins.dict", trusted_modules=frozenset({"builtins"}))
         assert cls is dict
 
-    def test_invalid_dotted_path(self):
-        with pytest.raises(ImportError, match="Invalid dotted path"):
-            _import_class("")
-
-    def test_invalid_identifier_segments(self):
-        with pytest.raises(ImportError, match="Invalid dotted path"):
-            _import_class("sklearn.123bad")
-
-    def test_nonexistent_class(self):
-        with pytest.raises(ImportError, match="Could not import"):
-            _import_class("sklearn.linear_model.NonExistentClass")
-
-    def test_nonexistent_module(self):
-        with pytest.raises(ImportError, match="Could not import"):
-            _import_class("sklearn.nonexistent_module.Foo")
-
-    def test_resolves_to_non_class(self):
-        with pytest.raises(ImportError, match="not a class"):
-            # sklearn.__version__ is a string, not a class
-            _import_class("sklearn.__version__")
+    @pytest.mark.parametrize(
+        "dotted_path,error_type,match",
+        [
+            pytest.param("", ImportError, "Invalid dotted path", id="empty_path"),
+            pytest.param("sklearn.123bad", ImportError, "Invalid dotted path", id="invalid_identifier"),
+            pytest.param(
+                "sklearn.linear_model.NonExistentClass", ImportError, "Could not import", id="nonexistent_class"
+            ),
+            pytest.param("sklearn.nonexistent_module.Foo", ImportError, "Could not import", id="nonexistent_module"),
+            pytest.param("sklearn.__version__", ImportError, "not a class", id="non_class_attribute"),
+        ],
+    )
+    def test_import_errors(self, dotted_path, error_type, match):
+        with pytest.raises(error_type, match=match):
+            _import_class(dotted_path)
 
 
 class TestClassToDottedPath:
@@ -79,11 +73,6 @@ class TestClassToDottedPath:
 
     def test_builtin(self):
         assert _class_to_dotted_path(dict) == "builtins.dict"
-
-
-# ============================================================================
-# EstimatorConfig - construction and validation
-# ============================================================================
 
 
 class TestEstimatorConfigValidation:
@@ -150,11 +139,6 @@ class TestEstimatorConfigValidation:
             EstimatorConfig.model_validate("not a dict")
 
 
-# ============================================================================
-# EstimatorConfig.build()
-# ============================================================================
-
-
 class TestEstimatorConfigBuild:
     """Tests for building estimators from config."""
 
@@ -217,11 +201,6 @@ class TestEstimatorConfigBuild:
         assert isinstance(result, dict)
 
 
-# ============================================================================
-# EstimatorConfig.from_estimator()
-# ============================================================================
-
-
 class TestFromEstimator:
     """Tests for creating configs from existing estimators."""
 
@@ -248,11 +227,6 @@ class TestFromEstimator:
         rebuilt = config.build()
         assert rebuilt.alpha == original.alpha
         assert rebuilt.fit_intercept == original.fit_intercept
-
-
-# ============================================================================
-# YAML I/O
-# ============================================================================
 
 
 class TestYamlIO:
@@ -362,11 +336,6 @@ class TestYamlIO:
             _load_yaml(tmp_path / "a.yaml")
 
 
-# ============================================================================
-# Full roundtrip: estimator -> yaml -> config -> estimator
-# ============================================================================
-
-
 class TestFullRoundtrip:
     """End-to-end roundtrip tests."""
 
@@ -399,11 +368,6 @@ class TestFullRoundtrip:
         assert rebuilt.steps[1][1].alpha == 0.3
 
 
-# ============================================================================
-# Security tests
-# ============================================================================
-
-
 class TestSecurity:
     """Tests for security restrictions on class resolution."""
 
@@ -411,22 +375,19 @@ class TestSecurity:
         assert "sklearn" in DEFAULT_TRUSTED_MODULES
         assert "sklearn_wrap" in DEFAULT_TRUSTED_MODULES
 
-    def test_untrusted_top_level_rejected(self):
+    @pytest.mark.parametrize(
+        "dotted_path",
+        [
+            pytest.param("subprocess.Popen", id="subprocess"),
+            pytest.param("os.system", id="os"),
+            pytest.param("builtins.eval", id="builtins"),
+            pytest.param("builtins.__import__", id="dunder_import"),
+        ],
+    )
+    def test_untrusted_module_rejected(self, dotted_path):
+        """Verify various untrusted modules are rejected by the allowlist."""
         with pytest.raises(UntrustedModuleError):
-            _import_class("subprocess.Popen")
-
-    def test_os_module_rejected(self):
-        with pytest.raises(UntrustedModuleError):
-            _import_class("os.system")
-
-    def test_builtins_rejected_by_default(self):
-        with pytest.raises(UntrustedModuleError):
-            _import_class("builtins.eval")
-
-    def test_dunder_in_path_is_valid_identifier(self):
-        """Dunder names are valid identifiers but still blocked by trusted_modules."""
-        with pytest.raises(UntrustedModuleError):
-            _import_class("builtins.__import__")
+            _import_class(dotted_path)
 
     def test_build_rejects_untrusted_nested(self):
         config = EstimatorConfig(
@@ -439,11 +400,6 @@ class TestSecurity:
         )
         with pytest.raises(UntrustedModuleError):
             config.build()
-
-
-# ============================================================================
-# Edge cases
-# ============================================================================
 
 
 class TestEdgeCases:
