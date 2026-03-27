@@ -283,8 +283,17 @@ def fix(session: nox.Session) -> None:
         "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
-    # Run pre-commit
-    session.run("pre-commit", "run", "--all-files", "--show-diff-on-failure", *session.posargs, external=True)
+    # Run pre-commit - pass UV_PROJECT_ENVIRONMENT so that `uv run` inside hooks
+    # (e.g. the ty hook) uses this session's venv where pydantic is installed.
+    session.run(
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--show-diff-on-failure",
+        *session.posargs,
+        external=True,
+        env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
+    )
 
 
 @nox.session(venv_backend="uv")
