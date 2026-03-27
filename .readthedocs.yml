@@ -18,7 +18,7 @@ build:
       - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
     install:
       # Sync doc-dependencies (the group "docs") and install the project itself
-      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --group docs
+      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --group docs --extra config
     post_build:
       # Check for broken links
       - uvx linkchecker "${READTHEDOCS_OUTPUT}html/index.html" --no-status --no-warnings --ignore-url material/overrides --ignore-url '/edit/$'
