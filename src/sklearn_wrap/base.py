@@ -8,6 +8,8 @@ from sklearn._config import config_context, get_config
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import _is_fitted
 
+from ._validation import validate_class_params
+
 __all__ = ["BaseClassWrapper"]
 
 
@@ -261,43 +263,15 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         if not validate_nested:
             return params
 
-        constructor_signature = inspect.signature(self.estimator_class.__init__)
-
-        # Check if constructor accepts **kwargs
-        has_var_keyword = any(
-            p.kind == inspect.Parameter.VAR_KEYWORD for p in constructor_signature.parameters.values()
-        )
-
-        valid_class_params = {
-            key: val.default
-            for key, val in constructor_signature.parameters.items()
-            if key != "self" and val.kind not in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL)
-        }
-
-        validated_params = {}
-        for param_name, param_val in params.items():
-            # Check for reserved delimiter in parameter names
+        # Wrapper-specific: reject double-underscore parameter names
+        for param_name in params:
             if "__" in param_name:
                 raise ValueError(
                     f"Parameter name {param_name!r} cannot contain '__' (double underscore). "
                     f"This delimiter is reserved for nested parameter syntax."
                 )
 
-            # If class accepts **kwargs, allow any parameter
-            if param_name not in valid_class_params and not has_var_keyword:
-                raise ValueError(
-                    f"{param_name!r} is not a valid parameter for class {self.estimator_class.__name__!r}."
-                )
-
-            validated_params[param_name] = param_val
-
-        # Add default values for missing parameters (but not for *args)
-        for param_name, param_val in valid_class_params.items():
-            if param_name not in params:
-                default_val = REQUIRED_PARAM_VALUE if param_val is inspect._empty else param_val
-                validated_params[param_name] = default_val
-
-        return validated_params
+        return validate_class_params(self.estimator_class, params)
 
     def _validate_nested_wrapper_param(self, param_name: str, param_value: Any) -> None:
         """Validate a parameter value that should be a BaseClassWrapper.

@@ -8,18 +8,141 @@ Requires the ``config`` extra: ``pip install sklearn-wrap[config]``."""
 
 from __future__ import annotations
 
+import contextlib
 import importlib
 import inspect
 import os
+import threading
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-__all__ = ["EstimatorConfig", "UntrustedModuleError"]
+from ._validation import validate_class_params, validate_dotted_path
+
+__all__ = [
+    "EstimatorConfig",
+    "UntrustedModuleError",
+    "config_context",
+    "get_config",
+    "reset_config",
+    "set_config",
+]
 
 DEFAULT_TRUSTED_MODULES: frozenset[str] = frozenset({"sklearn", "sklearn_wrap"})
+
+_global_config: dict[str, Any] = {
+    "trusted_modules": DEFAULT_TRUSTED_MODULES,
+}
+_threadlocal = threading.local()
+
+
+def get_config() -> dict[str, Any]:
+    """Return a copy of the current sklearn-wrap configuration.
+
+    Thread-local overrides (set via `set_config` or `config_context`) take
+    precedence over the global defaults.
+
+    Returns
+    -------
+    dict[str, Any]
+        A dictionary with the current configuration values.
+
+    Examples
+    --------
+    >>> cfg = get_config()
+    >>> "trusted_modules" in cfg
+    True
+
+    See Also
+    --------
+    set_config : Persistently update the configuration.
+    config_context : Temporarily update the configuration.
+    """
+    config = _global_config.copy()
+    config.update(getattr(_threadlocal, "config", {}))
+    return config
+
+
+def set_config(*, trusted_modules: frozenset[str] | None = None) -> None:
+    """Persistently update the sklearn-wrap configuration for the current thread.
+
+    Parameters
+    ----------
+    trusted_modules : frozenset[str] or None
+        If not ``None``, replace the current set of trusted top-level packages
+        used by `EstimatorConfig.build`.
+
+    Examples
+    --------
+    >>> set_config(trusted_modules=frozenset({"sklearn", "xgboost"}))
+    >>> get_config()["trusted_modules"] == frozenset({"sklearn", "xgboost"})
+    True
+    >>> reset_config()  # clean up
+
+    See Also
+    --------
+    get_config : Retrieve the current configuration.
+    config_context : Temporarily update the configuration.
+    reset_config : Restore default configuration.
+    """
+    if not hasattr(_threadlocal, "config"):
+        _threadlocal.config = {}
+    if trusted_modules is not None:
+        _threadlocal.config["trusted_modules"] = trusted_modules
+
+
+def reset_config() -> None:
+    """Restore the sklearn-wrap configuration to its defaults for the current thread.
+
+    Examples
+    --------
+    >>> set_config(trusted_modules=frozenset({"my_pkg"}))
+    >>> reset_config()
+    >>> get_config()["trusted_modules"] == DEFAULT_TRUSTED_MODULES
+    True
+
+    See Also
+    --------
+    set_config : Persistently update the configuration.
+    get_config : Retrieve the current configuration.
+    """
+    _threadlocal.config = {}
+
+
+@contextlib.contextmanager
+def config_context(*, trusted_modules: frozenset[str] | None = None) -> Generator[None, None, None]:
+    """Context manager to temporarily set sklearn-wrap configuration.
+
+    Configuration is restored to its previous state when the context exits,
+    even if an exception is raised.
+
+    Parameters
+    ----------
+    trusted_modules : frozenset[str] or None
+        If not ``None``, temporarily replace the trusted modules set.
+
+    Examples
+    --------
+    >>> with config_context(trusted_modules=frozenset({"sklearn", "xgboost"})):
+    ...     get_config()["trusted_modules"] == frozenset({"sklearn", "xgboost"})
+    True
+    >>> get_config()["trusted_modules"] == DEFAULT_TRUSTED_MODULES
+    True
+
+    See Also
+    --------
+    set_config : Persistently update the configuration.
+    get_config : Retrieve the current configuration.
+    """
+    old_config = getattr(_threadlocal, "config", {}).copy()
+    try:
+        set_config(trusted_modules=trusted_modules)
+        yield
+    finally:
+        _threadlocal.config = old_config
 
 
 class UntrustedModuleError(ImportError):
@@ -66,9 +189,10 @@ def _import_class(dotted_path: str, trusted_modules: frozenset[str] = DEFAULT_TR
     _class_to_dotted_path : Reverse operation, building a dotted path from a class.
     UntrustedModuleError : Raised when the top-level package is not trusted.
     """
-    parts = dotted_path.split(".")
-    if not parts or not all(p.isidentifier() for p in parts):
-        raise ImportError(f"Invalid dotted path: {dotted_path!r}")
+    try:
+        parts = validate_dotted_path(dotted_path)
+    except ValueError:
+        raise ImportError(f"Invalid dotted path: {dotted_path!r}") from None
 
     top_level = parts[0]
     if top_level not in trusted_modules:
@@ -229,9 +353,7 @@ class _ClassRef(BaseModel):
         str
             The validated path.
         """
-        parts = v.split(".")
-        if not parts or not all(p.isidentifier() for p in parts):
-            raise ValueError(f"Invalid dotted path: {v!r}")
+        validate_dotted_path(v)
         return v
 
 
@@ -283,12 +405,13 @@ class EstimatorConfig(BaseModel):
         str
             The validated path.
         """
-        parts = v.split(".")
-        if len(parts) < 2 or not all(p.isidentifier() for p in parts):
+        try:
+            validate_dotted_path(v, min_segments=2)
+        except ValueError:
             raise ValueError(
                 f"estimator_class must be a valid dotted import path with at least "
                 f"two segments (e.g. 'sklearn.linear_model.Ridge'), got {v!r}"
-            )
+            ) from None
         return v
 
     @model_validator(mode="before")
@@ -312,13 +435,23 @@ class EstimatorConfig(BaseModel):
                 data["params"] = _walk_params(params)
         return data
 
-    def build(self, *, trusted_modules: frozenset[str] = DEFAULT_TRUSTED_MODULES) -> Any:
+    def build(
+        self,
+        *,
+        trusted_modules: frozenset[str] | None = None,
+        validate_params: bool = True,
+    ) -> Any:
         """Resolve the configuration into an instantiated estimator.
 
         Parameters
         ----------
-        trusted_modules : frozenset[str]
-            Allowed top-level packages for class resolution.
+        trusted_modules : frozenset[str] or None
+            Allowed top-level packages for class resolution. When ``None``
+            (the default), the value from the global configuration is used
+            (see `set_config`).
+        validate_params : bool, default=True
+            If True, validate that the resolved parameter names match the
+            constructor signature of the target class before instantiation.
 
         Returns
         -------
@@ -339,9 +472,14 @@ class EstimatorConfig(BaseModel):
         --------
         EstimatorConfig.from_estimator : Create a config from an existing estimator.
         EstimatorConfig.from_yaml : Load a config from a YAML file.
+        set_config : Set global trusted modules configuration.
         """
+        if trusted_modules is None:
+            trusted_modules = get_config()["trusted_modules"]
         cls = _import_class(self.estimator_class, trusted_modules)
         resolved = _resolve_params(self.params, trusted_modules=trusted_modules)
+        if validate_params:
+            validate_class_params(cls, resolved)
         return cls(**resolved)
 
     @classmethod

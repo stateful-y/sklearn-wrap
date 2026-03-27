@@ -1,5 +1,6 @@
 """Tests for sklearn_wrap.config module."""
 
+import concurrent.futures
 import pickle
 import textwrap
 
@@ -21,6 +22,10 @@ from sklearn_wrap.config import (
     _resolve_params,
     _resolve_value,
     _serialize_value,
+    config_context,
+    get_config,
+    reset_config,
+    set_config,
 )
 
 
@@ -427,6 +432,154 @@ class TestEdgeCases:
         config = EstimatorConfig(estimator_class="sklearn.linear_model.Ridge")
         est = config.build()
         assert est.__class__.__name__ == "Ridge"
+
+
+class TestGlobalConfig:
+    """Tests for set_config / get_config / config_context / reset_config."""
+
+    @pytest.fixture(autouse=True)
+    def _reset(self):
+        """Ensure clean config state for every test."""
+        reset_config()
+        yield
+        reset_config()
+
+    def test_get_config_returns_defaults(self):
+        cfg = get_config()
+        assert cfg["trusted_modules"] == DEFAULT_TRUSTED_MODULES
+
+    def test_set_config_updates_trusted_modules(self):
+        new_modules = frozenset({"sklearn", "xgboost"})
+        set_config(trusted_modules=new_modules)
+        assert get_config()["trusted_modules"] == new_modules
+
+    def test_set_config_none_is_noop(self):
+        set_config(trusted_modules=None)
+        assert get_config()["trusted_modules"] == DEFAULT_TRUSTED_MODULES
+
+    def test_reset_config_restores_defaults(self):
+        set_config(trusted_modules=frozenset({"custom"}))
+        reset_config()
+        assert get_config()["trusted_modules"] == DEFAULT_TRUSTED_MODULES
+
+    def test_config_context_temporary(self):
+        with config_context(trusted_modules=frozenset({"sklearn", "xgboost"})):
+            assert "xgboost" in get_config()["trusted_modules"]
+        assert get_config()["trusted_modules"] == DEFAULT_TRUSTED_MODULES
+
+    def test_config_context_nested(self):
+        with config_context(trusted_modules=frozenset({"a"})):
+            assert get_config()["trusted_modules"] == frozenset({"a"})
+            with config_context(trusted_modules=frozenset({"b"})):
+                assert get_config()["trusted_modules"] == frozenset({"b"})
+            assert get_config()["trusted_modules"] == frozenset({"a"})
+        assert get_config()["trusted_modules"] == DEFAULT_TRUSTED_MODULES
+
+    def test_config_context_restores_on_exception(self):
+        with pytest.raises(RuntimeError), config_context(trusted_modules=frozenset({"temp"})):
+            assert get_config()["trusted_modules"] == frozenset({"temp"})
+            raise RuntimeError("boom")
+        assert get_config()["trusted_modules"] == DEFAULT_TRUSTED_MODULES
+
+    def test_config_context_none_is_noop(self):
+        with config_context(trusted_modules=None):
+            assert get_config()["trusted_modules"] == DEFAULT_TRUSTED_MODULES
+
+    def test_thread_isolation(self):
+        """Changes in one thread do not affect another."""
+        barrier = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+
+        def worker():
+            set_config(trusted_modules=frozenset({"thread_pkg"}))
+            return get_config()["trusted_modules"]
+
+        future = barrier.submit(worker)
+        worker_result = future.result()
+        barrier.shutdown()
+
+        assert worker_result == frozenset({"thread_pkg"})
+        # Main thread unaffected
+        assert get_config()["trusted_modules"] == DEFAULT_TRUSTED_MODULES
+
+    def test_get_config_returns_copy(self):
+        cfg1 = get_config()
+        cfg2 = get_config()
+        assert cfg1 is not cfg2
+
+    def test_build_uses_global_config(self):
+        set_config(trusted_modules=frozenset({"sklearn", "builtins"}))
+        config = EstimatorConfig(estimator_class="builtins.dict")
+        result = config.build()
+        assert isinstance(result, dict)
+
+    def test_build_explicit_overrides_global(self):
+        set_config(trusted_modules=frozenset({"sklearn"}))
+        config = EstimatorConfig(estimator_class="builtins.dict")
+        result = config.build(trusted_modules=frozenset({"builtins"}))
+        assert isinstance(result, dict)
+
+
+class TestBuildParamValidation:
+    """Tests for parameter validation at build() time."""
+
+    def test_build_validates_params(self):
+        config = EstimatorConfig(
+            estimator_class="sklearn.linear_model.Ridge",
+            params={"alpha": 1.0, "nonexistent_param": 42},
+        )
+        with pytest.raises(ValueError, match="'nonexistent_param' is not a valid parameter"):
+            config.build()
+
+    def test_build_validate_params_false_skips(self):
+        config = EstimatorConfig(
+            estimator_class="sklearn.linear_model.Ridge",
+            params={"alpha": 1.0},
+        )
+        est = config.build(validate_params=False)
+        assert est.alpha == 1.0
+
+    def test_build_pipeline_with_kwargs(self):
+        """Pipeline accepts **kwargs so no false positives from validation."""
+        config = EstimatorConfig(
+            estimator_class="sklearn.pipeline.Pipeline",
+            params={
+                "steps": [
+                    ["ridge", {"estimator_class": "sklearn.linear_model.Ridge"}],
+                ],
+            },
+        )
+        pipe = config.build()
+        assert pipe.__class__.__name__ == "Pipeline"
+
+    def test_build_nested_config_validates(self):
+        """Nested EstimatorConfig objects are resolved before validation."""
+        config = EstimatorConfig(
+            estimator_class="sklearn.pipeline.Pipeline",
+            params={
+                "steps": [
+                    ["scaler", {"estimator_class": "sklearn.preprocessing.StandardScaler"}],
+                    [
+                        "ridge",
+                        {
+                            "estimator_class": "sklearn.linear_model.Ridge",
+                            "params": {"alpha": 0.5},
+                        },
+                    ],
+                ],
+            },
+        )
+        pipe = config.build()
+        assert len(pipe.steps) == 2
+        assert pipe.steps[1][1].alpha == 0.5
+
+    def test_build_valid_params_pass(self):
+        config = EstimatorConfig(
+            estimator_class="sklearn.linear_model.Ridge",
+            params={"alpha": 2.0, "fit_intercept": False},
+        )
+        est = config.build()
+        assert est.alpha == 2.0
+        assert est.fit_intercept is False
 
     def test_none_param_value(self):
         config = EstimatorConfig(
