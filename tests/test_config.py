@@ -22,6 +22,7 @@ from sklearn_wrap.config import (
     _resolve_params,
     _resolve_value,
     _serialize_value,
+    _threadlocal,
     config_context,
     get_config,
     reset_config,
@@ -456,6 +457,13 @@ class TestGlobalConfig:
     def test_set_config_none_is_noop(self):
         set_config(trusted_modules=None)
         assert get_config()["trusted_modules"] == DEFAULT_TRUSTED_MODULES
+
+    def test_set_config_initializes_threadlocal(self):
+        """set_config works even when threadlocal has no config attribute."""
+        if hasattr(_threadlocal, "config"):
+            del _threadlocal.config
+        set_config(trusted_modules=frozenset({"fresh"}))
+        assert get_config()["trusted_modules"] == frozenset({"fresh"})
 
     def test_reset_config_restores_defaults(self):
         set_config(trusted_modules=frozenset({"custom"}))

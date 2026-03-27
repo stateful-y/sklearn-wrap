@@ -88,7 +88,8 @@ def set_config(*, trusted_modules: frozenset[str] | None = None) -> None:
     config_context : Temporarily update the configuration.
     reset_config : Restore default configuration.
     """
-    if not hasattr(_threadlocal, "config"):
+    local_config = getattr(_threadlocal, "config", None)
+    if local_config is None:
         _threadlocal.config = {}
     if trusted_modules is not None:
         _threadlocal.config["trusted_modules"] = trusted_modules
