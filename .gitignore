@@ -138,3 +138,4 @@ llm-instructions/
 .cursor/
 .aider*
 .continue/
+.git-commit-msg
