@@ -10,7 +10,8 @@
 # YAML Configuration
 
 Define, save, and load scikit-learn estimator configurations as YAML files.
-Use YAML anchors for shared defaults and `!include` for multi-file composition.
+Use YAML anchors for shared defaults, `!include` for multi-file composition,
+and built-in parameter validation to catch typos before runtime.
 """
 
 import marimo
@@ -41,9 +42,9 @@ def _():
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import StandardScaler
 
-    from sklearn_wrap.config import EstimatorConfig
+    from sklearn_wrap.config import EstimatorConfig, config_context, get_config, set_config
 
-    return EstimatorConfig, Path, Pipeline, Ridge, StandardScaler, np, tempfile, textwrap
+    return EstimatorConfig, Path, Pipeline, Ridge, StandardScaler, config_context, get_config, np, set_config, tempfile, textwrap
 
 
 @app.cell(hide_code=True)
@@ -53,6 +54,8 @@ def _(mo):
 
     - How to define estimator configurations as YAML
     - How to build estimators from YAML configs
+    - How parameter validation catches config mistakes early
+    - How to manage trusted modules globally with `set_config` / `config_context`
     - How to capture an existing estimator's configuration
     - How YAML anchors and merge keys enable shared defaults
     - How `!include` composes configs from multiple files
@@ -258,18 +261,82 @@ def _(EstimatorConfig, Path, np, tempfile, textwrap):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Security
+    ## 7. Parameter Validation
 
-    By default, only classes from `sklearn` and `sklearn_wrap` can be resolved.
-    Pass `trusted_modules` to `build()` to allow additional packages:
-
-    ```python
-    config.build(trusted_modules=frozenset({"sklearn", "sklearn_wrap", "xgboost"}))
-    ```
-
-    This prevents arbitrary code execution from untrusted YAML files.
+    `build()` validates parameter names against the target class constructor
+    *before* instantiation. Typos in YAML are caught immediately instead of
+    producing a cryptic `TypeError` at runtime.
     """)
     return
+
+
+@app.cell
+def _(EstimatorConfig, mo):
+    bad_config = EstimatorConfig(
+        estimator_class="sklearn.linear_model.Ridge",
+        params={"alpha": 1.0, "allpha": 2.0},  # typo!
+    )
+
+    try:
+        bad_config.build()
+    except ValueError as exc:
+        mo.output.replace(mo.md(f"**Caught at build time:** `{exc}`"))
+    return (bad_config,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
+    If a class accepts `**kwargs` (like `Pipeline`), extra parameter names are
+    allowed. You can also disable validation with `validate_params=False`.
+    """)
+    return
+
+
+@app.cell
+def _(EstimatorConfig):
+    # Pipeline accepts **kwargs - no false positives
+    pipe_cfg = EstimatorConfig(
+        estimator_class="sklearn.pipeline.Pipeline",
+        params={
+            "steps": [
+                ["ridge", {"estimator_class": "sklearn.linear_model.Ridge"}],
+            ],
+            "memory": None,
+        },
+    )
+    pipe = pipe_cfg.build()
+    print(f"Pipeline built with validation: {[name for name, _ in pipe.steps]}")
+    return pipe, pipe_cfg
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
+    ## 8. Global Trusted Modules
+
+    By default, only `sklearn` and `sklearn_wrap` classes can be resolved.
+    Instead of passing `trusted_modules` to every `build()` call, use
+    `set_config` to register packages globally, or `config_context` for
+    a temporary scope.
+    """)
+    return
+
+
+@app.cell
+def _(EstimatorConfig, config_context, get_config, mo, set_config):
+    # Check the defaults
+    defaults = get_config()["trusted_modules"]
+    mo.output.replace(mo.md(f"Default trusted modules: `{sorted(defaults)}`"))
+
+    # Temporarily trust builtins
+    with config_context(trusted_modules=frozenset({"sklearn", "sklearn_wrap", "builtins"})):
+        d = EstimatorConfig(estimator_class="builtins.dict").build()
+        print(f"Inside context: built {type(d).__name__}")
+
+    # Back to defaults outside the context
+    print(f"After context: trusted modules = {sorted(get_config()['trusted_modules'])}")
+    return d, defaults
 
 
 if __name__ == "__main__":
