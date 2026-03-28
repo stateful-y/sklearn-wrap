@@ -15,290 +15,280 @@ from sklearn_wrap.base import BaseClassWrapper, _fit_context
 
 from .conftest import BaseTestClass, NotBaseClass, SimpleEstimator, SimpleWrapper
 
-# ============================================================================
-# Basic _fit_context Decorator Tests
-# ============================================================================
 
+class TestBasicFitContext:
+    """Tests for basic _fit_context decorator functionality."""
 
-def test_fit_context_decorator_basic():
-    """Test the _fit_context decorator functionality."""
+    def test_decorator_basic(self):
+        """Test the _fit_context decorator functionality."""
 
-    class FittableWrapper(SimpleWrapper):
-        def __init__(self, simple, **params):
-            super().__init__(simple=simple, **params)
-            self.fit_called = False
+        class FittableWrapper(SimpleWrapper):
+            def __init__(self, simple, **params):
+                super().__init__(simple=simple, **params)
+                self.fit_called = False
 
-        @_fit_context(prefer_skip_nested_validation=True)
-        def fit(self, X, y=None):
-            self.fit_called = True
-            return self
+            @_fit_context(prefer_skip_nested_validation=True)
+            def fit(self, X, y=None):
+                self.fit_called = True
+                return self
 
-    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
-    X = [[1, 2], [3, 4]]
-    y = [0, 1]
+        wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
+        X = [[1, 2], [3, 4]]
+        y = [0, 1]
 
-    # Call fit - should trigger instantiate via decorator
-    wrapper.fit(X, y)
-
-    assert wrapper.fit_called
-    assert hasattr(wrapper, "instance_")
-    assert isinstance(wrapper.instance_, SimpleEstimator)
-
-
-def test_fit_context_sets_fitted_flag():
-    """Test that _fit_context decorator sets _fitted flag after successful fit."""
-
-    class FittableWrapper(SimpleWrapper):
-        @_fit_context(prefer_skip_nested_validation=True)
-        def fit(self, X, y=None):
-            return self
-
-    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
-    X = [[1, 2], [3, 4]]
-
-    # Before fit
-    assert wrapper.__sklearn_is_fitted__() is False
-
-    # After fit
-    wrapper.fit(X)
-    assert wrapper.__sklearn_is_fitted__() is True
-
-
-# ============================================================================
-# partial_fit Tests
-# ============================================================================
-
-
-def test_fit_context_decorator_partial_fit():
-    """Test _fit_context decorator with partial_fit when already fitted."""
-
-    class PartialFittableWrapper(SimpleWrapper):
-        def __init__(self, simple, **params):
-            super().__init__(simple=simple, **params)
-            self.partial_fit_count = 0
-            self.instantiate_count = 0
-
-        def instantiate(self):
-            self.instantiate_count += 1
-            return super().instantiate()
-
-        @_fit_context(prefer_skip_nested_validation=True)
-        def partial_fit(self, X, y=None):
-            self.partial_fit_count += 1
-            return self
-
-    wrapper = PartialFittableWrapper(simple=SimpleEstimator, required_param=5)
-    X = [[1, 2], [3, 4]]
-    y = [0, 1]
-
-    # First call to partial_fit - should instantiate
-    wrapper.partial_fit(X, y)
-    assert wrapper.partial_fit_count == 1
-    assert wrapper.instantiate_count == 1
-
-    # Mark as fitted
-    wrapper.is_fitted_ = True
-
-    # Second call to partial_fit - should NOT instantiate again
-    wrapper.partial_fit(X, y)
-    assert wrapper.partial_fit_count == 2
-    # instantiate_count should still be 1 because it's already fitted
-    assert wrapper.instantiate_count == 1
-
-
-def test_fit_context_partial_fit_reinstantiates_when_not_fitted():
-    """Test that partial_fit reinstantiates if estimator is not fitted."""
-
-    class PartialFittableWrapper(SimpleWrapper):
-        def __init__(self, simple, **params):
-            super().__init__(simple=simple, **params)
-            self.instantiate_count = 0
-
-        def instantiate(self):
-            self.instantiate_count += 1
-            return super().instantiate()
-
-        @_fit_context(prefer_skip_nested_validation=True)
-        def partial_fit(self, X, y=None):
-            return self
-
-    wrapper = PartialFittableWrapper(simple=SimpleEstimator, required_param=5)
-    X = [[1, 2], [3, 4]]
-
-    # First call - should instantiate
-    wrapper.partial_fit(X)
-    assert wrapper.instantiate_count == 1
-
-    # Don't set is_fitted_ - call again
-    wrapper.partial_fit(X)
-    # Should instantiate again since not marked as fitted
-    assert wrapper.instantiate_count == 2
-
-
-# ============================================================================
-# Objects Without instantiate Method
-# ============================================================================
-
-
-def test_fit_context_decorator_without_instantiate():
-    """Test _fit_context decorator on object without instantiate method."""
-
-    class SimpleEstimatorClass:
-        def __init__(self):
-            self.fit_called = False
-
-        @_fit_context(prefer_skip_nested_validation=True)
-        def fit(self, X, y=None):
-            self.fit_called = True
-            return self
-
-    estimator = SimpleEstimatorClass()
-    X = [[1, 2], [3, 4]]
-    y = [0, 1]
-
-    # Should work fine even without instantiate method
-    estimator.fit(X, y)
-    assert estimator.fit_called
-
-
-# ============================================================================
-# Config Context Tests
-# ============================================================================
-
-
-def test_fit_context_decorator_with_skip_validation_config():
-    """Test _fit_context decorator with global skip_parameter_validation config."""
-
-    class FittableWrapper(SimpleWrapper):
-        def __init__(self, simple, **params):
-            super().__init__(simple=simple, **params)
-            self.fit_called = False
-            self.validate_params_called = False
-
-        def _validate_params(self):
-            self.validate_params_called = True
-            super()._validate_params()
-
-        @_fit_context(prefer_skip_nested_validation=False)
-        def fit(self, X, y=None):
-            self.fit_called = True
-            return self
-
-    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
-    X = [[1, 2], [3, 4]]
-    y = [0, 1]
-
-    # Test with skip_parameter_validation=True
-    with config_context(skip_parameter_validation=True):
         wrapper.fit(X, y)
+
         assert wrapper.fit_called
-        # instantiate() is called which calls _validate_params
-        assert wrapper.validate_params_called
+        assert hasattr(wrapper, "instance_")
+        assert isinstance(wrapper.instance_, SimpleEstimator)
+
+    def test_sets_fitted_flag(self):
+        """Test that _fit_context decorator sets fitted flag after successful fit."""
+
+        class FittableWrapper(SimpleWrapper):
+            @_fit_context(prefer_skip_nested_validation=True)
+            def fit(self, X, y=None):
+                return self
+
+        wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
+        X = [[1, 2], [3, 4]]
+
+        assert wrapper.__sklearn_is_fitted__() is False
+
+        wrapper.fit(X)
+        assert wrapper.__sklearn_is_fitted__() is True
 
 
-def test_fit_context_prefer_skip_nested_validation():
-    """Test _fit_context with prefer_skip_nested_validation parameter."""
+class TestPartialFit:
+    """Tests for partial_fit behavior with _fit_context."""
 
-    class FittableWrapper(SimpleWrapper):
-        @_fit_context(prefer_skip_nested_validation=True)
-        def fit(self, X, y=None):
-            return self
+    def test_skips_reinstantiation_when_fitted(self):
+        """Test _fit_context decorator with partial_fit when already fitted."""
 
-    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
-    X = [[1, 2], [3, 4]]
+        class PartialFittableWrapper(SimpleWrapper):
+            def __init__(self, simple, **params):
+                super().__init__(simple=simple, **params)
+                self.partial_fit_count = 0
+                self.instantiate_count = 0
 
-    # Should work with prefer_skip_nested_validation=True
-    wrapper.fit(X)
-    assert hasattr(wrapper, "instance_")
+            def instantiate(self):
+                self.instantiate_count += 1
+                return super().instantiate()
+
+            @_fit_context(prefer_skip_nested_validation=True)
+            def partial_fit(self, X, y=None):
+                self.partial_fit_count += 1
+                return self
+
+        wrapper = PartialFittableWrapper(simple=SimpleEstimator, required_param=5)
+        X = [[1, 2], [3, 4]]
+        y = [0, 1]
+
+        wrapper.partial_fit(X, y)
+        assert wrapper.partial_fit_count == 1
+        assert wrapper.instantiate_count == 1
+
+        wrapper.is_fitted_ = True
+
+        wrapper.partial_fit(X, y)
+        assert wrapper.partial_fit_count == 2
+        assert wrapper.instantiate_count == 1
+
+    def test_reinstantiates_when_not_fitted(self):
+        """Test that partial_fit reinstantiates if estimator is not fitted."""
+
+        class PartialFittableWrapper(SimpleWrapper):
+            def __init__(self, simple, **params):
+                super().__init__(simple=simple, **params)
+                self.instantiate_count = 0
+
+            def instantiate(self):
+                self.instantiate_count += 1
+                return super().instantiate()
+
+            @_fit_context(prefer_skip_nested_validation=True)
+            def partial_fit(self, X, y=None):
+                return self
+
+        wrapper = PartialFittableWrapper(simple=SimpleEstimator, required_param=5)
+        X = [[1, 2], [3, 4]]
+
+        wrapper.partial_fit(X)
+        assert wrapper.instantiate_count == 1
+
+        wrapper.partial_fit(X)
+        assert wrapper.instantiate_count == 2
 
 
-def test_fit_context_without_prefer_skip_nested_validation():
-    """Test _fit_context with prefer_skip_nested_validation=False."""
+class TestNonEstimatorObjects:
+    """Tests for _fit_context on objects without instantiate method."""
 
-    class FittableWrapper(SimpleWrapper):
-        @_fit_context(prefer_skip_nested_validation=False)
-        def fit(self, X, y=None):
-            return self
+    def test_without_instantiate(self):
+        """Test _fit_context decorator on object without instantiate method."""
 
-    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
-    X = [[1, 2], [3, 4]]
+        class SimpleEstimatorClass:
+            def __init__(self):
+                self.fit_called = False
 
-    # Should still work
-    wrapper.fit(X)
-    assert hasattr(wrapper, "instance_")
+            @_fit_context(prefer_skip_nested_validation=True)
+            def fit(self, X, y=None):
+                self.fit_called = True
+                return self
+
+        estimator = SimpleEstimatorClass()
+        X = [[1, 2], [3, 4]]
+        y = [0, 1]
+
+        estimator.fit(X, y)
+        assert estimator.fit_called
 
 
-# ============================================================================
-# Edge Cases
-# ============================================================================
+class TestConfigContext:
+    """Tests for _fit_context interaction with sklearn config_context."""
+
+    def test_with_skip_validation_config(self):
+        """Test _fit_context decorator with global skip_parameter_validation config."""
+
+        class FittableWrapper(SimpleWrapper):
+            def __init__(self, simple, **params):
+                super().__init__(simple=simple, **params)
+                self.fit_called = False
+                self.validate_params_called = False
+
+            def _validate_params(self):
+                self.validate_params_called = True
+                super()._validate_params()
+
+            @_fit_context(prefer_skip_nested_validation=False)
+            def fit(self, X, y=None):
+                self.fit_called = True
+                return self
+
+        wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
+        X = [[1, 2], [3, 4]]
+        y = [0, 1]
+
+        with config_context(skip_parameter_validation=True):
+            wrapper.fit(X, y)
+            assert wrapper.fit_called
+            assert wrapper.validate_params_called
+
+    def test_prefer_skip_nested_validation_true(self):
+        """Test _fit_context with prefer_skip_nested_validation=True."""
+
+        class FittableWrapper(SimpleWrapper):
+            @_fit_context(prefer_skip_nested_validation=True)
+            def fit(self, X, y=None):
+                return self
+
+        wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
+        X = [[1, 2], [3, 4]]
+
+        wrapper.fit(X)
+        assert hasattr(wrapper, "instance_")
+
+    def test_prefer_skip_nested_validation_false(self):
+        """Test _fit_context with prefer_skip_nested_validation=False."""
+
+        class FittableWrapper(SimpleWrapper):
+            @_fit_context(prefer_skip_nested_validation=False)
+            def fit(self, X, y=None):
+                return self
+
+        wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
+        X = [[1, 2], [3, 4]]
+
+        wrapper.fit(X)
+        assert hasattr(wrapper, "instance_")
 
 
-def test_fit_context_with_exception():
-    """Test that _fit_context doesn't set fitted flag if fit raises exception."""
+class TestFitContextEdgeCases:
+    """Tests for _fit_context edge cases."""
 
-    class FittableWrapper(SimpleWrapper):
-        @_fit_context(prefer_skip_nested_validation=True)
-        def fit(self, X, y=None):
-            raise ValueError("Intentional error")
+    def test_exception_does_not_set_fitted(self):
+        """Test that _fit_context doesn't set fitted flag if fit raises exception."""
 
-    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
-    X = [[1, 2], [3, 4]]
+        class FittableWrapper(SimpleWrapper):
+            @_fit_context(prefer_skip_nested_validation=True)
+            def fit(self, X, y=None):
+                raise ValueError("Intentional error")
 
-    # Fit raises exception
-    with pytest.raises(ValueError, match="Intentional error"):
+        wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
+        X = [[1, 2], [3, 4]]
+
+        with pytest.raises(ValueError, match="Intentional error"):
+            wrapper.fit(X)
+
+        assert wrapper.__sklearn_is_fitted__() is False
+
+    def test_multiple_fits(self):
+        """Test calling fit multiple times with _fit_context."""
+
+        class FittableWrapper(SimpleWrapper):
+            def __init__(self, simple, **params):
+                super().__init__(simple=simple, **params)
+                self.fit_count = 0
+
+            @_fit_context(prefer_skip_nested_validation=True)
+            def fit(self, X, y=None):
+                self.fit_count += 1
+                return self
+
+        wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
+        X = [[1, 2], [3, 4]]
+
+        wrapper.fit(X)
+        assert wrapper.fit_count == 1
+        assert wrapper.__sklearn_is_fitted__() is True
+
+        wrapper.fit(X)
+        assert wrapper.fit_count == 2
+        assert wrapper.__sklearn_is_fitted__() is True
+
+    def test_validates_estimator_class(self):
+        """Test that _fit_context triggers validation via instantiate."""
+
+        class FittableWrapper(BaseClassWrapper):
+            _estimator_name = "simple"
+            _estimator_base_class = BaseTestClass
+
+            @_fit_context(prefer_skip_nested_validation=True)
+            def fit(self, X, y=None):
+                return self
+
+        wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
+        wrapper.estimator_class = NotBaseClass
+
+        X = [[1, 2], [3, 4]]
+
+        with pytest.raises(ValueError, match="should be derived from"):
+            wrapper.fit(X)
+
+    def test_fit_with_inplace_modification(self):
+        """Test _fit_context when fit method modifies X in place."""
+
+        class InplaceEstimator(BaseTestClass):
+            def __init__(self, scale=1):
+                self.scale = scale
+
+            def fit(self, X, y=None):
+                for row in X:
+                    for i in range(len(row)):
+                        row[i] *= self.scale
+                return self
+
+        class InplaceWrapper(BaseClassWrapper):
+            _estimator_name = "inplace"
+            _estimator_base_class = BaseTestClass
+
+            @_fit_context(prefer_skip_nested_validation=True)
+            def fit(self, X, y=None):
+                self.instance_.fit(X, y)
+                return self
+
+        wrapper = InplaceWrapper(inplace=InplaceEstimator, scale=2)
+        X = [[1, 2], [3, 4]]
         wrapper.fit(X)
 
-    # Should not be fitted
-    assert wrapper.__sklearn_is_fitted__() is False
-
-
-def test_fit_context_multiple_fits():
-    """Test calling fit multiple times with _fit_context."""
-
-    class FittableWrapper(SimpleWrapper):
-        def __init__(self, simple, **params):
-            super().__init__(simple=simple, **params)
-            self.fit_count = 0
-
-        @_fit_context(prefer_skip_nested_validation=True)
-        def fit(self, X, y=None):
-            self.fit_count += 1
-            return self
-
-    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
-    X = [[1, 2], [3, 4]]
-
-    # First fit
-    wrapper.fit(X)
-    assert wrapper.fit_count == 1
-    assert wrapper.__sklearn_is_fitted__() is True
-
-    # Second fit - should re-instantiate and fit again
-    wrapper.fit(X)
-    assert wrapper.fit_count == 2
-    # Should still be fitted after second fit
-    assert wrapper.__sklearn_is_fitted__() is True
-
-
-def test_fit_context_validates_estimator_class():
-    """Test that _fit_context triggers validation via instantiate."""
-
-    class FittableWrapper(BaseClassWrapper):
-        _estimator_name = "simple"
-        _estimator_base_class = BaseTestClass
-
-        @_fit_context(prefer_skip_nested_validation=True)
-        def fit(self, X, y=None):
-            return self
-
-    # Create wrapper with valid class
-    wrapper = FittableWrapper(simple=SimpleEstimator, required_param=5)
-
-    # Manually change to invalid class (bypass __init__ validation)
-    wrapper.estimator_class = NotBaseClass
-
-    X = [[1, 2], [3, 4]]
-
-    # Fit should trigger validation and raise error
-    with pytest.raises(ValueError, match="should be derived from"):
-        wrapper.fit(X)
+        assert wrapper.__sklearn_is_fitted__() is True
+        assert X == [[2, 4], [6, 8]]

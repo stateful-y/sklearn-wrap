@@ -30,6 +30,8 @@ def test_coverage(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "tests",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -60,6 +62,8 @@ def test(session: nox.Session) -> None:
         "tests",
         "--group",
         "examples",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -87,6 +91,8 @@ def test_fast(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "tests",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -115,6 +121,8 @@ def test_slow(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "tests",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -151,6 +159,8 @@ def test_compat(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "tests",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -190,6 +200,8 @@ def test_examples(session: nox.Session) -> None:
         "tests",
         "--group",
         "examples",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -217,6 +229,8 @@ def test_docstrings(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "tests",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -265,10 +279,21 @@ def fix(session: nox.Session) -> None:
         "--no-default-groups",
         "--group",
         "dev",
+        "--extra",
+        "config",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
-    # Run pre-commit
-    session.run("pre-commit", "run", "--all-files", "--show-diff-on-failure", *session.posargs, external=True)
+    # Run pre-commit - pass UV_PROJECT_ENVIRONMENT so that `uv run` inside hooks
+    # (e.g. the ty hook) uses this session's venv where pydantic is installed.
+    session.run(
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--show-diff-on-failure",
+        *session.posargs,
+        external=True,
+        env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
+    )
 
 
 @nox.session(venv_backend="uv")

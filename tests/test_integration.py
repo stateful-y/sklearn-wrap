@@ -26,10 +26,6 @@ from sklearn_wrap.base import BaseClassWrapper, _fit_context
 
 from .conftest import BaseTestClass
 
-# ============================================================================
-# Test Estimator Classes
-# ============================================================================
-
 
 class SimpleRegressorClass(BaseTestClass):
     """Simple regressor for testing."""
@@ -60,11 +56,6 @@ class SimpleClassifierClass(BaseTestClass):
         # Simple prediction based on distance to mean
         distances = np.sum((X - self.mean_) ** 2, axis=1)
         return (distances > self.threshold).astype(int)
-
-
-# ============================================================================
-# Wrapper Classes
-# ============================================================================
 
 
 class RegressorWrapper(RegressorMixin, BaseClassWrapper):
@@ -105,11 +96,6 @@ class ClassifierWrapper(ClassifierMixin, BaseClassWrapper):
         return accuracy_score(y, self.predict(X))
 
 
-# ============================================================================
-# Pipeline Integration Tests
-# ============================================================================
-
-
 @pytest.mark.integration
 class TestPipelineIntegration:
     """Test integration with sklearn Pipeline."""
@@ -144,11 +130,6 @@ class TestPipelineIntegration:
         pipeline.fit(X, y)
         predictions = pipeline.predict(X)
         assert predictions.shape == (100,)
-
-
-# ============================================================================
-# GridSearchCV Integration Tests
-# ============================================================================
 
 
 @pytest.mark.integration
@@ -201,11 +182,6 @@ class TestGridSearchCVIntegration:
         assert predictions.shape == (100,)
 
 
-# ============================================================================
-# cross_val_score Integration Tests
-# ============================================================================
-
-
 @pytest.mark.integration
 class TestCrossValScoreIntegration:
     """Test integration with sklearn cross_val_score."""
@@ -233,11 +209,6 @@ class TestCrossValScoreIntegration:
 
         assert len(scores) == 3
         assert all(isinstance(s, int | float) for s in scores)
-
-
-# ============================================================================
-# Ensemble Integration Tests
-# ============================================================================
 
 
 @pytest.mark.integration
@@ -296,11 +267,6 @@ class TestEnsembleIntegration:
         predictions = stacking.predict(X)
 
         assert predictions.shape == (100,)
-
-
-# ============================================================================
-# Real-World Scenario Tests
-# ============================================================================
 
 
 @pytest.mark.integration
