@@ -17,44 +17,64 @@ With Sklearn-Wrap, you gain immediate access to GridSearchCV for hyperparameter 
 
     Install Sklearn-Wrap and create your first wrapper. Learn the basic pattern and immediately gain meta estimator compatibility.
 
-    [Getting Started](pages/getting-started.md)
+    [Getting Started](pages/tutorials/getting-started.md)
 
-- **Need Help?**
-
-    ---
-
-    Find answers and join the community. Ask questions, share experiences, and get help from maintainers and other users on GitHub Discussions.
-
-    [GitHub Discussions](https://github.com/stateful-y/sklearn-wrap/discussions)
-
-- **Learn the Concepts**
+- **How-to Guides**
 
     ---
 
-    Understand the wrapper pattern, parameter interface, and decorator mechanics. Dive deep into how Sklearn-Wrap integrates with Scikit-Learn's ecosystem.
+    Task-oriented guides for wrapping classes, validating parameters, YAML configuration, GridSearchCV integration, and nesting wrappers.
 
-    [User Guide](pages/user-guide.md)
+    [How-to Guides](pages/how-to/wrap-a-class.md)
 
-- **See It In Action**
+- **Understand the Design**
 
     ---
 
-    Explore interactive examples from basics to advanced patterns. Each notebook demonstrates one concept with hands-on code you can modify and run interactively.
+    Learn why the delegation pattern works, how `_fit_context` manages the lifecycle, and the trade-offs of composition over inheritance.
 
-    [Examples](pages/examples.md)
+    [Core Concepts](pages/explanation/concepts.md)
+
+- **API Reference**
+
+    ---
+
+    Complete reference for all Sklearn-Wrap classes, functions, and configuration options.
+
+    [API Reference](pages/reference/api.md)
 
 </div>
 
 ## Table of Contents
 
-### [Getting started](pages/getting-started.md)
+### [Tutorials](pages/tutorials/getting-started.md)
 
 Step-by-step guide to installing and setting up Sklearn-Wrap in your project.
 
-- [Installation](pages/getting-started.md#installation)
-- [Basic Usage](pages/getting-started.md#basic-usage)
-- [Try Interactive Examples](pages/getting-started.md#try-interactive-examples)
+- [Getting Started](pages/tutorials/getting-started.md)
 
+### [How-to Guides](pages/how-to/wrap-a-class.md)
+
+Task-oriented guides for common workflows.
+
+- [Wrap a Class](pages/how-to/wrap-a-class.md)
+- [Validate Parameters](pages/how-to/validate-parameters.md)
+- [Use YAML Configuration](pages/how-to/yaml-configuration.md)
+- [Use with GridSearchCV](pages/how-to/use-with-gridsearch.md)
+- [Nest Wrappers](pages/how-to/nest-wrappers.md)
+
+### [Reference](pages/reference/api.md)
+
+Detailed reference for the Sklearn-Wrap API, classes, functions, and configuration options.
+
+- [API Reference](pages/reference/api.md)
+- [Configuration](pages/reference/configuration.md)
+
+### [Explanation](pages/explanation/concepts.md)
+
+Background on design decisions, architecture, and core concepts.
+
+- [Core Concepts](pages/explanation/concepts.md)
 
 ### [Examples](pages/examples.md)
 
@@ -62,19 +82,6 @@ Interactive notebooks demonstrating Sklearn-Wrap features.
 
 - [Gallery](pages/examples.md#examples)
 - [Running Locally](pages/examples.md#running-examples-locally)
-
-
-### [User guide](pages/user-guide.md)
-
-In-depth documentation on the design, architecture, and core concepts.
-
-- [Core Concepts](pages/user-guide.md#core-concepts)
-- [Configuration](pages/user-guide.md#configuration)
-- [Best Practices](pages/user-guide.md#best-practices)
-
-### [Reference](pages/api-reference/)
-
-Detailed reference for the Sklearn-Wrap API, including classes, functions, and configuration options.
 
 ## License
 

@@ -525,7 +525,7 @@ def _build_module_toc(config, current_src_path=None):
     api_dir = docs_dir / "pages" / "api"
     project_root = docs_dir.parent
 
-    is_index = current_src_path is None or current_src_path == "pages/api-reference.md"
+    is_index = current_src_path is None or current_src_path == "pages/reference/api.md"
 
     modules = _get_submodules(project_root)
     module_toc = []
@@ -538,8 +538,8 @@ def _build_module_toc(config, current_src_path=None):
 
         # Compute relative URL
         if is_index:
-            # api-reference.md is at pages/api-reference/, submodule pages at pages/api/
-            page_url = f"../api/{md_filename.replace('.md', '/')}"
+            # reference/api.md is at pages/reference/api/, submodule pages at pages/api/
+            page_url = f"../../api/{md_filename.replace('.md', '/')}"
         else:
             page_url = f"../{md_filename.replace('.md', '/')}".replace("//", "/")
 
@@ -899,7 +899,7 @@ def on_page_content(html, page, config, files):
     if src.startswith("pages/api/generated/"):
         html = _process_api_page_content(html, page, config)
 
-    if src == "pages/api-reference.md":
+    if src == "pages/reference/api.md":
         # API index: flat module list (api-index.html template)
         page.meta["module_toc"] = _build_module_toc(config, current_src_path=src)
     elif (

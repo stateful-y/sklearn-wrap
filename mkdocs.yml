@@ -137,11 +137,21 @@ plugins:
 
 nav:
   - Home: index.md
-  - Getting Started: pages/getting-started.md
-  - User Guide: pages/user-guide.md
+  - Tutorials:
+    - Getting Started: pages/tutorials/getting-started.md
+  - How-to Guides:
+    - Wrap a Class: pages/how-to/wrap-a-class.md
+    - Validate Parameters: pages/how-to/validate-parameters.md
+    - Use YAML Configuration: pages/how-to/yaml-configuration.md
+    - Use with GridSearchCV: pages/how-to/use-with-gridsearch.md
+    - Nest Wrappers: pages/how-to/nest-wrappers.md
+    - Contributing: pages/how-to/contribute.md
+  - Reference:
+    - API Reference: pages/reference/api.md
+    - Configuration: pages/reference/configuration.md
+  - Explanation:
+    - Core Concepts: pages/explanation/concepts.md
   - Examples: pages/examples.md
-  - API Reference: pages/api-reference.md
-  - Contributing: pages/contributing.md
 
 extra:
   social:

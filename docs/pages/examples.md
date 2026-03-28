@@ -12,6 +12,6 @@ Explore Sklearn-Wrap through focused, interactive examples. Each notebook demons
 
 ## Next Steps
 
-- **[User Guide](user-guide.md)** – Deep dive into core concepts and architecture
-- **[API Reference](api-reference.md)** – Complete BaseClassWrapper documentation
-- **[Contributing](contributing.md)** – Add your own examples or improve existing ones
+- **[Core Concepts](explanation/concepts.md)** - Understand the delegation pattern and design
+- **[API Reference](reference/api.md)** - Complete BaseClassWrapper documentation
+- **[Contributing](how-to/contribute.md)** - Add your own examples or improve existing ones
