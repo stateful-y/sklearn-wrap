@@ -176,4 +176,4 @@ You have wrapped a custom Python class into a Scikit-Learn compatible estimator.
 - [How to Wrap a Class](../how-to/wrap-a-class.md) - detailed reference for regressor, classifier, and transformer wrappers
 - [About Core Concepts](../explanation/concepts.md) - understand the delegation pattern and architecture
 - [API Reference](../reference/api.md) - full `BaseClassWrapper` documentation
-- [Examples](../examples.md) - interactive notebooks demonstrating all features
+- [Examples](examples.md) - interactive notebooks demonstrating all features

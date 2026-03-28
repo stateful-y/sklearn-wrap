@@ -207,6 +207,7 @@ Run tests across multiple Python versions:
     ```bash
     uvx nox -s test
     ```
+
 Run example notebook tests:
 
 === "just"
@@ -228,6 +229,8 @@ Run example notebook tests:
     ```
 
 This runs all notebooks in the `examples/` directory as Python scripts in parallel using pytest-xdist (`-n auto`). Each notebook is executed non-interactively to validate it runs without errors.
+
+
 #### When to Mark Tests as Slow or Integration
 
 Mark your tests appropriately to help maintain fast feedback during development:
@@ -248,6 +251,7 @@ Mark your tests appropriately to help maintain fast feedback during development:
   - Validate example notebooks execute without errors
   - Run notebooks in the `examples/` directory
   - Test interactive documentation and tutorials
+
 
 Example:
 
@@ -519,7 +523,7 @@ Run the example test suite to verify your notebook passes:
     uv run pytest tests/test_examples.py -m example
     ```
 
-Add a link to your example in `docs/pages/examples.md`:
+Add a link to your example in `docs/pages/tutorials/examples.md`:
 
 ```markdown
 - [Example Name](../examples/<name>/) - Brief description

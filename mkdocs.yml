@@ -139,6 +139,7 @@ nav:
   - Home: index.md
   - Tutorials:
     - Getting Started: pages/tutorials/getting-started.md
+    - Examples: pages/tutorials/examples.md
   - How-to Guides:
     - Wrap a Class: pages/how-to/wrap-a-class.md
     - Validate Parameters: pages/how-to/validate-parameters.md
@@ -147,11 +148,10 @@ nav:
     - Nest Wrappers: pages/how-to/nest-wrappers.md
     - Contributing: pages/how-to/contribute.md
   - Reference:
-    - API Reference: pages/reference/api.md
+    - API: pages/reference/api.md
     - Configuration: pages/reference/configuration.md
   - Explanation:
-    - Core Concepts: pages/explanation/concepts.md
-  - Examples: pages/examples.md
+    - Concepts: pages/explanation/concepts.md
 
 extra:
   social:

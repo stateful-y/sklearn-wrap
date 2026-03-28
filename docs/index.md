@@ -52,6 +52,7 @@ With Sklearn-Wrap, you gain immediate access to GridSearchCV for hyperparameter 
 Step-by-step guide to installing and setting up Sklearn-Wrap in your project.
 
 - [Getting Started](pages/tutorials/getting-started.md)
+- [Examples](pages/tutorials/examples.md)
 
 ### [How-to Guides](pages/how-to/wrap-a-class.md)
 
@@ -75,13 +76,6 @@ Detailed reference for the Sklearn-Wrap API, classes, functions, and configurati
 Background on design decisions, architecture, and core concepts.
 
 - [Core Concepts](pages/explanation/concepts.md)
-
-### [Examples](pages/examples.md)
-
-Interactive notebooks demonstrating Sklearn-Wrap features.
-
-- [Gallery](pages/examples.md#examples)
-- [Running Locally](pages/examples.md#running-examples-locally)
 
 ## License
 
