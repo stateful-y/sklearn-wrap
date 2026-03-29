@@ -8,17 +8,20 @@
 # ]
 # ///
 """
-# Nested Parameters
+# How to Control Nested Wrapper Parameters
 
-Master the `__` syntax for controlling parameters in nested estimator hierarchies.
+This notebook shows how to use the double-underscore (`__`) syntax
+for controlling parameters in nested estimator hierarchies.
 """
 
 import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "Nested Wrappers",
+    "title": "How to Control Nested Wrapper Parameters",
     "description": "Control nested estimator hierarchies with double-underscore parameter syntax.",
+    "category": "how-to",
+    "companion": "pages/how-to/nest-wrappers.md",
 }
 app = marimo.App(width="medium")
 
@@ -41,16 +44,11 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## What You'll Learn
+    In this tutorial we build an ensemble wrapper that contains two inner wrappers.
+    We will inspect the nested parameter structure, modify parameters at any depth
+    with the `__` syntax, and see how sklearn renders the hierarchy.
 
-    - How the double-underscore (`__`) syntax controls parameters in nested estimator hierarchies
-    - How `get_params(deep=True)` expands nested parameter structures
-    - How to use `set_params()` with `__` notation to modify parameters at any nesting depth
-    - How nested estimators display in HTML representations
-
-    ## Prerequisites
-
-    Familiarity with first_wrapper.py and parameter_interface.py.
+    **Prerequisites** - Familiarity with [first_wrapper.py](first_wrapper.py) and [parameter_interface.py](parameter_interface.py).
     """)
     return
 
@@ -117,7 +115,7 @@ def _(BaseClassWrapper):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 1. Create Nested Estimator
+    ## 1. Creating a Nested Estimator
     """)
     return
 
@@ -295,9 +293,10 @@ def create_regression_scatter(X_train, y_train, X_test, y_test, X_plot, y_pred_p
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 4. Nested Parameter Modification
+    ## 4. Modifying Nested Parameters
 
-    Use `set_params` with `__` syntax to modify nested parameters without recreating the estimator.
+    We can use `set_params()` with `__` syntax to modify nested parameters without
+    recreating the estimator.
     """)
     return
 
@@ -327,7 +326,8 @@ def _(mo):
     mo.md("""
     ## 5. HTML Representation
 
-    The nested estimator structure displays correctly with all parameter hierarchies.
+    Notice that the nested structure renders correctly, showing the full parameter
+    hierarchy at a glance.
     """)
     return
 
@@ -349,23 +349,14 @@ def _(ensemble):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Key Takeaways
+    ## What We Built
 
-    - **`estimator__param` syntax** accesses nested parameters at any depth
-    - **`get_params(deep=True)`** reveals the full parameter hierarchy
-    - **GridSearchCV** can search nested parameter spaces using `__` notation
-    - **`set_params()`** with `__` syntax modifies nested parameters without recreating the estimator
-    - **HTML representation** shows the complete nested structure
-    """)
-    return
+    We built a two-level estimator hierarchy and used the `__` syntax to inspect and
+    modify parameters at every level. This same syntax is what `GridSearchCV` uses to
+    search nested parameter spaces.
 
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md("""
-    ## Next Steps
-
-    **Continue to:** [fit_context.py](fit_context.py) - Understand the `_fit_context` decorator and automatic validation control
+    Next: [fit_context.py](fit_context.py) covers the `_fit_context` decorator and
+    automatic validation control.
     """)
     return
 

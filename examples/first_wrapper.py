@@ -10,8 +10,8 @@
 """
 # Your First Wrapper
 
-Create a minimal sklearn-compatible wrapper for any Python class using BaseClassWrapper.
-Wrap a custom polynomial regression algorithm that doesn't follow sklearn conventions.
+In this notebook, we wrap a custom Python class into a scikit-learn compatible
+estimator using BaseClassWrapper.
 """
 
 import marimo
@@ -20,6 +20,8 @@ __generated_with = "0.19.8"
 __gallery__ = {
     "title": "A First Wrapper",
     "description": "Create a minimal sklearn-compatible wrapper for any Python class using BaseClassWrapper.",
+    "category": "tutorial",
+    "companion": "pages/tutorials/getting-started.md",
 }
 app = marimo.App(width="medium")
 
@@ -42,16 +44,12 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## What You'll Learn
+    In this notebook, we wrap a custom Python class into a scikit-learn
+    compatible estimator using `BaseClassWrapper`. We bridge non-standard method
+    names to sklearn's `fit`/`predict` interface and explore the result
+    interactively.
 
-    - How to wrap a non-sklearn Python class into a scikit-learn compatible estimator
-    - The three essential components every wrapper needs: `_estimator_name`, `_estimator_base_class`, and `fit`/`predict`
-    - How to bridge custom method names (e.g., `train`/`compute_predictions`) to sklearn's `fit`/`predict` interface
-    - Interactive hyperparameter control with wrapped estimators
-
-    ## Prerequisites
-
-    None -- this is the starting point.
+    **Prerequisites:** None - this is the starting point.
     """)
     return
 
@@ -61,7 +59,7 @@ def _(mo):
     mo.md("""
     ## 1. The Pattern
 
-    Any Python class can become sklearn-compatible in 3 steps:
+    We wrap any Python class for sklearn in 3 steps:
 
     1. Inherit from `BaseClassWrapper`
     2. Set `_estimator_name` and `_estimator_base_class`
@@ -75,8 +73,8 @@ def _(mo):
     mo.md("""
     ## 2. Custom Polynomial Regressor
 
-    A non-sklearn class implementing polynomial regression with gradient descent.
-    This class has its own method names and doesn't inherit from BaseEstimator.
+    Let's define a non-sklearn class that implements polynomial regression with gradient descent.
+    It uses its own method names and doesn't inherit from BaseEstimator.
     """)
     return
 
@@ -132,7 +130,7 @@ def _(mo):
     mo.md("""
     ## 3. Wrap It for sklearn
 
-    The wrapper bridges the custom class to sklearn's interface.
+    Now we bridge the custom class to sklearn's interface.
     """)
     return
 
@@ -162,7 +160,7 @@ def _(mo):
     mo.md("""
     ## 4. Interactive Demo
 
-    Adjust hyperparameters and see results in real-time.
+    Let's adjust hyperparameters and see results in real-time.
     """)
     return
 
@@ -280,17 +278,9 @@ def _(
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## HTML Representation
+    ## 5. HTML Representation
 
-    Wrapped estimators display nicely in interactive environments (Jupyter, marimo, etc.).
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md("""
-    ### Fitted Estimator
+    Notice that wrapped estimators display nicely in interactive environments.
     """)
     return
 
@@ -304,23 +294,21 @@ def _(wrapper):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Key Takeaways
+    ## What We Built
 
-    - **BaseClassWrapper** bridges any Python class to sklearn's interface
-    - **`_estimator_name` and `_estimator_base_class`** are required class attributes for every wrapper
-    - **Method delegation** maps custom method names to sklearn's `fit`/`predict` convention
-    - **sklearn ecosystem** integration (GridSearchCV, Pipeline, joblib) works automatically
-    - **Parameter validation** and HTML representation come for free
-    """)
-    return
+    We wrapped a custom `PolynomialRegressor` class into an sklearn-compatible estimator
+    using `BaseClassWrapper`. Along the way, we:
 
+    - Defined `_estimator_name` and `_estimator_base_class` as required class attributes
+    - Bridged custom method names (`train`/`compute_predictions`) to sklearn's `fit`/`predict`
+    - Got free parameter validation and HTML representation
 
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md("""
-    ## Next Steps
+    **Next steps:**
 
-    **Continue to:** [parameter_interface.py](parameter_interface.py) - Master the get_params/set_params interface for parameter management and sklearn integration
+    - The parameter interface in depth:
+      [View](/examples/parameter_interface/) · [Open in marimo](/examples/parameter_interface/edit/)
+    - The fit context decorator:
+      [View](/examples/fit_context/) · [Open in marimo](/examples/fit_context/edit/)
     """)
     return
 

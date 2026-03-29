@@ -7,19 +7,19 @@
 # ]
 # ///
 """
-# YAML Configuration
+# How to Configure Estimators with YAML
 
-Define, save, and load scikit-learn estimator configurations as YAML files.
-Use YAML anchors for shared defaults, `!include` for multi-file composition,
-and built-in parameter validation to catch typos before runtime.
+Define, save, and load scikit-learn estimator configurations as validated YAML files.
 """
 
 import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "YAML Configuration",
-    "description": "Save and load estimator configurations as validated YAML files with inheritance support.",
+    "title": "How to Configure Estimators with YAML",
+    "description": "Define, save, and load estimator configurations as validated YAML files.",
+    "category": "how-to",
+    "companion": "pages/how-to/yaml-configuration.md",
 }
 app = marimo.App(width="medium")
 
@@ -50,15 +50,9 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## What You'll Learn
-
-    - How to define estimator configurations as YAML
-    - How to build estimators from YAML configs
-    - How parameter validation catches config mistakes early
-    - How to manage trusted modules globally with `set_config` / `config_context`
-    - How to capture an existing estimator's configuration
-    - How YAML anchors and merge keys enable shared defaults
-    - How `!include` composes configs from multiple files
+    This guide covers the `EstimatorConfig` API: building estimators from YAML,
+    capturing configs from existing estimators, composing multi-file configs with
+    `!include`, and validating parameters at build time.
     """)
     return
 
@@ -66,10 +60,10 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 1. Building an Estimator from a Config
+    ## 1. Build an Estimator from a Config
 
-    `EstimatorConfig` holds a dotted import path and constructor parameters.
-    Call `.build()` to get a ready-to-use estimator.
+    Create an `EstimatorConfig` with a dotted import path and parameters,
+    then call `.build()` to get a ready-to-use estimator.
     """)
     return
 
@@ -90,10 +84,10 @@ def _(EstimatorConfig):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 2. Capturing a Config from an Existing Estimator
+    ## 2. Capture a Config from an Existing Estimator
 
-    `EstimatorConfig.from_estimator()` inspects any sklearn-compatible estimator
-    and produces a config that can reproduce it.
+    Use `EstimatorConfig.from_estimator()` to inspect any sklearn-compatible
+    estimator and produce a reproducible config.
     """)
     return
 
@@ -113,8 +107,8 @@ def _(mo):
     mo.md("""
     ## 3. YAML Roundtrip
 
-    Save a config to YAML with `.to_yaml()`, load it back with `.from_yaml()`,
-    then `.build()` to get an identical estimator.
+    Save a config with `.to_yaml()`, load it with `.from_yaml()`, then
+    `.build()` to reconstruct the estimator.
     """)
     return
 
@@ -141,10 +135,10 @@ def _(EstimatorConfig, Path, Ridge, tempfile):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 4. YAML Anchors and Merge Keys
+    ## 4. Use YAML Anchors for Shared Defaults
 
-    Native YAML anchors (`&name`) and merge keys (`<<: *name`) let you define
-    shared parameter defaults and override them per estimator - no custom syntax needed.
+    Define shared parameter defaults with anchors (`&name`) and merge keys
+    (`<<: *name`), then override per estimator.
     """)
     return
 
@@ -175,10 +169,10 @@ def _(EstimatorConfig, Path, tempfile):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 5. Multi-file Composition with `!include`
+    ## 5. Compose Configs with `!include`
 
-    Split complex configurations across files. The `!include` tag loads and
-    inlines another YAML file, with paths resolved relative to the including file.
+    Split complex configurations across files. The `!include` tag loads another
+    YAML file inline, with paths resolved relative to the including file.
     """)
     return
 
@@ -223,9 +217,9 @@ def _(EstimatorConfig, Path, tempfile, textwrap):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 6. Fit and Predict from YAML Config
+    ## 6. Fit and Predict from a YAML Config
 
-    A complete workflow: load config, build estimator, fit, predict.
+    Load a config, build the estimator, fit, and predict - end to end.
     """)
     return
 
@@ -261,11 +255,10 @@ def _(EstimatorConfig, Path, np, tempfile, textwrap):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 7. Parameter Validation
+    ## 7. Validate Parameters
 
     `build()` validates parameter names against the target class constructor
-    *before* instantiation. Typos in YAML are caught immediately instead of
-    producing a cryptic `TypeError` at runtime.
+    before instantiation. Typos in YAML are caught immediately.
     """)
     return
 
@@ -313,11 +306,10 @@ def _(EstimatorConfig):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 8. Global Trusted Modules
+    ## 8. Manage Trusted Modules
 
-    By default, only `sklearn` and `sklearn_wrap` classes can be resolved.
-    Instead of passing `trusted_modules` to every `build()` call, use
-    `set_config` to register packages globally, or `config_context` for
+    By default only `sklearn` and `sklearn_wrap` classes can be resolved.
+    Use `set_config` to register packages globally, or `config_context` for
     a temporary scope.
     """)
     return
