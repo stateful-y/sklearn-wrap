@@ -20,6 +20,8 @@ __generated_with = "0.19.8"
 __gallery__ = {
     "title": "A First Wrapper",
     "description": "Create a minimal sklearn-compatible wrapper for any Python class using BaseClassWrapper.",
+    "category": "tutorial",
+    "companion": "pages/tutorials/getting-started.md",
 }
 app = marimo.App(width="medium")
 

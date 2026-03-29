@@ -17,8 +17,10 @@ import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "XGBoost Wrapper",
+    "title": "How to Wrap XGBoost",
     "description": "Wrap XGBoost's low-level Booster API into a scikit-learn compatible estimator.",
+    "category": "how-to",
+    "companion": "pages/how-to/wrap-a-class.md",
 }
 app = marimo.App(width="medium")
 

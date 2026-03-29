@@ -17,8 +17,10 @@ import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "Grid Search",
-    "description": "Hyperparameter tuning with GridSearchCV on wrapped estimators.",
+    "title": "Grid Search Integration",
+    "description": "Run GridSearchCV on wrapped estimators for hyperparameter tuning.",
+    "category": "tutorial",
+    "companion": "pages/how-to/use-with-gridsearch.md",
 }
 app = marimo.App(width="medium")
 

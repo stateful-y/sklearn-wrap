@@ -16,8 +16,10 @@ import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "Fit Context Decorator",
-    "description": "Understand the _fit_context decorator that powers automatic instantiation and validation.",
+    "title": "The Fit Context Decorator",
+    "description": "Use the _fit_context decorator to control instantiation and validation in fit methods.",
+    "category": "tutorial",
+    "companion": "pages/tutorials/getting-started.md",
 }
 app = marimo.App(width="medium")
 

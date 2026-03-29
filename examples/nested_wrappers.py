@@ -17,8 +17,10 @@ import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "Nested Wrappers",
+    "title": "Nested Wrapper Parameters",
     "description": "Control nested estimator hierarchies with double-underscore parameter syntax.",
+    "category": "tutorial",
+    "companion": "pages/how-to/nest-wrappers.md",
 }
 app = marimo.App(width="medium")
 

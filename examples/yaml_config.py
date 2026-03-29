@@ -18,8 +18,10 @@ import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "YAML Configuration",
-    "description": "Save and load estimator configurations as validated YAML files with inheritance support.",
+    "title": "How to Configure Estimators with YAML",
+    "description": "Define, save, and load estimator configurations as validated YAML files.",
+    "category": "how-to",
+    "companion": "pages/how-to/yaml-configuration.md",
 }
 app = marimo.App(width="medium")
 

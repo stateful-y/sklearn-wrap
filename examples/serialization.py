@@ -17,8 +17,10 @@ import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "Serialization",
-    "description": "Save and load wrapped estimators with joblib for production deployment.",
+    "title": "How to Serialize Estimators",
+    "description": "Save and load wrapped estimators, pipelines, and search results with joblib.",
+    "category": "how-to",
+    "companion": "pages/how-to/serialize-estimators.md",
 }
 app = marimo.App(width="medium")
 

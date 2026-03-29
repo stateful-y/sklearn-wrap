@@ -16,8 +16,10 @@ import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "Validation",
-    "description": "Explore error patterns and parameter validation for robust wrappers.",
+    "title": "How to Validate Wrapper Parameters",
+    "description": "Define parameter constraints and handle validation errors in wrapped estimators.",
+    "category": "how-to",
+    "companion": "pages/how-to/validate-parameters.md",
 }
 app = marimo.App(width="medium")
 
