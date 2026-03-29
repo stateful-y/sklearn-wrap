@@ -10,8 +10,8 @@
 """
 # Parameter Management
 
-Master get_params() and set_params() for dynamic hyperparameter control.
-Essential for GridSearchCV and interactive tuning.
+We explore how `get_params()` and `set_params()` work in wrapped estimators,
+and why sklearn's ecosystem depends on this interface.
 """
 
 import marimo
@@ -43,16 +43,12 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## What You'll Learn
+    In this tutorial we examine how `BaseClassWrapper` implements sklearn's parameter
+    interface. We will use interactive sliders to see parameter changes in real time,
+    inspect `get_params()` output, and experiment with `set_params()` - including what
+    happens with invalid parameters.
 
-    - How `get_params()` and `set_params()` work under the hood in wrapped estimators
-    - Why sklearn needs this parameter interface for GridSearchCV, Pipeline, and cloning
-    - How to dynamically update parameters and understand when changes take effect
-    - What happens when you pass invalid parameters
-
-    ## Prerequisites
-
-    Familiarity with first_wrapper.py.
+    **Prerequisites** - Familiarity with [first_wrapper.py](first_wrapper.py).
     """)
     return
 
@@ -101,15 +97,11 @@ def _(BaseClassWrapper):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 1. Why It Matters
+    ## 1. Why Parameters Matter
 
-    These methods enable:
-    - **GridSearchCV**: Iterates through parameter combinations
-    - **Pipeline**: Accesses nested estimator parameters
-    - **Cloning**: Creates copies with same parameters
-    - **Introspection**: Discovers available parameters programmatically
-
-    sklearn's entire ecosystem depends on this interface.
+    `get_params()` and `set_params()` are the interface that `GridSearchCV`, `Pipeline`,
+    and `clone()` all rely on. `BaseClassWrapper` implements them automatically by
+    inspecting the wrapped class's `__init__` signature.
     """)
     return
 
@@ -119,7 +111,7 @@ def _(mo):
     mo.md("""
     ## 2. Interactive Parameter Control
 
-    Sliders demonstrate real-time parameter updates.
+    Let's use sliders to change `alpha` and `beta` and watch the model update in real time.
     """)
     return
 
@@ -238,24 +230,15 @@ def _(est, mo):
     params = est.get_params()
     mo.md(
         f"""
-        ## 3. get_params() Deep Dive
+        ## 3. Inspecting get_params()
 
         ```python
         {params}
         ```
 
-        **What get_params() returns:**
-        - All constructor parameters of the wrapped class
-        - The `model` parameter (estimator_class itself)
-        - With `deep=True` (default), includes nested estimator parameters
-
-        **Key behaviors:**
-        - Parameter names match the wrapped class's `__init__` signature
-        - The `estimator_class` is read-only (cannot be changed via set_params)
-        - Used by sklearn's `clone()` to create identical copies
-        - GridSearchCV calls this to discover searchable parameters
-
-        **Note:** The `model` key shows the class being wrapped, not the instance.
+        Notice that `get_params()` returns every `__init__` parameter of the wrapped class
+        plus the `model` key (the class itself). This is exactly what `GridSearchCV` and
+        `clone()` use to discover and reproduce an estimator's configuration.
         """
     )
     return
@@ -264,9 +247,9 @@ def _(est, mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 4. set_params() Mechanics
+    ## 4. Updating with set_params()
 
-    Update parameters dynamically without recreating the wrapper.
+    We can update parameters dynamically without recreating the wrapper.
     """)
     return
 
@@ -301,14 +284,9 @@ def _(error_msg, mo, updated_params):
     {updated_params}
     ```
 
-    **How set_params() works:**
-    1. Validates parameter names against wrapped class's `__init__`
-    2. Updates internal `params` dictionary
-    3. Returns `self` for method chaining
-    4. Next `fit()` call uses updated parameters via `instantiate()`
-
-    **Important:** Changes only take effect after calling `fit()` again.
-    The wrapped instance is recreated during `instantiate()`.
+    Notice that `set_params()` validates names against the wrapped class's `__init__`,
+    updates the internal `params` dictionary, and returns `self` for method chaining.
+    Changes take effect on the next `fit()` call, when the wrapped instance is recreated.
 
     ### Invalid Parameter Error
 
@@ -316,8 +294,8 @@ def _(error_msg, mo, updated_params):
     {error_msg}
     ```
 
-    BaseClassWrapper validates against the wrapped class's `__init__` signature.
-    Only parameters defined in `ConfigurableRegressor.__init__` are allowed.
+    Passing a parameter that does not exist in `ConfigurableRegressor.__init__` raises
+    a `ValueError` immediately - we never reach `fit()`.
     """)
     return
 
@@ -325,13 +303,13 @@ def _(error_msg, mo, updated_params):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Key Takeaways
+    ## What We Built
 
-    - **`get_params()`** returns all constructor parameters of the wrapped class plus the estimator class itself
-    - **`set_params()`** validates parameter names against the wrapped class's `__init__` and updates them dynamically
-    - **Parameter changes** only take effect after calling `fit()` again, since the wrapped instance is recreated during `instantiate()`
-    - **Invalid parameters** raise `ValueError` immediately, catching mistakes before runtime
-    - **sklearn integration** depends entirely on this interface for GridSearchCV, Pipeline, and `clone()`
+    We used `get_params()` and `set_params()` to inspect and update a wrapped estimator's
+    configuration at runtime. The parameter interface is what makes `BaseClassWrapper`
+    compatible with `GridSearchCV`, `Pipeline`, and `clone()`.
+
+    Next: [grid_search.py](grid_search.py) puts this interface to work inside `GridSearchCV`.
     """)
     return
 
@@ -339,9 +317,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Next Steps
-
-    **Continue to:** [validation.py](validation.py) - Learn comprehensive error handling patterns and parameter constraint validation
+    **More examples:** [validation.py](validation.py) | [nested_wrappers.py](nested_wrappers.py)
     """)
     return
 

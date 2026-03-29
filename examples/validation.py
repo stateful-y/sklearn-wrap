@@ -7,9 +7,10 @@
 # ]
 # ///
 """
-# Validation and Error Handling
+# How to Validate Parameters and Handle Errors
 
-Learn common error patterns, parameter constraints, and how BaseClassWrapper catches mistakes early.
+Catch invalid parameters, enforce base class requirements, and define parameter
+constraints on wrapped estimators.
 """
 
 import marimo
@@ -42,16 +43,10 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## What You'll Learn
+    This guide covers five common error patterns and the mechanisms that catch
+    them: constructor validation, base class enforcement, and parameter constraints.
 
-    - Five common error patterns when wrapping classes and how to diagnose them
-    - How BaseClassWrapper validates parameters against the wrapped class's constructor
-    - How to enforce base class requirements with `_estimator_base_class`
-    - How to use `_parameter_constraints` for type-safe nested wrapper composition
-
-    ## Prerequisites
-
-    Familiarity with first_wrapper.py.
+    **Prerequisites** - Familiarity with [first_wrapper.py](first_wrapper.py).
     """)
     return
 
@@ -61,7 +56,7 @@ def _(mo):
     mo.md("""
     ## 1. Invalid Parameters
 
-    BaseClassWrapper validates against the wrapped class's constructor signature.
+    Pass a parameter that does not exist in the wrapped class's constructor.
     """)
     return
 
@@ -127,7 +122,7 @@ def _(mo):
     mo.md("""
     ## 2. Wrong Base Class
 
-    Enforce that wrapped classes inherit from required base classes.
+    Set `_estimator_base_class` to enforce inheritance requirements.
     """)
     return
 
@@ -239,7 +234,8 @@ def _(mo):
     mo.md("""
     ## 5. Parameter Constraints
 
-    Use `_parameter_constraints` to enforce type and inheritance requirements on parameters.
+    Define `_parameter_constraints` to enforce type and inheritance requirements
+    on wrapper parameters.
     """)
     return
 
@@ -343,6 +339,8 @@ def _(create_error_demo, non_wrapper_constraint_operation):
 def _(mo):
     mo.md("""
     ## Valid Constrained Usage
+
+    Provide a `BaseClassWrapper` instance to satisfy the constraint.
     """)
     return
 
@@ -376,23 +374,7 @@ def _(mo, ensemble_predictions):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Key Takeaways
-
-    - **`_estimator_base_class`** enforces inheritance requirements on the wrapped class
-    - **`_parameter_constraints`** enables type-safe validation for nested wrapper parameters
-    - **Parameter validation** catches invalid, missing, and reserved parameter names early
-    - **`get_params()`** helps inspect available parameters before setting them
-    - **Default values** should be provided in the wrapped class for optional parameters
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md("""
-    ## Next Steps
-
-    **Continue to:** [grid_search.py](grid_search.py) - Use wrapped estimators with GridSearchCV for automated hyperparameter tuning
+    **More examples:** [parameter_interface.py](parameter_interface.py) | [nested_wrappers.py](nested_wrappers.py)
     """)
     return
 

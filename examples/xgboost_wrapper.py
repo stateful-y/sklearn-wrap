@@ -8,9 +8,9 @@
 # ]
 # ///
 """
-# XGBoost Integration
+# How to Wrap XGBoost
 
-Wrap XGBoost's low-level Booster API for sklearn compatibility.
+Wrap XGBoost's low-level Booster API into a scikit-learn compatible estimator.
 """
 
 import marimo
@@ -44,16 +44,10 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## What You'll Learn
+    This guide wraps XGBoost's procedural `xgb.train()` API using an adapter
+    class, then adds nested callback control via the `__` syntax.
 
-    - How to wrap XGBoost's low-level Booster API for sklearn compatibility
-    - How to create an adapter class to bridge procedural APIs (`xgb.train()`) to a class-based interface
-    - How nested wrappers enable callback parameter control via `__` syntax
-    - How `_parameter_constraints` and `_estimator_default_class` simplify wrapper configuration
-
-    ## Prerequisites
-
-    Familiarity with first_wrapper.py.
+    **Prerequisites** - Familiarity with [first_wrapper.py](first_wrapper.py).
     """)
     return
 
@@ -61,9 +55,9 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 1. XGBoost Wrapper Setup
+    ## 1. Create the Adapter and Wrapper
 
-    Create an adapter class to wrap `xgb.train()` as a regular class, then wrap it with nested callback support.
+    Build an adapter class around `xgb.train()`, then wrap it with nested callback support.
     """)
     return
 
@@ -154,7 +148,7 @@ def _(BaseClassWrapper, xgb):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 2. Interactive Demo
+    ## 2. Train with Interactive Parameters
     """)
     return
 
@@ -282,9 +276,9 @@ def _(wrapper):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 5. Nested Parameter Control
+    ## 5. Control Callback Parameters
 
-    Use the `__` syntax to control callback parameters.
+    Use the `__` syntax to modify callback settings without recreating the wrapper.
     """)
     return
 
@@ -305,7 +299,7 @@ def _(mo):
     mo.md("""
     ### Modify Nested Parameters
 
-    Change the callback period using nested syntax:
+    Change the callback period with nested syntax:
     """)
     return
 
@@ -324,24 +318,7 @@ def _(wrapper):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Key Takeaways
-
-    - **Low-level XGBoost API** becomes sklearn-compatible through an adapter class pattern
-    - **Nested wrapper pattern** enables callback control via `__` syntax
-    - **`_parameter_constraints`** validates that callbacks inherit from `TrainingCallback`
-    - **`_estimator_default_class`** eliminates the need to pass the wrapped class every time
-    - **DMatrix handling** is integrated seamlessly inside the adapter class
-    - **HTML representation** shows the complete nested structure
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md("""
-    ## Next Steps
-
-    **Continue to:** [serialization.py](serialization.py) - Learn how to save and load wrapped XGBoost models with joblib
+    **More examples:** [serialization.py](serialization.py) | [yaml_config.py](yaml_config.py)
     """)
     return
 

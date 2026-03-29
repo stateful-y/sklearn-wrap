@@ -7,10 +7,9 @@
 # ]
 # ///
 """
-# Serialization and Persistence
+# How to Serialize Estimators
 
-Save and load wrapped estimators, pipelines, and GridSearchCV objects using joblib.
-All sklearn serialization mechanisms work seamlessly with wrapped estimators.
+Save and load wrapped estimators, pipelines, and GridSearchCV objects with `joblib`.
 """
 
 import marimo
@@ -50,15 +49,10 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## What You'll Learn
+    This guide covers saving and loading wrapped estimators with `joblib` -
+    individually, inside pipelines, and as part of `GridSearchCV` results.
 
-    - How to save and load wrapped estimators using joblib
-    - How pipelines containing wrapped estimators serialize correctly
-    - How GridSearchCV meta-estimators preserve all state including cross-validation results
-
-    ## Prerequisites
-
-    Familiarity with first_wrapper.py.
+    **Prerequisites** - Familiarity with [first_wrapper.py](first_wrapper.py).
     """)
     return
 
@@ -66,9 +60,9 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 1. Estimator Serialization
+    ## 1. Save and Load a Single Estimator
 
-    Wrapped estimators can be saved and loaded like any sklearn estimator.
+    Use `joblib.dump()` and `joblib.load()` exactly as with any sklearn estimator.
     """)
     return
 
@@ -163,9 +157,9 @@ def _(loaded_estimator, X_test, y_test, original_predictions, original_score, mo
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 2. Pipeline Serialization
+    ## 2. Save and Load a Pipeline
 
-    Pipelines containing wrapped estimators serialize correctly.
+    Pipelines containing wrapped estimators persist all preprocessing steps.
     """)
     return
 
@@ -215,9 +209,9 @@ def _(mo, np, pipeline_predictions, loaded_pipeline_predictions, loaded_pipeline
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 3. GridSearchCV Serialization
+    ## 3. Save and Load GridSearchCV Results
 
-    Meta-estimators save complete search results and best parameters.
+    Save the complete search state including the best estimator and all CV results.
     """)
     return
 
@@ -272,21 +266,7 @@ def _(loaded_grid, best_params, grid_predictions, loaded_grid_predictions,  mo, 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Key Takeaways
-
-    - **`joblib.dump()`** and `joblib.load()` work seamlessly with wrapped estimators
-    - **Pipelines** containing wrappers persist and restore all preprocessing steps correctly
-    - **GridSearchCV** saves complete state including best estimator and all cross-validation results
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md("""
-    ## Next Steps
-
-    **Continue to:** [xgboost_wrapper.py](xgboost_wrapper.py) - Learn to wrap third-party libraries like XGBoost
+    **More examples:** [xgboost_wrapper.py](xgboost_wrapper.py) | [yaml_config.py](yaml_config.py)
     """)
     return
 
