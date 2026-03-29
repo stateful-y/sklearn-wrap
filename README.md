@@ -26,6 +26,7 @@ With sklearn-wrap, you gain immediate access to GridSearchCV for hyperparameter 
 - **Nested parameters**: Support sklearn's double-underscore syntax for nested estimator hierarchies
 - **Full ecosystem compatibility**: Works seamlessly with Pipeline, cross-validation, and joblib serialization
 - **Built-in validation**: Optional parameter constraints with automatic type/value checking before fit
+- **YAML configuration**: Declarative estimator definitions with `EstimatorConfig` - build, save, and load estimators from YAML files (`pip install sklearn-wrap[config]`)
 
 ## How to install Sklearn-Wrap?
 
@@ -112,7 +113,7 @@ Full documentation is available at [https://sklearn-wrap.readthedocs.io/](https:
 
 Interactive examples are available in the `examples/` directory:
 
-- **Online**: [https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/)
+- **Online**: [https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/)
 - **Locally**: Run `just example first_wrapper.py` or `uv run marimo edit examples/first_wrapper.py` to open an interactive notebook
 
 ## Can I contribute?
@@ -128,7 +129,7 @@ If you are interested in becoming a maintainer or taking a more active role, ple
 ## Where can I learn more?
 
 - Full documentation: [https://sklearn-wrap.readthedocs.io/](https://sklearn-wrap.readthedocs.io/)
-- Interactive Examples: [https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/)
+- Interactive Examples: [https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/)
 
 For questions and discussions, you can also open a [discussion](https://github.com/stateful-y/sklearn-wrap/discussions).
 

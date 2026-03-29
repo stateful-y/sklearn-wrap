@@ -8,17 +8,20 @@
 # ]
 # ///
 """
-# GridSearch with Wrappers
+# How to Use GridSearchCV with Wrappers
 
-Use GridSearchCV to automatically find optimal hyperparameters for wrapped estimators.
+This notebook shows how to run `GridSearchCV` on a wrapped estimator
+to find optimal hyperparameters automatically.
 """
 
 import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "Grid Search",
-    "description": "Hyperparameter tuning with GridSearchCV on wrapped estimators.",
+    "title": "How to Use GridSearchCV with Wrappers",
+    "description": "Run GridSearchCV on wrapped estimators for hyperparameter tuning.",
+    "category": "how-to",
+    "companion": "pages/how-to/use-with-gridsearch.md",
 }
 app = marimo.App(width="medium")
 
@@ -42,16 +45,11 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## What You'll Learn
+    In this tutorial we wrap a custom k-Nearest Neighbors classifier and hand it to
+    `GridSearchCV`. We will define a parameter grid, run cross-validated search,
+    and inspect both the results and the HTML representation of the meta-estimator.
 
-    - How to use GridSearchCV with wrapped estimators for automated hyperparameter tuning
-    - How BaseClassWrapper's parameter interface integrates seamlessly with sklearn's search tools
-    - How to define parameter grids and interpret cross-validation results
-    - How wrapped estimators display in sklearn meta-estimator HTML representations
-
-    ## Prerequisites
-
-    Familiarity with first_wrapper.py and parameter_interface.py.
+    **Prerequisites** - Familiarity with [first_wrapper.py](first_wrapper.py) and [parameter_interface.py](parameter_interface.py).
     """)
     return
 
@@ -59,9 +57,9 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 1. k-Nearest Neighbors Classifier
+    ## 1. A Custom KNN Classifier
 
-    A simple classifier to demonstrate GridSearchCV integration.
+    We start with a simple classifier that uses its own method names.
     """)
     return
 
@@ -125,7 +123,7 @@ def _(BaseClassWrapper):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## 2. GridSearchCV Execution
+    ## 2. Running GridSearchCV
     """)
     return
 
@@ -237,7 +235,8 @@ def _(mo):
     mo.md("""
     ## 4. HTML Representation
 
-    GridSearchCV meta-estimators display correctly with wrapped estimators.
+    Notice that `GridSearchCV` and the best estimator both render correctly - the
+    wrapper is fully transparent to sklearn's display machinery.
     """)
     return
 
@@ -273,22 +272,15 @@ def _(best_estimator):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    ## Key Takeaways
+    ## What We Built
 
-    - **GridSearchCV** works seamlessly with wrapped estimators through the parameter interface
-    - **Cross-validation** and scoring integrate automatically with no extra code in the wrapper
-    - **Parameter validation** happens through BaseClassWrapper during each grid search iteration
-    - **HTML representations** display correctly for meta-estimators containing wrappers
-    """)
-    return
+    We ran a full `GridSearchCV` on a wrapped estimator with zero extra glue code.
+    The parameter interface we explored in [parameter_interface.py](parameter_interface.py)
+    is what makes this possible - `GridSearchCV` uses `get_params()` and `set_params()`
+    behind the scenes.
 
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md("""
-    ## Next Steps
-
-    **Continue to:** [serialization.py](serialization.py) - Learn how to save and load wrapped estimators, pipelines, and GridSearchCV results
+    Next: [nested_wrappers.py](nested_wrappers.py) extends this to estimators that
+    contain other estimators.
     """)
     return
 

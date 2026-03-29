@@ -3,11 +3,9 @@
 
 # Welcome to Sklearn-Wrap's documentation
 
-A Package for wrapping Python classes into Scikit-Learn estimators.
-
 Sklearn-wrap enables you to wrap any Python class into a Scikit-Learn compatible estimator without rewriting your code. Whether you're integrating XGBoost's Booster API, custom gradient descent algorithms, or third-party machine learning libraries, Sklearn-Wrap provides the glue layer that makes them work seamlessly with Scikit-Learn's ecosystem.
 
-With Sklearn-Wrap, you gain immediate access to GridSearchCV for hyperparameter tuning, meta estimators like Pipeline for composable workflows, and joblib for serialization, all while maintaining your original implementation. This enables data scientists to achieve Scikit-Learn compatibility without sacrificing custom logic or performance.
+With Sklearn-Wrap, you gain immediate access to GridSearchCV for hyperparameter tuning, meta estimators like Pipeline for composable workflows, joblib for serialization, and declarative YAML configuration via `EstimatorConfig` while maintaining your original implementation. This enables data scientists to achieve Scikit-Learn compatibility without sacrificing custom logic or performance.
 
 <div class="grid cards" markdown>
 
@@ -17,64 +15,33 @@ With Sklearn-Wrap, you gain immediate access to GridSearchCV for hyperparameter 
 
     Install Sklearn-Wrap and create your first wrapper. Learn the basic pattern and immediately gain meta estimator compatibility.
 
-    [Getting Started](pages/getting-started.md)
+    [Getting Started](pages/tutorials/getting-started.md)
 
-- **Need Help?**
-
-    ---
-
-    Find answers and join the community. Ask questions, share experiences, and get help from maintainers and other users on GitHub Discussions.
-
-    [GitHub Discussions](https://github.com/stateful-y/sklearn-wrap/discussions)
-
-- **Learn the Concepts**
+- **How-to Guides**
 
     ---
 
-    Understand the wrapper pattern, parameter interface, and decorator mechanics. Dive deep into how Sklearn-Wrap integrates with Scikit-Learn's ecosystem.
+    Task-oriented guides for wrapping classes, validating parameters, YAML configuration, GridSearchCV integration, and nesting wrappers.
 
-    [User Guide](pages/user-guide.md)
+    [Browse Guides](pages/how-to/index.md)
 
-- **See It In Action**
+- **Understand the Design**
 
     ---
 
-    Explore interactive examples from basics to advanced patterns. Each notebook demonstrates one concept with hands-on code you can modify and run interactively.
+    Learn why the delegation pattern works, how `_fit_context` manages the lifecycle, and the trade-offs of composition over inheritance.
 
-    [Examples](pages/examples.md)
+    [Core Concepts](pages/explanation/index.md)
+
+- **API Reference**
+
+    ---
+
+    Complete reference for all Sklearn-Wrap classes, functions, and configuration options.
+
+    [API Reference](pages/reference/index.md)
 
 </div>
-
-## Table of Contents
-
-### [Getting started](pages/getting-started.md)
-
-Step-by-step guide to installing and setting up Sklearn-Wrap in your project.
-
-- [Installation](pages/getting-started.md#installation)
-- [Basic Usage](pages/getting-started.md#basic-usage)
-- [Try Interactive Examples](pages/getting-started.md#try-interactive-examples)
-
-
-### [Examples](pages/examples.md)
-
-Interactive notebooks demonstrating Sklearn-Wrap features.
-
-- [Gallery](pages/examples.md#examples)
-- [Running Locally](pages/examples.md#running-examples-locally)
-
-
-### [User guide](pages/user-guide.md)
-
-In-depth documentation on the design, architecture, and core concepts.
-
-- [Core Concepts](pages/user-guide.md#core-concepts)
-- [Configuration](pages/user-guide.md#configuration)
-- [Best Practices](pages/user-guide.md#best-practices)
-
-### [Reference](pages/api-reference/)
-
-Detailed reference for the Sklearn-Wrap API, including classes, functions, and configuration options.
 
 ## License
 

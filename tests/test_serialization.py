@@ -26,10 +26,6 @@ from .conftest import (
     SimpleWrapper,
 )
 
-# ============================================================================
-# Test Wrapper with Fit Method
-# ============================================================================
-
 
 class SerializableWrapper(BaseClassWrapper):
     """Wrapper that can be fitted for serialization testing."""
@@ -48,11 +44,6 @@ class SerializableWrapper(BaseClassWrapper):
             return self.instance_.predict(X)
         # Simple prediction for testing
         return np.zeros(len(X))
-
-
-# ============================================================================
-# Pickle Tests - Unfitted Wrapper
-# ============================================================================
 
 
 class TestPickleUnfitted:
@@ -98,11 +89,6 @@ class TestPickleUnfitted:
         unpickled.instantiate()
         assert hasattr(unpickled, "instance_")
         assert isinstance(unpickled.instance_, SimpleEstimator)
-
-
-# ============================================================================
-# Pickle Tests - Fitted Wrapper
-# ============================================================================
 
 
 class TestPickleFitted:
@@ -167,11 +153,6 @@ class TestPickleFitted:
         assert unpickled.instance_.custom_attr == "test_value"
 
 
-# ============================================================================
-# Pickle Tests - Nested Wrappers
-# ============================================================================
-
-
 class TestPickleNested:
     """Test pickling of nested wrapper structures."""
 
@@ -202,11 +183,6 @@ class TestPickleNested:
         assert isinstance(unpickled.params["inner"], SimpleWrapper)
         assert isinstance(unpickled.params["inner"].params["inner"], SimpleWrapper)
         assert unpickled.params["inner"].params["inner"].params["required_param"] == 1
-
-
-# ============================================================================
-# Joblib Tests
-# ============================================================================
 
 
 class TestJoblibPersistence:
@@ -298,11 +274,6 @@ class TestJoblibPersistence:
             # Verify
             assert loaded.__sklearn_is_fitted__() is True
             assert loaded.n_features_in_ == 2
-
-
-# ============================================================================
-# Edge Cases
-# ============================================================================
 
 
 class TestSerializationEdgeCases:
