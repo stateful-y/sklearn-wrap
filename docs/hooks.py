@@ -235,7 +235,7 @@ def _build_api_table_html(project_root):
 
         members = _get_module_members(mod_file)
         module_label = f"sklearn_wrap.{mod['module_name']}"
-        module_href = f"../api/{mod['module_name']}/"
+        module_href = f"../../api/{mod['module_name']}/"
 
         for cls in members["classes"]:
             qualified = f"sklearn_wrap.{mod['module_name']}.{cls['name']}"
@@ -254,7 +254,7 @@ def _build_api_table_html(project_root):
 
     tbody_lines = []
     for name, kind, module_label, module_href, desc, qualified in rows:
-        href = f"../api/generated/{qualified}/"
+        href = f"../../api/generated/{qualified}/"
         badge_cls = _type_badge_cls.get(kind, "")
         tbody_lines.append(
             f"      <tr>"
@@ -356,6 +356,7 @@ def _get_gallery_items(project_root):
         items.append({
             "title": gallery.get("title", stem.replace("_", " ").title()),
             "description": gallery.get("description", ""),
+            "category": gallery.get("category", ""),
             "view_path": view_path,
             "open_path": open_path,
             "stem": stem,
@@ -366,12 +367,43 @@ def _get_gallery_items(project_root):
 
 
 def _build_gallery_html(project_root):
-    """Build gallery card grid as Material 'grid cards' markdown."""
+    """Build gallery card grid as Material 'grid cards' markdown, grouped by category."""
     items = _get_gallery_items(project_root)
 
     if not items:
         return "<!-- no gallery items found -->\n"
 
+    # Group items by category, preserving order within each group
+    _CATEGORY_ORDER = ["tutorial", "how-to"]
+    _CATEGORY_HEADINGS = {
+        "tutorial": "Tutorials",
+        "how-to": "How-to Guides",
+    }
+
+    grouped: dict[str, list[dict]] = {}
+    for item in items:
+        cat = item.get("category") or "other"
+        grouped.setdefault(cat, []).append(item)
+
+    sections = []
+    for cat in _CATEGORY_ORDER:
+        group = grouped.pop(cat, [])
+        if not group:
+            continue
+        heading = _CATEGORY_HEADINGS.get(cat, cat.title())
+        cards = _build_gallery_cards(group)
+        sections.append(f"## {heading}\n\n{cards}")
+
+    # Remaining uncategorized items
+    for _cat, group in grouped.items():
+        cards = _build_gallery_cards(group)
+        sections.append(cards)
+
+    return "\n\n".join(sections) + "\n"
+
+
+def _build_gallery_cards(items):
+    """Build a Material 'grid cards' block from a list of gallery items."""
     cards = []
     for item in items:
         desc = item["description"] or "No description."
@@ -478,25 +510,7 @@ def _build_api_examples_html(project_root, qualified_name):
             seen.add(item["stem"])
             unique_items.append(item)
 
-    cards = []
-    for item in unique_items:
-        desc = item["description"] or "No description."
-        cards.append(
-            f"-   **{item['title']}**\n"
-            f"\n"
-            f"    ---\n"
-            f"\n"
-            f"    {desc}\n"
-            f"\n"
-            f"    [View]({item['view_path']}) · "
-            f"[Open in marimo]({item['open_path']})"
-        )
-
-    return (
-        "## Examples\n\n"
-        "The following example notebooks use this component:\n\n"
-        '<div class="grid cards" markdown>\n\n' + "\n\n".join(cards) + "\n\n</div>\n"
-    )
+    return "## Examples\n\nThe following example notebooks use this component:\n\n" + _build_gallery_cards(unique_items)
 
 
 # ---------------------------------------------------------------------------
@@ -525,7 +539,7 @@ def _build_module_toc(config, current_src_path=None):
     api_dir = docs_dir / "pages" / "api"
     project_root = docs_dir.parent
 
-    is_index = current_src_path is None or current_src_path == "pages/api-reference.md"
+    is_index = current_src_path is None or current_src_path == "pages/reference/api.md"
 
     modules = _get_submodules(project_root)
     module_toc = []
@@ -538,8 +552,8 @@ def _build_module_toc(config, current_src_path=None):
 
         # Compute relative URL
         if is_index:
-            # api-reference.md is at pages/api-reference/, submodule pages at pages/api/
-            page_url = f"../api/{md_filename.replace('.md', '/')}"
+            # reference/api.md is at pages/reference/api/, submodule pages at pages/api/
+            page_url = f"../../api/{md_filename.replace('.md', '/')}"
         else:
             page_url = f"../{md_filename.replace('.md', '/')}".replace("//", "/")
 
@@ -899,7 +913,7 @@ def on_page_content(html, page, config, files):
     if src.startswith("pages/api/generated/"):
         html = _process_api_page_content(html, page, config)
 
-    if src == "pages/api-reference.md":
+    if src == "pages/reference/api.md":
         # API index: flat module list (api-index.html template)
         page.meta["module_toc"] = _build_module_toc(config, current_src_path=src)
     elif (

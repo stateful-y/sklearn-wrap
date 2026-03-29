@@ -8,17 +8,18 @@ Tests special scenarios:
 - Parameter dict mutation safety
 - Classes with callable defaults
 - Abstract base classes
+- Custom pickle protocols
+- Large parameter dictionaries
+- Property-based testing with hypothesis
 """
 
 from abc import ABC, abstractmethod
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from .conftest import BaseTestClass, SimpleEstimator, SimpleWrapper
-
-# ============================================================================
-# Deep Nesting Tests (4+ levels)
-# ============================================================================
 
 
 class TestDeepNesting:
@@ -69,11 +70,6 @@ class TestDeepNesting:
         assert level1.params["optional_param"] == 555
 
 
-# ============================================================================
-# Classes with __slots__
-# ============================================================================
-
-
 class TestSlotsClasses:
     """Test wrapping classes with __slots__."""
 
@@ -114,11 +110,6 @@ class TestSlotsClasses:
 
         wrapper.instantiate()
         assert wrapper.instance_.fixed_param == 10
-
-
-# ============================================================================
-# Property-Based Parameters
-# ============================================================================
 
 
 class TestPropertyBasedParams:
@@ -164,11 +155,6 @@ class TestPropertyBasedParams:
         assert wrapper.instance_.computed_value == 30
 
 
-# ============================================================================
-# Dynamically Created Classes
-# ============================================================================
-
-
 class TestDynamicClasses:
     """Test wrapping dynamically created classes."""
 
@@ -209,11 +195,6 @@ class TestDynamicClasses:
 
         # Dynamically added method should work
         assert wrapper.instance_.custom_method() == 30
-
-
-# ============================================================================
-# Parameter Dict Mutation Safety
-# ============================================================================
 
 
 class TestParamDictMutationSafety:
@@ -261,11 +242,6 @@ class TestParamDictMutationSafety:
         assert wrapper.params["optional_param"] == 20
 
 
-# ============================================================================
-# Callable Defaults
-# ============================================================================
-
-
 class TestCallableDefaults:
     """Test classes with callable default parameters."""
 
@@ -299,11 +275,6 @@ class TestCallableDefaults:
         wrapper.instantiate()
         assert wrapper.instance_.value == 20
         assert wrapper.instance_.func == default_function
-
-
-# ============================================================================
-# Abstract Base Classes
-# ============================================================================
 
 
 class TestAbstractBaseClasses:
@@ -349,11 +320,6 @@ class TestAbstractBaseClasses:
         assert wrapper.instance_.abstract_method() == 30
 
 
-# ============================================================================
-# Multiple Inheritance
-# ============================================================================
-
-
 class TestMultipleInheritance:
     """Test wrapping classes with multiple inheritance."""
 
@@ -396,11 +362,6 @@ class TestMultipleInheritance:
         assert wrapper.instance_.method() == "base1"
 
 
-# ============================================================================
-# Special Parameter Names
-# ============================================================================
-
-
 class TestSpecialParameterNames:
     """Test handling of special parameter names."""
 
@@ -433,11 +394,6 @@ class TestSpecialParameterNames:
         # Should instantiate with no args
         wrapper.instantiate()
         assert wrapper.instance_.args == ()
-
-
-# ============================================================================
-# Edge Case Combinations
-# ============================================================================
 
 
 class TestEdgeCaseCombinations:
@@ -495,3 +451,106 @@ class TestEdgeCaseCombinations:
         # Set nested params
         outer.set_params(inner__value=75)
         assert inner.params["value"] == 75
+
+
+class TestCustomPickleProtocol:
+    """Test wrapping classes with custom __getstate__/__setstate__."""
+
+    def test_class_with_custom_getstate(self):
+        """Test wrapping a class with custom pickle protocol methods."""
+
+        class CustomPickleClass(BaseTestClass):
+            def __init__(self, value=10, secret="hidden"):
+                self.value = value
+                self.secret = secret
+
+            def __getstate__(self):
+                state = self.__dict__.copy()
+                del state["secret"]
+                return state
+
+            def __setstate__(self, state):
+                self.__dict__.update(state)
+                self.secret = "restored"
+
+        wrapper = SimpleWrapper(simple=CustomPickleClass, value=42, secret="my_secret")
+        wrapper.instantiate()
+
+        assert wrapper.instance_.value == 42
+        assert wrapper.instance_.secret == "my_secret"
+
+    def test_class_with_reduce(self):
+        """Test wrapping a class that implements __reduce__."""
+
+        class ReduceClass(BaseTestClass):
+            def __init__(self, data=None):
+                self.data = data or []
+
+        wrapper = SimpleWrapper(simple=ReduceClass, data=[1, 2, 3])
+        wrapper.instantiate()
+        assert wrapper.instance_.data == [1, 2, 3]
+
+
+class TestLargeParameterDictionaries:
+    """Test performance with large parameter dictionaries."""
+
+    def test_many_parameters(self):
+        """Test wrapper with a class that has many parameters."""
+        params = {f"param_{i}": i for i in range(50)}
+        init_code = ", ".join(f"{name}={default}" for name, default in params.items())
+
+        # Build class dynamically with 50 params
+        ns = {"BaseTestClass": BaseTestClass}
+        exec(  # noqa: S102
+            f"class ManyParams(BaseTestClass):\n"
+            f"    def __init__(self, {init_code}):\n" + "".join(f"        self.{name} = {name}\n" for name in params),
+            ns,
+        )
+        ManyParams = ns["ManyParams"]
+
+        wrapper = SimpleWrapper(simple=ManyParams, **params)
+        result = wrapper.get_params(deep=True)
+
+        for name, default in params.items():
+            assert result[name] == default
+
+        wrapper.instantiate()
+        for name, default in params.items():
+            assert getattr(wrapper.instance_, name) == default
+
+
+class TestPropertyBasedRoundtrip:
+    """Hypothesis-based property tests for parameter roundtrip invariants."""
+
+    @given(
+        required_param=st.one_of(st.integers(), st.text(min_size=1), st.floats(allow_nan=False)),
+        optional_param=st.integers(),
+    )
+    @settings(max_examples=50)
+    def test_get_set_params_identity(self, required_param, optional_param):
+        """Property: set_params(get_params()) preserves all parameter values."""
+        wrapper = SimpleWrapper(
+            simple=SimpleEstimator,
+            required_param=required_param,
+            optional_param=optional_param,
+        )
+
+        original_params = wrapper.get_params()
+        wrapper.set_params(**{k: v for k, v in original_params.items() if k != "simple"})
+        roundtripped_params = wrapper.get_params()
+
+        assert roundtripped_params == original_params
+
+    @given(optional_param=st.integers(min_value=-1000, max_value=1000))
+    @settings(max_examples=30)
+    def test_set_params_idempotent(self, optional_param):
+        """Property: setting a parameter twice to the same value is idempotent."""
+        wrapper = SimpleWrapper(simple=SimpleEstimator, required_param=1)
+
+        wrapper.set_params(optional_param=optional_param)
+        params_after_first = wrapper.get_params()
+
+        wrapper.set_params(optional_param=optional_param)
+        params_after_second = wrapper.get_params()
+
+        assert params_after_first == params_after_second

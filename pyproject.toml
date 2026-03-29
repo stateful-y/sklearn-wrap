@@ -25,6 +25,12 @@ dependencies = [
     "joblib>=1.2.0",
 ]
 
+[project.optional-dependencies]
+config = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+]
+
 [dependency-groups]
 dev = [
     {include-group = "tests"},
@@ -32,7 +38,6 @@ dev = [
     {include-group = "docs"},
     {include-group = "fix"},
     {include-group = "examples"},
-
 ]
 tests = [
     "covdefaults>=2.3",
@@ -51,6 +56,7 @@ docs = [
     "mkdocs-autorefs>=1.0",
     "mkdocs-material>=9.7",
     "mkdocstrings[python]>=0.26.0",
+    "pygments>=2.18,<2.20",
     "pymdown-extensions>=10.20.1",
 ]
 fix = [
@@ -63,7 +69,6 @@ examples = [
     "plotly>=6.5.0",
     "xgboost>=2.0.0",
 ]
-
 [project.urls]
 Homepage = "https://github.com/stateful-y/sklearn-wrap"
 Documentation = "https://sklearn-wrap.readthedocs.io"
@@ -208,6 +213,7 @@ exclude = ["CHANGELOG.md", "site", "htmlcov", ".nox", ".venv"]
 
 [tool.rumdl.per-file-ignores]
 ".github/PULL_REQUEST_TEMPLATE.md" = ["MD041"]  # PR template starts with checklist
+".github/skills/**" = ["MD007"]  # Nested lists in skill files use variable indent
 "README.md" = ["MD041"]  # README starts with logo, not heading
 "docs/index.md" = ["MD041"]  # Landing page starts with logo, not heading
 "CONTRIBUTING.md" = ["MD057"]  # Relative link to docs/ is valid at project level

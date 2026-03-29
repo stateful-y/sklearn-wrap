@@ -4,20 +4,11 @@ import pytest
 
 from sklearn_wrap.base import BaseClassWrapper
 
-# ============================================================================
-# Base Test Classes
-# ============================================================================
-
 
 class BaseTestClass:
     """Base class for test estimators."""
 
     pass
-
-
-# ============================================================================
-# Dummy Estimator Classes
-# ============================================================================
 
 
 class SimpleEstimator(BaseTestClass):
@@ -67,11 +58,6 @@ class ClassWithInner(BaseTestClass):
         self.inner = inner
 
 
-# ============================================================================
-# Wrapper Classes
-# ============================================================================
-
-
 class SimpleWrapper(BaseClassWrapper):
     """Concrete wrapper implementation for testing."""
 
@@ -99,17 +85,7 @@ class DefaultClassWrapper(BaseClassWrapper):
     _estimator_default_class = NoRequiredParams
 
 
-# ============================================================================
-# Constants
-# ============================================================================
-
-
 REQUIRED_PARAM_TEST_VALUE = 42
-
-
-# ============================================================================
-# Pytest Fixtures
-# ============================================================================
 
 
 @pytest.fixture
