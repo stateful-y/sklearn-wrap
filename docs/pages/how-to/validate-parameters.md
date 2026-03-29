@@ -2,6 +2,11 @@
 
 This guide shows you how to add parameter validation to your wrappers using Scikit-Learn's constraint system. Use this when you want to catch invalid parameter values before `fit()` runs.
 
+!!! tip "Interactive notebook available"
+
+    Try this guide as an interactive notebook:
+    [How to Validate Wrapper Parameters](/examples/validation/)
+
 ## Prerequisites
 
 - sklearn-wrap installed ([Getting Started](../tutorials/getting-started.md))

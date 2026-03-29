@@ -146,6 +146,7 @@ nav:
     - Use YAML Configuration: pages/how-to/yaml-configuration.md
     - Use with GridSearchCV: pages/how-to/use-with-gridsearch.md
     - Nest Wrappers: pages/how-to/nest-wrappers.md
+    - Serialize Estimators: pages/how-to/serialize-estimators.md
     - Contributing: pages/how-to/contribute.md
   - Reference:
     - API: pages/reference/api.md

@@ -2,6 +2,11 @@
 
 This guide shows you how to save, load, and validate estimator configurations as YAML files using `EstimatorConfig`. Use this when you want to manage estimator parameters as declarative config files rather than Python code.
 
+!!! tip "Interactive notebook available"
+
+    Try this guide as an interactive notebook:
+    [How to Configure Estimators with YAML](/examples/yaml_config/)
+
 ## Prerequisites
 
 Install the config extra:
