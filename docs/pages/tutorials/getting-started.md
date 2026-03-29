@@ -38,7 +38,7 @@ The output should look something like:
 
 ## A Custom Class to Wrap
 
-Now let's define a simple polynomial regression class. This class does not follow Scikit-Learn conventions - it uses custom method names and a non-standard constructor.
+Now let's define a simple polynomial regression class. This class does not follow Scikit-Learn conventions: it uses custom method names and a non-standard constructor.
 
 ```python
 import numpy as np
@@ -160,7 +160,7 @@ Best parameters: {'degree': 2, 'learning_rate': 0.01}
 Best score: -1.023
 ```
 
-The exact values will vary due to random noise, but notice that `GridSearchCV` found the degree and learning rate automatically - without any modifications to `PolynomialRegressor`.
+The exact values will vary due to random noise, but notice that `GridSearchCV` found the degree and learning rate automatically, without any modifications to `PolynomialRegressor`.
 
 ## What We Built
 

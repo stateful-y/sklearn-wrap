@@ -56,7 +56,7 @@ wrapper.fit(X, y)
 | `None` | Allow `None` | Include `None` in the list |
 | `callable` | Any callable | `callable` |
 
-Combine multiple constraints with a list - the value must match at least one:
+Combine multiple constraints with a list. The value must match at least one:
 
 ```python
 _parameter_constraints = {

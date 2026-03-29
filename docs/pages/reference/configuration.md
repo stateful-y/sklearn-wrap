@@ -23,7 +23,7 @@ Austere reference for class attributes, parameter constraints, and configuration
 
 ## Parameter Constraint Types
 
-Constraints use `sklearn.utils._param_validation`. Each parameter maps to a list of allowed constraints - the value must match at least one.
+Constraints use `sklearn.utils._param_validation`. Each parameter maps to a list of allowed constraints, and the value must match at least one.
 
 | Constraint | Import | Description |
 |---|---|---|
