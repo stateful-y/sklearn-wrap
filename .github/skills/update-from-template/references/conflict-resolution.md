@@ -46,8 +46,8 @@ If copier updated the file without conflict (no `.rej`), the update is already c
 1. Read the **local file** (current project state with customizations)
 2. Read the **`.rej` file** (what the template wanted to change)
 3. Understand the intent of BOTH:
-   - Template change: bug fix? dependency bump? structural improvement? new feature?
-   - Local state: custom content? extended functionality? project-specific additions?
+    - Template change: bug fix? dependency bump? structural improvement? new feature?
+    - Local state: custom content? extended functionality? project-specific additions?
 4. Apply template changes while preserving local additions (see file-type patterns below)
 5. Delete the `.rej` file
 
@@ -105,11 +105,11 @@ Use the context lines to locate the corresponding section in the local file, the
 
 1. For template-owned sections (`[build-system]`, `[tool.*]`): Apply the `.rej` changes directly
 2. For `[project]`:
-   - Accept: `requires-python` changes, classifier updates, maintainer format changes
-   - Preserve: Custom `dependencies` entries beyond template defaults, custom `[project.scripts]`, custom `[project.urls]` entries
+    - Accept: `requires-python` changes, classifier updates, maintainer format changes
+    - Preserve: Custom `dependencies` entries beyond template defaults, custom `[project.scripts]`, custom `[project.urls]` entries
 3. For `[dependency-groups]`:
-   - Update version pins in template-defined groups (`tests`, `lint`, `docs`, `fix`, `examples`)
-   - Preserve entirely custom groups (group names not in the template)
+    - Update version pins in template-defined groups (`tests`, `lint`, `docs`, `fix`, `examples`)
+    - Preserve entirely custom groups (group names not in the template)
 4. For unknown sections: Preserve (they're local additions)
 
 **Example — preserving a custom dependency group:**
@@ -195,8 +195,8 @@ jobs:
 
 1. Parse both files into sections by heading level
 2. For headings present in both template and local:
-   - If section content matches baseline (never customized): Accept template version
-   - If section content differs from baseline (customized): Keep local content, but apply template format changes if structural only
+    - If section content matches baseline (never customized): Accept template version
+    - If section content differs from baseline (customized): Keep local content, but apply template format changes if structural only
 3. For headings only in template (new): Insert at the template's position
 4. For headings only in local (custom): Preserve at their current position
 

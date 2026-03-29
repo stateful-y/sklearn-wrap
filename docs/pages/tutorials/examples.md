@@ -2,6 +2,9 @@
 
 Explore Sklearn-Wrap through focused, interactive examples. Each notebook demonstrates one core concept in 5-15 minutes.
 
+**Tutorials** walk through core concepts step by step - start with *A First Wrapper* if you are new.
+**How-to guides** show how to accomplish specific tasks - jump straight to the one you need.
+
 <!-- GALLERY -->
 
 ## Running Examples Locally

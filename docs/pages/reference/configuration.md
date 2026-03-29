@@ -1,6 +1,6 @@
 # Configuration Reference
 
-Austere reference for class attributes, parameter constraints, and configuration functions in sklearn-wrap.
+All class attributes, parameter constraints, and configuration functions available when defining wrapper classes or using `EstimatorConfig`.
 
 ## Wrapper Class Attributes
 

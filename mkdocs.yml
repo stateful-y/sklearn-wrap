@@ -100,6 +100,7 @@ exclude_docs: |
   api-submodule.html
   examples/**/CLAUDE.md
 
+
 not_in_nav: |
   assets/README.md
   pages/api/*.md
