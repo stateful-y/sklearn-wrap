@@ -85,6 +85,6 @@ print(f"Mean score: {scores.mean():.4f} (+/- {scores.std():.4f})")
 
 ## See Also
 
-- [Grid Search example](/examples/grid_search/) - interactive walkthrough with full code
-- [How to Nest Wrappers](nest-wrappers.md) - composing wrappers with `__` parameter syntax
-- [About Core Concepts](../explanation/concepts.md) - how the parameter interface enables GridSearchCV
+- [Grid Search example](/examples/grid_search/): interactive walkthrough with full code
+- [How to Nest Wrappers](nest-wrappers.md): composing wrappers with `__` parameter syntax
+- [About the Delegation Pattern](../explanation/delegation-pattern.md): how the parameter interface enables GridSearchCV

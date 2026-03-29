@@ -89,7 +89,8 @@ class PolynomialWrapper(BaseClassWrapper, RegressorMixin):
     """Sklearn-compatible wrapper for PolynomialRegressor."""
 
     _estimator_name = "regressor"
-    _estimator_base_class = object
+    _estimator_base_class = PolynomialRegressor
+    _estimator_default_class = PolynomialRegressor
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -103,9 +104,14 @@ class PolynomialWrapper(BaseClassWrapper, RegressorMixin):
 Let's check what we wrote:
 
 - `_estimator_name = "regressor"` tells Sklearn-Wrap that the wrapped class is passed via the `regressor` keyword argument
-- `_estimator_base_class = object` accepts any class (use a specific base class for stricter validation)
+- `_estimator_base_class = PolynomialRegressor` ensures only `PolynomialRegressor` (or subclasses) can be wrapped
+- `_estimator_default_class = PolynomialRegressor` means we don't have to pass the class every time we construct the wrapper
 - The `@_fit_context` decorator automatically creates `self.instance_` before `fit` runs
 - We delegate `fit` and `predict` to the wrapped instance's methods
+
+!!! tip "Generic wrappers"
+
+    If you want a wrapper that accepts *any* class (not just `PolynomialRegressor`), set `_estimator_base_class = object` and omit `_estimator_default_class`. You will then need to pass the class explicitly: `PolynomialWrapper(regressor=PolynomialRegressor, ...)`.
 
 ## Fitting the Wrapper
 
@@ -120,7 +126,6 @@ y = 2 + 3 * X.ravel() + 0.5 * X.ravel() ** 2 + np.random.randn(100)
 
 # Create the wrapped estimator
 wrapper = PolynomialWrapper(
-    regressor=PolynomialRegressor,
     degree=2,
     learning_rate=0.01,
     n_iterations=1000,
@@ -137,7 +142,7 @@ You should see output like:
 First 5 predictions: [1.98 2.34 2.71 3.09 3.48]
 ```
 
-Notice that we passed `PolynomialRegressor` as the `regressor` keyword argument (matching `_estimator_name`), and the constructor parameters (`degree`, `learning_rate`, `n_iterations`) are passed as regular keyword arguments.
+Notice that we only passed the constructor parameters (`degree`, `learning_rate`, `n_iterations`) as keyword arguments. The wrapper already knows which class to instantiate thanks to `_estimator_default_class`.
 
 ## Hyperparameter Tuning with GridSearchCV
 
@@ -169,18 +174,11 @@ Best score: -1.023
 
 The exact values will vary due to random noise, but notice that `GridSearchCV` found the degree and learning rate automatically, without any modifications to `PolynomialRegressor`.
 
-## What We Built
-
-You have wrapped a custom Python class into a Scikit-Learn compatible estimator. Along the way, you:
-
-- Created a wrapper with `BaseClassWrapper` and `RegressorMixin`
-- Used the `@_fit_context` decorator for automatic instantiation
-- Delegated `fit` and `predict` to the wrapped class's methods
-- Ran hyperparameter tuning with `GridSearchCV`
+The wrapper is ready to use with any Scikit-Learn tool that accepts an estimator.
 
 ## Next Steps
 
-- [How to Wrap a Class](../how-to/wrap-a-class.md) - detailed reference for regressor, classifier, and transformer wrappers
-- [About Core Concepts](../explanation/concepts.md) - understand the delegation pattern and architecture
-- [API Reference](../reference/api.md) - full `BaseClassWrapper` documentation
-- [Examples](examples.md) - interactive notebooks demonstrating all features
+- [How to Wrap a Class](../how-to/wrap-a-class.md): detailed reference for regressor, classifier, and transformer wrappers
+- [About the Delegation Pattern](../explanation/delegation-pattern.md): understand the delegation pattern and architecture
+- [API Reference](../reference/api.md): full `BaseClassWrapper` documentation
+- [Examples](examples.md): interactive notebooks demonstrating all features

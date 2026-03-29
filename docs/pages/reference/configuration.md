@@ -93,6 +93,6 @@ with config_context(trusted_modules=frozenset({"sklearn", "xgboost"})):
 
 ## See Also
 
-- [How to Use YAML Configuration](../how-to/yaml-configuration.md) - practical usage guide
-- [How to Validate Parameters](../how-to/validate-parameters.md) - using `_parameter_constraints`
-- [API Reference](api.md) - auto-generated API docs
+- [How to Use YAML Configuration](../how-to/yaml-configuration.md): practical usage guide
+- [How to Validate Parameters](../how-to/validate-parameters.md): using `_parameter_constraints`
+- [API Reference](api.md): auto-generated API docs

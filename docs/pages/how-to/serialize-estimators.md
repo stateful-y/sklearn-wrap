@@ -84,5 +84,5 @@ with open("model.pkl", "rb") as f:
 
 ## See Also
 
-- [API Reference](../reference/api.md) - `BaseClassWrapper` serialization details
-- [How to Wrap a Class](wrap-a-class.md) - creating wrappers to serialize
+- [API Reference](../reference/api.md): `BaseClassWrapper` serialization details
+- [How to Wrap a Class](wrap-a-class.md): creating wrappers to serialize

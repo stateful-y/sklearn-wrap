@@ -107,7 +107,7 @@ This verifies at validation time that `base_estimator` is a `BaseClassWrapper` w
 
 ## See Also
 
-- [Nested Wrappers example](/examples/nested_wrappers/) - interactive walkthrough
-- [How to Use with GridSearchCV](use-with-gridsearch.md) - tuning nested parameters with grid search
-- [How to Validate Parameters](validate-parameters.md) - the `wrapper_base_class` constraint
-- [About Core Concepts](../explanation/concepts.md) - nested parameter delegation explained
+- [Nested Wrappers example](/examples/nested_wrappers/): interactive walkthrough
+- [How to Use with GridSearchCV](use-with-gridsearch.md): tuning nested parameters with grid search
+- [How to Validate Parameters](validate-parameters.md): the `wrapper_base_class` constraint
+- [About the Delegation Pattern](../explanation/delegation-pattern.md): nested parameter delegation explained

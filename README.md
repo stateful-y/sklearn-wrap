@@ -26,6 +26,7 @@ With sklearn-wrap, you gain immediate access to GridSearchCV for hyperparameter 
 - **Nested parameters**: Support sklearn's double-underscore syntax for nested estimator hierarchies
 - **Full ecosystem compatibility**: Works seamlessly with Pipeline, cross-validation, and joblib serialization
 - **Built-in validation**: Optional parameter constraints with automatic type/value checking before fit
+- **YAML configuration**: Declarative estimator definitions with `EstimatorConfig` - build, save, and load estimators from YAML files (`pip install sklearn-wrap[config]`)
 
 ## How to install Sklearn-Wrap?
 

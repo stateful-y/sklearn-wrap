@@ -122,7 +122,7 @@ Passing a class that does not inherit from the specified base raises a `TypeErro
 
 ## See Also
 
-- [About Core Concepts](../explanation/concepts.md) - understanding the delegation pattern
-- [How to Validate Parameters](validate-parameters.md) - adding parameter constraints
-- [How to Nest Wrappers](nest-wrappers.md) - composing wrappers hierarchically
-- [API Reference](../reference/api.md) - full `BaseClassWrapper` documentation
+- [About the Delegation Pattern](../explanation/delegation-pattern.md): understanding the delegation pattern
+- [How to Validate Parameters](validate-parameters.md): adding parameter constraints
+- [How to Nest Wrappers](nest-wrappers.md): composing wrappers hierarchically
+- [API Reference](../reference/api.md): full `BaseClassWrapper` documentation

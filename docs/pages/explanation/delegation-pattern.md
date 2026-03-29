@@ -1,6 +1,6 @@
-# About Core Concepts
+# About the Delegation Pattern
 
-Sklearn-Wrap bridges arbitrary Python classes with Scikit-Learn's estimator interface through a thin delegation layer. This page explains the design, the reasoning behind it, and how the pieces connect.
+Sklearn-Wrap bridges arbitrary Python classes with Scikit-Learn's estimator interface through a thin delegation layer. This page explains the core architectural approach, the reasoning behind it, and the configuration that makes it work.
 
 ## The Problem
 
@@ -20,10 +20,11 @@ The approach is particularly effective when:
 - You have battle-tested code whose internals you prefer not to touch
 - The wrapped class uses non-standard method names (like `fit_model` instead of `fit`)
 - You want the same class to be usable both inside and outside Scikit-Learn workflows
+- Multiple classes share a common base, so a single wrapper covers the entire family
 
 For new implementations where you control the entire codebase, inheriting directly from Scikit-Learn's `BaseEstimator` is simpler and more direct. Sklearn-Wrap adds value specifically when that direct approach is impractical.
 
-## The Delegation Pattern
+## The Three-Phase Lifecycle
 
 At its heart, Sklearn-Wrap uses a separation between the wrapper's configuration and the wrapped instance:
 
@@ -43,17 +44,7 @@ Every wrapper class must define two attributes that configure the delegation:
 
 **`_estimator_base_class`** validates that the wrapped class inherits from an expected base. This catches configuration errors early: passing an incompatible class raises an error at wrapper creation time rather than failing deep inside `fit()`. Use `object` for minimal validation, or a specific base class for stricter type checking.
 
-## The `_fit_context` Decorator
-
-The `@_fit_context` decorator handles the instantiation phase automatically. It wraps your `fit()` method to:
-
-1. Call `instantiate()`, which validates parameters and creates `self.instance_`
-2. Run Scikit-Learn's parameter validation if `_parameter_constraints` are defined
-3. Manage a context for nested estimator validation
-
-The `prefer_skip_nested_validation` parameter reflects a practical trade-off. For most wrappers, parameters come directly from the user (or from `GridSearchCV`), so validating them once at the outer level is sufficient and nested wrappers can skip redundant checks. For meta-estimators that construct parameters internally, setting this to `False` ensures nested parameters are validated too.
-
-Without the decorator, you would need to call `self.instantiate()` manually as the first line of every `fit()` method. The decorator eliminates this boilerplate and ensures consistent behavior across all wrappers.
+Setting `_estimator_base_class` to a shared base class also enables a single wrapper to serve an entire family of implementations. If several classes share a common base (e.g., multiple XGBoost callback types all inherit from `xgb.callback.TrainingCallback`), one wrapper targeting that base class can wrap any of them. Users swap implementations by passing a different class at construction time, without writing additional wrapper code.
 
 ## Nested Parameters and the `__` Syntax
 
@@ -63,20 +54,15 @@ When a wrapper parameter is itself a `BaseClassWrapper` instance, `get_params(de
 
 Some teams prefer flat parameter spaces with all knobs at one level, while others build deep hierarchies reflecting the model architecture. Both approaches work with Sklearn-Wrap. Flat structures are simpler to configure; nested structures make the architecture explicit and allow swapping sub-components independently.
 
-## Trade-offs and Limitations
-
-The delegation approach comes with trade-offs worth understanding:
-
-**Estimator class immutability**: Once a wrapper is instantiated, the wrapped class cannot be changed via `set_params()`. This is by design because changing the class would invalidate all parameter metadata. To wrap a different class, create a new wrapper instance.
-
-**Parameter validation overhead**: Sklearn-Wrap validates parameters before every instantiation, adding overhead per `fit()` call. For tight loops or performance-critical applications, `sklearn.set_config(skip_parameter_validation=True)` disables this after initial validation.
-
-**No automatic metadata routing**: The wrapper can consume metadata like `sample_weight` in its `fit()` method, but cannot automatically route metadata to nested wrapped estimators. You must handle routing manually if needed. This is a conscious boundary since automatic routing across heterogeneous interfaces would be fragile.
-
 ## Connections
 
 - The wrapper pattern is an instance of the [Adapter pattern](https://en.wikipedia.org/wiki/Adapter_pattern), bridging incompatible interfaces
 - Scikit-Learn's own `Pipeline` and `VotingClassifier` use similar delegation internally
 - The `EstimatorConfig` system extends this further by enabling YAML-based configuration and composition of wrapped estimators
-- For the machinery details, see the [API Reference](../reference/api.md) and [Configuration Reference](../reference/configuration.md)
-- For step-by-step procedures, see [How to Wrap a Class](../how-to/wrap-a-class.md) and other [how-to guides](../how-to/wrap-a-class.md)
+
+## See Also
+
+- [How to Wrap a Class](../how-to/wrap-a-class.md): step-by-step guide for regressor, classifier, and transformer wrappers
+- [How to Nest Wrappers](../how-to/nest-wrappers.md): composing wrappers hierarchically
+- [The Fit Context Lifecycle](fit-context-lifecycle.md): how `_fit_context` automates instantiation
+- [API Reference](../reference/api.md): full `BaseClassWrapper` documentation

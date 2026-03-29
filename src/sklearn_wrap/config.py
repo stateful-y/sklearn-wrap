@@ -365,7 +365,7 @@ class EstimatorConfig(BaseModel):
     instantiated estimators, convert existing estimators to configs,
     and serialize/deserialize to YAML.
 
-    Parameters
+    Attributes
     ----------
     estimator_class : str
         Fully qualified dotted import path, e.g. ``"sklearn.linear_model.Ridge"``.

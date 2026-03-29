@@ -540,7 +540,7 @@ Run the example test suite to verify your notebook passes:
 Add a link to your example in `docs/pages/tutorials/examples.md`:
 
 ```markdown
-- [Example Name](../examples/<name>/) - Brief description
+- [Example Name](../examples/<name>/): Brief description
 ```
 
 The mkdocs hooks automatically export notebooks to HTML during docs build. All notebooks in `examples/` are automatically discovered and tested by `test_examples.py` using pytest's parametrization feature, which runs them in parallel for fast validation.

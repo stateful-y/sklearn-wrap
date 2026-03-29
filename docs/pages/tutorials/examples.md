@@ -15,6 +15,6 @@ Explore Sklearn-Wrap through focused, interactive examples. Each notebook demons
 
 ## Next Steps
 
-- **[Core Concepts](../explanation/concepts.md)** - Understand the delegation pattern and design
+- **[Core Concepts](../explanation/delegation-pattern.md)** - Understand the delegation pattern and design
 - **[API Reference](../reference/api.md)** - Complete BaseClassWrapper documentation
 - **[Contributing](../how-to/contribute.md)** - Add your own examples or improve existing ones

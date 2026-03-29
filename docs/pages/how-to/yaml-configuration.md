@@ -54,70 +54,9 @@ loaded = EstimatorConfig.from_yaml("pipeline.yaml")
 estimator = loaded.build()
 ```
 
-## Use YAML Anchors for Shared Defaults
-
-Native YAML anchors let you define shared parameter blocks without custom syntax:
-
-```yaml
-_defaults: &defaults
-  fit_intercept: true
-  solver: auto
-
-estimator_class: sklearn.linear_model.Ridge
-params:
-  <<: *defaults
-  alpha: 0.5
-```
-
-## Compose Configs with `!include`
-
-Split complex pipelines across files. Paths resolve relative to the including file:
-
-```yaml
-# pipeline.yaml
-estimator_class: sklearn.pipeline.Pipeline
-params:
-  steps:
-    - - scaler
-      - !include preprocessing.yaml
-    - - ridge
-      - !include model.yaml
-```
-
-```yaml
-# model.yaml
-estimator_class: sklearn.linear_model.Ridge
-params:
-  alpha: 0.5
-```
-
-## Allow Third-party Modules
-
-By default, only `sklearn` and `sklearn_wrap` classes can be resolved. Pass `trusted_modules` to allow additional packages:
-
-```python
-config.build(trusted_modules=frozenset({"sklearn", "sklearn_wrap", "xgboost"}))
-```
-
-You can also set trusted modules globally:
-
-```python
-from sklearn_wrap.config import set_config
-
-set_config(trusted_modules=frozenset({"sklearn", "sklearn_wrap", "xgboost"}))
-```
-
-Or use a context manager for temporary scope:
-
-```python
-from sklearn_wrap.config import config_context
-
-with config_context(trusted_modules=frozenset({"sklearn", "sklearn_wrap", "xgboost"})):
-    estimator = config.build()
-```
-
 ## See Also
 
-- [YAML Configuration example](/examples/yaml_config/) - interactive walkthrough
-- [Configuration Reference](../reference/configuration.md) - `EstimatorConfig` API and config functions
-- [About Core Concepts](../explanation/concepts.md) - how config fits into the wrapper pattern
+- [Advanced YAML Patterns](yaml-advanced.md): YAML anchors, `!include` composition, multi-file configs
+- [YAML Configuration example](/examples/yaml_config/): interactive walkthrough
+- [Configuration Reference](../reference/configuration.md): `EstimatorConfig` API and config functions
+- [About YAML Configuration Design](../explanation/yaml-config-design.md): why declarative config and the trusted modules security model

@@ -8,19 +8,19 @@
 # ]
 # ///
 """
-# Nested Parameters
+# How to Control Nested Wrapper Parameters
 
-We explore the double-underscore (`__`) syntax for controlling parameters in
-nested estimator hierarchies.
+This notebook shows how to use the double-underscore (`__`) syntax
+for controlling parameters in nested estimator hierarchies.
 """
 
 import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "Nested Wrapper Parameters",
+    "title": "How to Control Nested Wrapper Parameters",
     "description": "Control nested estimator hierarchies with double-underscore parameter syntax.",
-    "category": "tutorial",
+    "category": "how-to",
     "companion": "pages/how-to/nest-wrappers.md",
 }
 app = marimo.App(width="medium")

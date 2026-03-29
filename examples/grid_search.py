@@ -8,19 +8,19 @@
 # ]
 # ///
 """
-# GridSearch with Wrappers
+# How to Use GridSearchCV with Wrappers
 
-We run `GridSearchCV` on a wrapped estimator to find optimal hyperparameters
-automatically.
+This notebook shows how to run `GridSearchCV` on a wrapped estimator
+to find optimal hyperparameters automatically.
 """
 
 import marimo
 
 __generated_with = "0.19.8"
 __gallery__ = {
-    "title": "Grid Search Integration",
+    "title": "How to Use GridSearchCV with Wrappers",
     "description": "Run GridSearchCV on wrapped estimators for hyperparameter tuning.",
-    "category": "tutorial",
+    "category": "how-to",
     "companion": "pages/how-to/use-with-gridsearch.md",
 }
 app = marimo.App(width="medium")

@@ -100,6 +100,6 @@ def _validate_params(self):
 
 ## See Also
 
-- [Configuration Reference](../reference/configuration.md) - full list of constraint types and `_parameter_constraints` format
-- [About Core Concepts](../explanation/concepts.md) - understanding the validation lifecycle
-- [API Reference](../reference/api.md) - `BaseClassWrapper._validate_params` documentation
+- [Configuration Reference](../reference/configuration.md): full list of constraint types and `_parameter_constraints` format
+- [About the Fit Context Lifecycle](../explanation/fit-context-lifecycle.md): understanding the validation lifecycle
+- [API Reference](../reference/api.md): `BaseClassWrapper._validate_params` documentation
