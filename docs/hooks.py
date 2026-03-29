@@ -235,7 +235,7 @@ def _build_api_table_html(project_root):
 
         members = _get_module_members(mod_file)
         module_label = f"sklearn_wrap.{mod['module_name']}"
-        module_href = f"../api/{mod['module_name']}/"
+        module_href = f"../../api/{mod['module_name']}/"
 
         for cls in members["classes"]:
             qualified = f"sklearn_wrap.{mod['module_name']}.{cls['name']}"
@@ -254,7 +254,7 @@ def _build_api_table_html(project_root):
 
     tbody_lines = []
     for name, kind, module_label, module_href, desc, qualified in rows:
-        href = f"../api/generated/{qualified}/"
+        href = f"../../api/generated/{qualified}/"
         badge_cls = _type_badge_cls.get(kind, "")
         tbody_lines.append(
             f"      <tr>"
