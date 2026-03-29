@@ -356,6 +356,7 @@ def _get_gallery_items(project_root):
         items.append({
             "title": gallery.get("title", stem.replace("_", " ").title()),
             "description": gallery.get("description", ""),
+            "category": gallery.get("category", ""),
             "view_path": view_path,
             "open_path": open_path,
             "stem": stem,
@@ -366,12 +367,43 @@ def _get_gallery_items(project_root):
 
 
 def _build_gallery_html(project_root):
-    """Build gallery card grid as Material 'grid cards' markdown."""
+    """Build gallery card grid as Material 'grid cards' markdown, grouped by category."""
     items = _get_gallery_items(project_root)
 
     if not items:
         return "<!-- no gallery items found -->\n"
 
+    # Group items by category, preserving order within each group
+    _CATEGORY_ORDER = ["tutorial", "how-to"]
+    _CATEGORY_HEADINGS = {
+        "tutorial": "Tutorials",
+        "how-to": "How-to Guides",
+    }
+
+    grouped: dict[str, list[dict]] = {}
+    for item in items:
+        cat = item.get("category") or "other"
+        grouped.setdefault(cat, []).append(item)
+
+    sections = []
+    for cat in _CATEGORY_ORDER:
+        group = grouped.pop(cat, [])
+        if not group:
+            continue
+        heading = _CATEGORY_HEADINGS.get(cat, cat.title())
+        cards = _build_gallery_cards(group)
+        sections.append(f"## {heading}\n\n{cards}")
+
+    # Remaining uncategorized items
+    for _cat, group in grouped.items():
+        cards = _build_gallery_cards(group)
+        sections.append(cards)
+
+    return "\n\n".join(sections) + "\n"
+
+
+def _build_gallery_cards(items):
+    """Build a Material 'grid cards' block from a list of gallery items."""
     cards = []
     for item in items:
         desc = item["description"] or "No description."
@@ -478,25 +510,7 @@ def _build_api_examples_html(project_root, qualified_name):
             seen.add(item["stem"])
             unique_items.append(item)
 
-    cards = []
-    for item in unique_items:
-        desc = item["description"] or "No description."
-        cards.append(
-            f"-   **{item['title']}**\n"
-            f"\n"
-            f"    ---\n"
-            f"\n"
-            f"    {desc}\n"
-            f"\n"
-            f"    [View]({item['view_path']}) · "
-            f"[Open in marimo]({item['open_path']})"
-        )
-
-    return (
-        "## Examples\n\n"
-        "The following example notebooks use this component:\n\n"
-        '<div class="grid cards" markdown>\n\n' + "\n\n".join(cards) + "\n\n</div>\n"
-    )
+    return "## Examples\n\nThe following example notebooks use this component:\n\n" + _build_gallery_cards(unique_items)
 
 
 # ---------------------------------------------------------------------------
