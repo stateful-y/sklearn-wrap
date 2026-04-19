@@ -64,7 +64,7 @@ def _(mo):
 
 @app.cell
 def _(BaseClassWrapper, xgb):
-    from sklearn_wrap.base import _fit_context
+    from sklearn_wrap import base as skw_base
 
     class XGBoostCallbackWrapper(BaseClassWrapper):
         """Wrap XGBoost callback classes.
@@ -134,7 +134,7 @@ def _(BaseClassWrapper, xgb):
             "callbacks": [None, {"wrapper_base_class": xgb.callback.TrainingCallback}]
         }
 
-        @_fit_context(prefer_skip_nested_validation=True)
+        @skw_base._fit_context(prefer_skip_nested_validation=True)
         def fit(self, X, y):
             self.instance_.fit_model(X, y)
             return self
