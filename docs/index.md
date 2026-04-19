@@ -45,4 +45,14 @@ With Sklearn-Wrap, you gain immediate access to GridSearchCV for hyperparameter 
 
 ## License
 
-Sklearn-Wrap is open source and licensed under the [Apache-2.0 License](https://opensource.org/licenses/Apache-2.0). You are free to use, modify, and distribute this software under the terms of this license.
+This project is licensed under the terms of the [Apache-2.0 License](https://github.com/stateful-y/sklearn-wrap/blob/main/LICENSE).
+
+## Acknowledgements
+
+This project is maintained by [stateful-y](https://stateful-y.io), an ML consultancy specializing in data science & engineering. If you're interested in collaborating or learning more about our services, please visit our website.
+
+<p align="center">
+  <a href="https://stateful-y.io">
+    <img src="docs/assets/made_by_stateful-y.png" alt="Made by stateful-y" width="200">
+  </a>
+</p>
