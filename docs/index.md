@@ -53,6 +53,6 @@ This project is maintained by [stateful-y](https://stateful-y.io), an ML consult
 
 <p align="center">
   <a href="https://stateful-y.io">
-    <img src="docs/assets/made_by_stateful-y.png" alt="Made by stateful-y" width="200">
+    <img src="assets/made_by_stateful-y.png" alt="Made by stateful-y" width="200">
   </a>
 </p>
