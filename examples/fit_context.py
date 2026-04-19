@@ -36,8 +36,8 @@ def _():
     import numpy as np
 
     from sklearn_wrap import BaseClassWrapper
-    from sklearn_wrap.base import _fit_context
-    return BaseClassWrapper, np, _fit_context
+    from sklearn_wrap import base as skw_base
+    return BaseClassWrapper, np, skw_base
 
 
 @app.cell(hide_code=True)
@@ -131,12 +131,12 @@ def _(mo):
 
 
 @app.cell
-def _(BaseClassWrapper, _fit_context):
+def _(BaseClassWrapper, skw_base):
     class DecoratorWrapper(BaseClassWrapper):
         _estimator_name = "model"
         _estimator_base_class = object
 
-        @_fit_context(prefer_skip_nested_validation=True)
+        @skw_base._fit_context(prefer_skip_nested_validation=True)
         def fit(self, X, y):
             # instantiate() called automatically by decorator
             self.instance_.train_model(X, y)
@@ -226,7 +226,7 @@ def _(mo):
 
 
 @app.cell
-def _(BaseClassWrapper, np, _fit_context):
+def _(BaseClassWrapper, np, skw_base):
     class IncrementalModel:
         def __init__(self):
             self.sum_ = 0.0
@@ -244,7 +244,7 @@ def _(BaseClassWrapper, np, _fit_context):
         _estimator_name = "model"
         _estimator_base_class = object
 
-        @_fit_context(prefer_skip_nested_validation=True)
+        @skw_base._fit_context(prefer_skip_nested_validation=True)
         def partial_fit(self, X, y):
             self.instance_.partial_fit(X, y)
             return self

@@ -139,7 +139,7 @@ This project is licensed under the terms of the [Apache-2.0 License](https://git
 
 ## Acknowledgements
 
-This project is maintained by [stateful-y](https://stateful-y.io), an ML consultancy specializing in MLOps and data science & engineering. If you're interested in collaborating or learning more about our services, please visit our website.
+This project is maintained by [stateful-y](https://stateful-y.io), an ML consultancy specializing in data science & engineering. If you're interested in collaborating or learning more about our services, please visit our website.
 
 <p align="center">
   <a href="https://stateful-y.io">
