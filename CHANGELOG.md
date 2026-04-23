@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.1.0-alpha.6] - 2026-04-19
+
+This **minor release** includes 4 commits.
+
+
+### Features
+- Add EstimatorConfig for YAML-based estimator configuration  ([#38](https://github.com/stateful-y/sklearn-wrap/pull/38)) by @gtauzin
+
+### Bug Fixes
+- Avoid marimo name mangling of _fit_context  ([#43](https://github.com/stateful-y/sklearn-wrap/pull/43)) by @gtauzin
+
+### Miscellaneous Tasks
+- Update from template 0.16.0  ([#37](https://github.com/stateful-y/sklearn-wrap/pull/37)) by @gtauzin
+- Update from template v0.18.0 and restructure docs with Diataxis  ([#40](https://github.com/stateful-y/sklearn-wrap/pull/40)) by @gtauzin
+
+### Contributors
+
+Thanks to all contributors for this release:
+- @gtauzin
+
 ## [0.1.0-alpha.5] - 2026-03-01
 
 This **minor release** includes 2 commits.
