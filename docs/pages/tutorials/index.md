@@ -12,6 +12,14 @@ Step-by-step guides to installing and using Sklearn-Wrap in your project.
 
     [Getting Started](getting-started.md)
 
+- **Wrapping Functions**
+
+    ---
+
+    Wrap standalone functions into sklearn-compatible functors. Learn the keyword-only convention, functor calls, and extending to a full estimator.
+
+    [Wrapping Functions](wrapping-functions.md)
+
 - **Examples**
 
     ---

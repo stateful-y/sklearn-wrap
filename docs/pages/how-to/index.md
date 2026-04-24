@@ -5,6 +5,7 @@ Task-oriented guides for common Sklearn-Wrap workflows. Each guide addresses a s
 | Guide | Description |
 |-------|-------------|
 | [Wrap a Class](wrap-a-class.md) | Turn any Python class into an sklearn estimator |
+| [Wrap Functions](wrap-functions.md) | Turn standalone functions into sklearn-compatible functors |
 | [Validate Parameters](validate-parameters.md) | Add type and value constraints to wrapper parameters |
 | [Use YAML Configuration](yaml-configuration.md) | Build, save, and load estimators from YAML files |
 | [Use with GridSearchCV](use-with-gridsearch.md) | Run hyperparameter search on wrapped estimators |
