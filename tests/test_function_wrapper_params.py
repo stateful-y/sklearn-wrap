@@ -9,7 +9,9 @@ from sklearn_wrap.base import FunctionWrapper
 
 from .conftest import (
     DefaultCallableWrapper,
+    NoRequiredParams,
     SimpleFunctionWrapper,
+    SimpleWrapper,
     kwargs_fn,
     predict_fn,
     simple_fn,
@@ -51,6 +53,32 @@ class TestGetParams:
         assert params["inner__beta"] == 2.0
         # callable key of nested wrapper should NOT appear in flattened params
         assert "inner__fn" not in params
+
+    def test_get_params_nested_base_class_wrapper(self):
+        inner = SimpleWrapper(simple=NoRequiredParams, param1=99)
+
+        class OuterWrapper(FunctionWrapper):
+            _callable_name = "fn"
+
+        outer = OuterWrapper(fn=kwargs_fn, base=1.0, nested=inner)
+        params = outer.get_params(deep=True)
+        assert params["nested"] is inner
+        assert params["nested__param1"] == 99
+        # estimator_name key of nested BaseClassWrapper should NOT appear
+        assert "nested__simple" not in params
+
+    def test_get_params_nested_plain_estimator(self):
+        from sklearn.tree import DecisionTreeClassifier
+
+        inner = DecisionTreeClassifier(max_depth=3)
+
+        class OuterWrapper(FunctionWrapper):
+            _callable_name = "fn"
+
+        outer = OuterWrapper(fn=kwargs_fn, base=1.0, tree=inner)
+        params = outer.get_params(deep=True)
+        assert params["tree"] is inner
+        assert params["tree__max_depth"] == 3
 
 
 class TestSetParams:

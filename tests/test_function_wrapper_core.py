@@ -92,6 +92,15 @@ class TestValidation:
         with pytest.raises(TypeError, match="not callable"):
             SimpleFunctionWrapper(fn=42)
 
+    def test_validate_callable_uninspectable_signature(self):
+        class BadCallable:
+            def __call__(self): ...
+
+            __signature__ = property(lambda self: (_ for _ in ()).throw(ValueError("no sig")))
+
+        with pytest.raises(TypeError, match="Cannot inspect signature"):
+            SimpleFunctionWrapper(fn=BadCallable())
+
     def test_validate_params_called_by_instantiate(self):
         wrapper = SimpleFunctionWrapper(fn=simple_fn, alpha=5.0)
         wrapper.instantiate()  # should not raise
