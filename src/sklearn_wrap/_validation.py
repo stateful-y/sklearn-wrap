@@ -9,7 +9,7 @@ from __future__ import annotations
 import inspect
 from typing import Any
 
-__all__ = ["validate_class_params", "validate_dotted_path"]
+__all__ = ["validate_class_params", "validate_dotted_path", "validate_function_params"]
 
 _REQUIRED_PARAM_VALUE = "__REQUIRED__"
 """Local alias so this module does not import from base (avoids circular deps)."""
@@ -109,6 +109,74 @@ def validate_class_params(cls: type, params: dict[str, Any]) -> dict[str, Any]:
         validated[param_name] = param_val
 
     for param_name, default in valid_class_params.items():
+        if param_name not in params:
+            validated[param_name] = _REQUIRED_PARAM_VALUE if default is inspect._empty else default
+
+    return validated
+
+
+def validate_function_params(fn: Any, params: dict[str, Any]) -> dict[str, Any]:
+    """Validate parameter names against a callable's keyword-only signature.
+
+    Inspects the signature of *fn*, extracts only ``KEYWORD_ONLY`` parameters
+    as valid config params (positional kinds are data params, passed at call
+    time). If ``VAR_KEYWORD`` (``**kwargs``) is present, arbitrary extra config
+    params are accepted.
+
+    Parameters
+    ----------
+    fn : callable
+        The callable whose signature will be inspected.
+    params : dict[str, Any]
+        Parameter names and values to validate.
+
+    Returns
+    -------
+    dict[str, Any]
+        Validated parameters, including defaults for omitted keyword-only
+        params. Required params without defaults are set to the sentinel
+        ``"__REQUIRED__"``.
+
+    Raises
+    ------
+    TypeError
+        If *fn*'s signature cannot be inspected.
+    ValueError
+        If *params* contains a key that is not a keyword-only parameter of
+        *fn* (and *fn* does not accept ``**kwargs``).
+
+    Examples
+    --------
+    >>> def my_fn(X, y, *, alpha=1.0, beta=2.0): ...
+    >>> validate_function_params(my_fn, {"alpha": 5.0})
+    {'alpha': 5.0, 'beta': 2.0}
+
+    See Also
+    --------
+    validate_class_params : Validate constructor parameters against a class signature.
+    """
+    try:
+        sig = inspect.signature(fn)
+    except (ValueError, TypeError) as exc:
+        raise TypeError(
+            f"Cannot inspect signature of {fn!r}. FunctionWrapper requires a callable with an inspectable signature."
+        ) from exc
+
+    has_var_keyword = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
+
+    valid_kw_only: dict[str, Any] = {
+        key: val.default for key, val in sig.parameters.items() if val.kind == inspect.Parameter.KEYWORD_ONLY
+    }
+
+    validated: dict[str, Any] = {}
+    for param_name, param_val in params.items():
+        if param_name not in valid_kw_only and not has_var_keyword:
+            raise ValueError(
+                f"{param_name!r} is not a valid keyword-only parameter for callable {getattr(fn, '__name__', repr(fn))!r}."
+            )
+        validated[param_name] = param_val
+
+    for param_name, default in valid_kw_only.items():
         if param_name not in params:
             validated[param_name] = _REQUIRED_PARAM_VALUE if default is inspect._empty else default
 

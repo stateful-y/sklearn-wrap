@@ -1027,7 +1027,6 @@ def on_pre_build(config):
                     "-m",
                     "marimo",
                     "-y",
-                    "-q",
                     "export",
                     "html",
                     "--no-sandbox",
@@ -1043,6 +1042,8 @@ def on_pre_build(config):
         except subprocess.CalledProcessError as e:
             failed.append(str(rel_path))
             print(f"[hooks] FAILED html {rel_path}: {e}", file=sys.stderr)
+            if e.stdout:
+                print(e.stdout, file=sys.stderr)
             if e.stderr:
                 print(e.stderr, file=sys.stderr)
             continue

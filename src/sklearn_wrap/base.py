@@ -8,9 +8,9 @@ from sklearn._config import config_context, get_config
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import _is_fitted
 
-from ._validation import validate_class_params
+from ._validation import validate_class_params, validate_function_params
 
-__all__ = ["BaseClassWrapper"]
+__all__ = ["BaseClassWrapper", "FunctionWrapper"]
 
 
 REQUIRED_PARAM_VALUE = "__REQUIRED__"
@@ -510,6 +510,359 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         # Step 5: Recursively set nested parameters
         for base_key, sub_params in nested_params.items():
             nested_obj = self.params[base_key]
+            if not hasattr(nested_obj, "set_params"):
+                raise AttributeError(
+                    f"Cannot set nested parameters on {base_key!r}. "
+                    f"Object of type {type(nested_obj).__name__!r} does not have a set_params method."
+                )
+            nested_obj.set_params(**sub_params)
+
+        return self
+
+
+class FunctionWrapper(BaseEstimator):
+    """Base class for wrapping callables into scikit-learn compatible functors.
+
+    Inheriting from this class provides:
+
+    - setting and getting parameters used by ``GridSearchCV`` and friends;
+    - textual and HTML representation displayed in terminals and IDEs;
+    - estimator serialization via ``clone()``;
+    - parameter validation;
+    - ``__call__`` forwarding positional data args and injecting stored config params.
+
+    Configuration params are identified via the keyword-only convention:
+    positional params in the wrapped callable's signature are data (passed at
+    call time via ``__call__``), keyword-only params (after ``*``) are config
+    (stored on the wrapper and managed via ``get_params``/``set_params``).
+
+    Subclasses can add sklearn mixins (e.g. ``RegressorMixin``) and implement
+    ``fit``/``predict``/``transform`` decorated with ``_fit_context`` to turn
+    the functor into a proper estimator.
+
+    Parameters
+    ----------
+    **params
+        The keyword argument matching ``_callable_name`` provides the callable
+        to wrap (optional when ``_callable_default`` is set).
+        Remaining keyword arguments are passed as keyword-only config params
+        to the wrapped callable.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn_wrap.base import FunctionWrapper
+    >>>
+    >>> def my_predict(X, *, scale=1.0, offset=0.0):
+    ...     return X.sum(axis=1) * scale + offset
+    >>>
+    >>> class ScaledPredictor(FunctionWrapper):
+    ...     _callable_name = "fn"
+    >>>
+    >>> wrapper = ScaledPredictor(fn=my_predict, scale=2.0)
+    >>> wrapper.get_params()["scale"]
+    2.0
+    >>> wrapper(np.array([[1, 2], [3, 4]]))
+    array([ 6., 14.])
+
+    See Also
+    --------
+    BaseClassWrapper : Wraps a class (with instance lifecycle) into an sklearn estimator.
+    _fit_context : Decorator for automatic validation during fit.
+    """
+
+    _required_parameters: list[str] = []
+    _callable_name: str | None = None
+    _callable_default = None
+
+    def __init_subclass__(cls, **kwargs):
+        """Set ``_required_parameters`` automatically for subclasses.
+
+        When a subclass defines ``_callable_name`` and optionally
+        ``_callable_default``, this hook populates ``_required_parameters``
+        so that scikit-learn utilities (e.g. ``clone``) know which
+        constructor arguments are mandatory.
+
+        See Also
+        --------
+        FunctionWrapper.__init__ : Constructor that consumes the required parameter.
+        """
+        super().__init_subclass__(**kwargs)
+        name = getattr(cls, "_callable_name", None)
+        if isinstance(name, str):
+            has_default = getattr(cls, "_callable_default", None) is not None
+            cls._required_parameters = [] if has_default else [name]
+
+    def __init__(self, **params):
+        name = self._callable_name
+        if not isinstance(name, str):
+            raise ValueError("Class should define a static `_callable_name`.")
+
+        if name not in params:
+            # Access from the class to avoid descriptor binding (a function
+            # stored as a class attribute would become a bound method if
+            # accessed via self, causing repr recursion).
+            default_fn = type(self)._callable_default
+            if default_fn is not None:
+                params[name] = default_fn
+            else:
+                raise TypeError(f"{self.__class__.__name__}.__init__() missing required keyword argument: '{name}'")
+        callable_fn = params.pop(name)
+
+        self.callable_fn = self._validate_estimator_fn(callable_fn)
+        self._params = self._validate_function_params(params)
+
+    def _validate_estimator_fn(self, fn):
+        """Validate that the value is callable and inspectable.
+
+        Parameters
+        ----------
+        fn : callable
+            The callable to validate.
+
+        Returns
+        -------
+        callable
+            The validated callable.
+
+        Raises
+        ------
+        TypeError
+            If *fn* is not callable or its signature cannot be inspected.
+
+        See Also
+        --------
+        FunctionWrapper._validate_function_params : Validates config parameter names.
+        """
+        if not callable(fn):
+            raise TypeError(
+                f"{self._callable_name} parameter for {self.__class__.__name__} is not callable. It is {fn!r}."
+            )
+
+        try:
+            inspect.signature(fn)
+        except (ValueError, TypeError) as exc:
+            raise TypeError(
+                f"Cannot inspect signature of {fn!r}. "
+                f"FunctionWrapper requires a callable with an inspectable signature."
+            ) from exc
+
+        return fn
+
+    def _validate_function_params(self, params):
+        """Validate config parameter names against the callable's signature.
+
+        Parameters
+        ----------
+        params : dict
+            Parameter names and values to validate.
+
+        Returns
+        -------
+        dict
+            Validated parameters with defaults filled in.
+
+        See Also
+        --------
+        FunctionWrapper._validate_estimator_fn : Validates the callable itself.
+        FunctionWrapper._validate_params : Full validation combining callable and params.
+        """
+        for param_name in params:
+            if "__" in param_name:
+                raise ValueError(
+                    f"Parameter name {param_name!r} cannot contain '__' (double underscore). "
+                    f"This delimiter is reserved for nested parameter syntax."
+                )
+
+        return validate_function_params(self.callable_fn, params)
+
+    def _validate_params(self):
+        """Validate the callable and all config parameters.
+
+        See Also
+        --------
+        FunctionWrapper._validate_estimator_fn : Validates the callable.
+        FunctionWrapper._validate_function_params : Validates config parameter names.
+        """
+        self._validate_estimator_fn(self.callable_fn)
+        self._validate_function_params(self._params)
+
+    def __sklearn_is_fitted__(self) -> bool:
+        """Check if the estimator has been fitted.
+
+        Checks for fitted attributes (attributes ending with ``_``, excluding
+        ``callable_fn``), which is the sklearn convention. Also checks the
+        internal ``_fitted`` flag.
+
+        Returns
+        -------
+        bool
+            True if the estimator has fitted attributes, False otherwise.
+
+        See Also
+        --------
+        _fit_context : Decorator that sets the fitted state after successful fit.
+        """
+        if getattr(self, "_fitted", False):
+            return True
+
+        fitted_attrs = [v for v in vars(self) if v.endswith("_") and not v.startswith("__") and v != "callable_fn"]
+        return len(fitted_attrs) > 0
+
+    def instantiate(self) -> "FunctionWrapper":
+        """Validate parameters and check for required sentinels.
+
+        Unlike ``BaseClassWrapper.instantiate()``, this does not create a
+        wrapped instance (there is no instance lifecycle). It validates
+        parameters and ensures no required params remain unset.
+
+        Returns
+        -------
+        self
+
+        Raises
+        ------
+        ValueError
+            If any config parameter is still set to the required sentinel.
+
+        See Also
+        --------
+        _fit_context : Decorator that calls instantiate automatically during fit.
+        FunctionWrapper._validate_params : Parameter validation called by this method.
+        """
+        self._validate_params()
+
+        for param_name, param_value in self._params.items():
+            if param_value == REQUIRED_PARAM_VALUE:
+                raise ValueError(
+                    f"Callable {getattr(self.callable_fn, '__name__', repr(self.callable_fn))!r} "
+                    f"requires parameter {param_name!r}."
+                )
+
+        return self
+
+    def __call__(self, *args):
+        """Invoke the wrapped callable with stored config params.
+
+        Positional data arguments are forwarded to the callable. Stored
+        keyword-only config params are injected automatically.
+
+        Parameters
+        ----------
+        *args
+            Positional data arguments forwarded to the wrapped callable.
+
+        Returns
+        -------
+        result
+            The return value of the wrapped callable.
+
+        See Also
+        --------
+        FunctionWrapper.instantiate : Validation step called before invocation.
+        """
+        self.instantiate()
+        return self.callable_fn(*args, **self._params)
+
+    def get_params(self, deep: bool = True) -> dict[str, Any]:
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : dict
+            Parameter names mapped to their values.
+
+        Notes
+        -----
+        The callable is always returned under the ``_callable_name`` key.
+        This ensures that ``sklearn.base.clone()`` can reconstruct the wrapper
+        correctly.
+
+        See Also
+        --------
+        FunctionWrapper.set_params : Set parameters on this estimator.
+        """
+        out = {}
+        for key, value in self._params.items():
+            if deep and hasattr(value, "get_params") and not isinstance(value, type):
+                deep_items = value.get_params().items()
+                if isinstance(value, BaseClassWrapper):
+                    estimator_name = value._estimator_name
+                    deep_items = [(k, v) for k, v in deep_items if k != estimator_name]
+                elif isinstance(value, FunctionWrapper):
+                    callable_name = value._callable_name
+                    deep_items = [(k, v) for k, v in deep_items if k != callable_name]
+                out.update((key + "__" + k, val) for k, val in deep_items)
+            out[key] = value
+
+        out[self._callable_name] = self.callable_fn
+
+        return out
+
+    def set_params(self, **params: object) -> "FunctionWrapper":
+        """Set the parameters of this estimator.
+
+        Works on simple parameters as well as nested objects with parameters
+        of the form ``<component>__<parameter>``.
+
+        Parameters
+        ----------
+        **params : dict
+            Estimator parameters.
+
+        Returns
+        -------
+        self : FunctionWrapper
+            This estimator instance.
+
+        See Also
+        --------
+        FunctionWrapper.get_params : Get parameters for this estimator.
+        """
+        if not params:
+            return self
+
+        if self._callable_name in params:
+            raise ValueError(
+                f"Cannot change callable via set_params. "
+                f"The '{self._callable_name}' parameter cannot be set. Redeclare the "
+                f"callable by creating a new instance of {self.__class__.__name__}."
+            )
+
+        simple_params = {}
+        nested_params = defaultdict(dict)
+        has_nested = False
+
+        for full_key, value in params.items():
+            base_key, delim, sub_key = full_key.partition("__")
+            if delim:
+                nested_params[base_key][sub_key] = value
+                has_nested = True
+            else:
+                simple_params[base_key] = value
+
+        if simple_params:
+            self._validate_function_params(simple_params)
+
+        if has_nested:
+            for base_key in nested_params:
+                if base_key not in self._params:
+                    raise ValueError(
+                        f"Invalid parameter {base_key!r} for estimator {self}. "
+                        f"Valid parameters are: {list(self._params.keys())!r}."
+                    )
+
+        for key, value in simple_params.items():
+            self._params[key] = value
+
+        for base_key, sub_params in nested_params.items():
+            nested_obj = self._params[base_key]
             if not hasattr(nested_obj, "set_params"):
                 raise AttributeError(
                     f"Cannot set nested parameters on {base_key!r}. "
