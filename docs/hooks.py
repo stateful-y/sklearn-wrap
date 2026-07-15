@@ -10,7 +10,15 @@ import sys
 from html.parser import HTMLParser
 from pathlib import Path
 
+# Module-level caches. MkDocs loads hooks as plugin instances and does not
+# reload the module between builds, so these live for the whole process --
+# under `mkdocs serve` an unreset cache serves stale content for the rest of the
+# session. Every cache is cleared per build by on_config() below.
+#
+# Naming is load-bearing: the reset and its test discover caches by the
+# `_CACHE` suffix, so a cache named otherwise escapes both, silently.
 _SUBMODULE_CACHE = None
+_API_NAME_LOOKUP_CACHE = None
 
 
 def _get_submodules(project_root):
@@ -88,6 +96,197 @@ def _get_module_members(py_file):
             functions.append({"name": node.name, "doc": doc.strip().split("\n")[0]})
 
     return {"classes": classes, "functions": functions}
+
+
+def _get_dunder_all(tree):
+    """Return the set of names listed in ``__all__``, or None if absent."""
+    for node in ast.iter_child_nodes(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name) and target.id == "__all__":
+                if not isinstance(node.value, ast.List | ast.Tuple):
+                    return None
+                return {e.value for e in node.value.elts if isinstance(e, ast.Constant) and isinstance(e.value, str)}
+    return None
+
+
+def _iter_reexport_nodes(tree):
+    """Yield ``ImportFrom`` nodes that re-export names from a package.
+
+    Covers top-level imports and imports guarded by a top-level ``try`` block,
+    which is the conventional way to expose an optional extra::
+
+        try:
+            from mypkg.neural._impl import Forecaster
+        except ImportError as err:
+            raise ImportError("install mypkg[neural]") from err
+
+    Only the ``try`` body is walked: names in an ``except`` handler are the
+    fallback path, not the package's advertised API.
+    """
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.ImportFrom):
+            yield node
+        elif isinstance(node, ast.Try):
+            for inner in node.body:
+                if isinstance(inner, ast.ImportFrom):
+                    yield inner
+
+
+def _resolve_import_from(node, init_file, pkg_dir):
+    """Map an ``ImportFrom`` node to the file that declares its names.
+
+    Handles relative imports (``from .naive import X``) and absolute imports
+    rooted at this package (``from mypkg.stats._base import X``).  Returns
+    None for imports that leave the package, which is what keeps incidental
+    third-party imports (``from pathlib import Path``) out of the API.
+    """
+    if node.level:
+        base = init_file.parent
+        for _ in range(node.level - 1):
+            base = base.parent
+        parts = node.module.split(".") if node.module else []
+    else:
+        if not node.module:
+            return None
+        parts = node.module.split(".")
+        if parts[0] != pkg_dir.name:
+            return None
+        base = pkg_dir
+        parts = parts[1:]
+
+    target = base
+    for part in parts:
+        target = target / part
+    for candidate in (target.with_suffix(".py"), target / "__init__.py"):
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _get_reexported_members(init_file, pkg_dir):
+    """Discover members a package exposes by re-export from its submodules.
+
+    A re-exporting ``__init__.py`` declares no classes or functions of its own,
+    so an AST scan of that file alone finds nothing.  This resolves each
+    ``ImportFrom`` binding to its declaring module and lifts the name's kind
+    and docstring from there.
+
+    ``__all__`` acts as a *filter*, not an authority: a name is exposed only if
+    it is listed there (when present) *and* resolves to a class or function in
+    its declaring module.  Constants and other exports are excluded, because
+    only classes and functions get generated pages.
+    """
+    try:
+        tree = ast.parse(init_file.read_text(encoding="utf-8"))
+    except (SyntaxError, UnicodeDecodeError, OSError):
+        return {"classes": [], "functions": []}
+
+    exported = _get_dunder_all(tree)
+    classes = []
+    functions = []
+    seen = set()
+
+    for node in _iter_reexport_nodes(tree):
+        decl_file = _resolve_import_from(node, init_file, pkg_dir)
+        if decl_file is None:
+            continue
+        decl_members = None
+        for alias in node.names:
+            if alias.name == "*":
+                continue
+            exposed = alias.asname or alias.name
+            if exposed.startswith("_") or exposed in seen:
+                continue
+            if exported is not None and exposed not in exported:
+                continue
+            if decl_members is None:
+                decl_members = _get_module_members(decl_file)
+            for bucket, entries in (("classes", decl_members["classes"]), ("functions", decl_members["functions"])):
+                match = next((e for e in entries if e["name"] == alias.name), None)
+                if match is None:
+                    continue
+                (classes if bucket == "classes" else functions).append({
+                    "name": exposed,
+                    "doc": match["doc"],
+                    "origin": str(decl_file),
+                    "reexported": True,
+                })
+                seen.add(exposed)
+                break
+
+    return {"classes": classes, "functions": functions}
+
+
+def _get_public_members(mod_file, pkg_dir):
+    """Public classes and functions of a module, including re-exported ones.
+
+    Each entry carries *origin* (the file that declares the symbol) and
+    *reexported*, so the name lookup can tell one symbol reachable by two paths
+    from two different symbols that happen to share a short name.
+    """
+    if not mod_file.exists():
+        return {"classes": [], "functions": []}
+    members = _get_module_members(mod_file)
+    for key in ("classes", "functions"):
+        for entry in members[key]:
+            entry.setdefault("origin", str(mod_file))
+            entry.setdefault("reexported", False)
+    if mod_file.name == "__init__.py":
+        reexported = _get_reexported_members(mod_file, pkg_dir)
+        declared = {e["name"] for e in members["classes"] + members["functions"]}
+        for key in ("classes", "functions"):
+            members[key].extend(e for e in reexported[key] if e["name"] not in declared)
+    return members
+
+
+def _get_api_name_lookup(project_root):
+    """Map a symbol's short name to the qualified name of its API page (cached).
+
+    Shared by See Also resolution and example-notebook cross-referencing so the
+    two cannot disagree about what a symbol is called.  Built by static
+    analysis only — the package is never imported.
+
+    When one symbol is reachable by two paths -- declared in a module and
+    re-exported by a package -- the published path wins: that is the name users
+    write, and the one whose page they expect.
+
+    When a short name identifies two genuinely different symbols, it is omitted
+    rather than resolved arbitrarily: consumers turn this straight into a URL,
+    and a wrong link is worse than no link.
+    """
+    global _API_NAME_LOOKUP_CACHE  # noqa: PLW0603
+    if _API_NAME_LOOKUP_CACHE is not None:
+        return _API_NAME_LOOKUP_CACHE
+
+    pkg_dir = project_root / "src" / "sklearn_wrap"
+    candidates = {}
+    for mod in _get_submodules(project_root):
+        mod_file = pkg_dir / f"{mod['module_name']}.py"
+        if not mod_file.exists():
+            mod_file = pkg_dir / mod["module_name"] / "__init__.py"
+        members = _get_public_members(mod_file, pkg_dir)
+        for entry in members["classes"] + members["functions"]:
+            qualified = f"sklearn_wrap.{mod['module_name']}.{entry['name']}"
+            candidates.setdefault(entry["name"], []).append({
+                "qualified": qualified,
+                "origin": entry.get("origin"),
+                "reexported": entry.get("reexported", False),
+            })
+
+    lookup = {}
+    for name, cands in candidates.items():
+        if len({c["origin"] for c in cands}) > 1:
+            continue  # genuinely different symbols share this short name
+        published = sorted(c["qualified"] for c in cands if c["reexported"])
+        if published:
+            lookup[name] = published[0]
+        elif len(cands) == 1:
+            lookup[name] = cands[0]["qualified"]
+
+    _API_NAME_LOOKUP_CACHE = lookup
+    return _API_NAME_LOOKUP_CACHE
 
 
 def _build_members_tables(package_name, module_name, members):
@@ -179,7 +378,7 @@ def _generate_api_pages(project_root):
         if not mod_file.exists():
             mod_file = pkg_dir / mod["module_name"] / "__init__.py"
 
-        members = _get_module_members(mod_file) if mod_file.exists() else {"classes": [], "functions": []}
+        members = _get_public_members(mod_file, pkg_dir)
 
         # Generate submodule overview page with tables
         members_tables = _build_members_tables(
@@ -233,7 +432,7 @@ def _build_api_table_html(project_root):
         if not mod_file.exists():
             continue
 
-        members = _get_module_members(mod_file)
+        members = _get_public_members(mod_file, pkg_dir)
         module_label = f"sklearn_wrap.{mod['module_name']}"
         module_href = f"../../api/{mod['module_name']}/"
 
@@ -310,6 +509,18 @@ def _build_api_table_html(project_root):
 
 
 _GALLERY_CACHE = None
+_COMPANION_INDEX_CACHE = None
+_GALLERY_PAGE_CACHE = None
+
+# Max example cards on a single API page.  Most symbols are well under this
+# (a typical notebook demonstrates a handful of things); the cap exists for the
+# widely used helpers, where an uncapped list runs to dozens of cards and stops
+# being scannable.  The overflow link keeps the rest reachable.
+#
+# The `_CACHE` suffix on cache globals above is load-bearing: the per-build
+# reset's registration test discovers caches by that suffix, so a cache named
+# otherwise escapes it silently.
+_API_EXAMPLES_CAP = 6
 
 
 def _get_gallery_items(project_root):
@@ -353,10 +564,19 @@ def _get_gallery_items(project_root):
         view_path = f"/examples/{stem}/"
         open_path = f"/examples/{stem}/edit/"
 
+        # api_references: absent (None) means "infer from imports"; an empty
+        # list means "this notebook belongs on no API page" -- a deliberate
+        # statement, not a default.
+        api_references = gallery.get("api_references")
+        if api_references is not None and not isinstance(api_references, list):
+            api_references = None
+
         items.append({
             "title": gallery.get("title", stem.replace("_", " ").title()),
             "description": gallery.get("description", ""),
             "category": gallery.get("category", ""),
+            "api_references": api_references,
+            "companion": gallery.get("companion"),
             "view_path": view_path,
             "open_path": open_path,
             "stem": stem,
@@ -424,6 +644,69 @@ def _build_gallery_cards(items):
 _NOTEBOOK_API_USAGE_CACHE = None
 
 
+def _get_gallery_page_url(project_root):
+    """URL of the page hosting the gallery, or None if there is not one.
+
+    The gallery page is whichever page carries the ``<!-- GALLERY -->``
+    placeholder -- found by looking, because that page is local-owned and a
+    project is free to move it.  A hardcoded path is wrong the moment someone
+    reorganises their docs, and produces a 404 with no build error.
+    """
+    global _GALLERY_PAGE_CACHE  # noqa: PLW0603
+    if _GALLERY_PAGE_CACHE is not None:
+        return _GALLERY_PAGE_CACHE or None
+
+    docs_dir = project_root / "docs"
+    _GALLERY_PAGE_CACHE = ""
+    if docs_dir.exists():
+        for md in sorted(docs_dir.rglob("*.md")):
+            try:
+                if "<!-- GALLERY -->" in md.read_text(encoding="utf-8"):
+                    rel = md.relative_to(docs_dir).with_suffix("")
+                    _GALLERY_PAGE_CACHE = "/" + "/".join(rel.parts) + "/"
+                    break
+            except (OSError, UnicodeDecodeError):
+                continue
+    return _GALLERY_PAGE_CACHE or None
+
+
+def _normalize_companion_path(path):
+    """Normalize a companion path so authored variants compare equal.
+
+    ``companion`` is hand-written, so it turns up as ``/pages/how-to/x/``,
+    ``pages/how-to/x`` and ``pages/how-to/x.md``.  All three mean the same
+    page; normalizing beats making the author guess the one true spelling.
+    """
+    return str(path).strip("/").removesuffix(".md").removesuffix("/index")
+
+
+def _get_companion_index(project_root):
+    """Reverse map: normalized doc page path -> notebooks naming it (cached)."""
+    global _COMPANION_INDEX_CACHE  # noqa: PLW0603
+    if _COMPANION_INDEX_CACHE is not None:
+        return _COMPANION_INDEX_CACHE
+
+    index: dict[str, list[dict]] = {}
+    for item in _get_gallery_items(project_root):
+        companion = item.get("companion")
+        if companion:
+            index.setdefault(_normalize_companion_path(companion), []).append(item)
+    _COMPANION_INDEX_CACHE = index
+    return _COMPANION_INDEX_CACHE
+
+
+def _build_companion_cards_html(project_root, page_src_uri):
+    """Build cards for notebooks declaring this page as their companion."""
+    items = _get_companion_index(project_root).get(_normalize_companion_path(page_src_uri), [])
+    if not items:
+        return ""
+    # The heading is emitted here rather than written into the page, so a page
+    # whose companions were removed renders nothing at all instead of a heading
+    # with an empty section under it.
+    cards = _build_gallery_cards(sorted(items, key=lambda item: item["title"]))
+    return f"## Try it interactively\n\n{cards}"
+
+
 def _get_notebook_api_usage(project_root):
     """Build reverse map: qualified API name → list of gallery items that use it.
 
@@ -435,22 +718,7 @@ def _get_notebook_api_usage(project_root):
     if _NOTEBOOK_API_USAGE_CACHE is not None:
         return _NOTEBOOK_API_USAGE_CACHE
 
-    pkg_dir = project_root / "src" / "sklearn_wrap"
-    modules = _get_submodules(project_root)
-
-    # Build short name → qualified lookup from discovered module members
-    name_to_qualified: dict[str, str] = {}
-    for mod in modules:
-        mod_file = pkg_dir / f"{mod['module_name']}.py"
-        if not mod_file.exists():
-            mod_file = pkg_dir / mod["module_name"] / "__init__.py"
-        if not mod_file.exists():
-            continue
-        members = _get_module_members(mod_file)
-        for cls in members["classes"]:
-            name_to_qualified[cls["name"]] = f"sklearn_wrap.{mod['module_name']}.{cls['name']}"
-        for func in members["functions"]:
-            name_to_qualified[func["name"]] = f"sklearn_wrap.{mod['module_name']}.{func['name']}"
+    name_to_qualified = _get_api_name_lookup(project_root)
 
     gallery_items = _get_gallery_items(project_root)
     stem_to_item = {item["stem"]: item for item in gallery_items}
@@ -472,18 +740,28 @@ def _get_notebook_api_usage(project_root):
         if item is None:
             continue
 
-        try:
-            source = notebook.read_text(encoding="utf-8")
-            tree = ast.parse(source)
-        except (SyntaxError, UnicodeDecodeError):
-            continue
+        # Declared api_references win; import scanning is the fallback.
+        # Import scanning cannot tell a symbol a notebook *demonstrates* from
+        # one it merely uses as scaffolding, so an author saying which is which
+        # beats inference.  But a notebook that says nothing must still work --
+        # a fresh project has no metadata, and the feature has to be visible
+        # before anyone opts in.
+        declared = item.get("api_references")
+        if declared is not None:
+            imported_names = set(declared)
+        else:
+            try:
+                source = notebook.read_text(encoding="utf-8")
+                tree = ast.parse(source)
+            except (SyntaxError, UnicodeDecodeError):
+                continue
 
-        # Extract names imported from sklearn_wrap.*
-        imported_names: set[str] = set()
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith("sklearn_wrap"):
-                for alias in node.names:
-                    imported_names.add(alias.name)
+            # Extract names imported from sklearn_wrap.*
+            imported_names = set()
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith("sklearn_wrap"):
+                    for alias in node.names:
+                        imported_names.add(alias.name)
 
         for imp_name in imported_names:
             qualified = name_to_qualified.get(imp_name)
@@ -510,7 +788,20 @@ def _build_api_examples_html(project_root, qualified_name):
             seen.add(item["stem"])
             unique_items.append(item)
 
-    return "## Examples\n\nThe following example notebooks use this component:\n\n" + _build_gallery_cards(unique_items)
+    # Bound the list.  A widely used helper accumulates a card per notebook,
+    # so the most-used symbols get the longest and least useful lists -- the
+    # failure is inversely proportional to usefulness.  Curation alone does not
+    # fix this: a genuinely central class really is used by dozens of
+    # notebooks.  Sort by title so the selection is stable across builds.
+    unique_items.sort(key=lambda item: item["title"])
+    total = len(unique_items)
+    shown = unique_items[:_API_EXAMPLES_CAP]
+
+    html = "## Examples\n\nThe following example notebooks use this component:\n\n" + _build_gallery_cards(shown)
+    gallery_url = _get_gallery_page_url(project_root)
+    if total > _API_EXAMPLES_CAP and gallery_url:
+        html += f"\n[See all {total} examples in the gallery]({gallery_url})\n"
+    return html
 
 
 # ---------------------------------------------------------------------------
@@ -619,6 +910,103 @@ _DETAIL_SECTION_SLUGS = {
     "see-also": ("see-also", "See Also"),
     "references": ("references", "References"),
 }
+
+
+_SEE_ALSO_BLOCK_RE = re.compile(r'<details\s+class="see-also"[^>]*>.*?</details>', re.DOTALL)
+# An entry's name sits at the START of its line -- mkdocstrings renders one entry
+# per line inside the paragraph. Anchoring here is what keeps a colon-terminated
+# word in an entry's DESCRIPTION ("Target : Note: see below") from being treated
+# as another entry and linked.
+_SEE_ALSO_ENTRY_RE = re.compile(r"^(\s*)(<code>[^<]+</code>|[A-Za-z_][\w.]*)(\s*:)")
+
+
+def _resolve_see_also_url(name):
+    """Resolve a See Also entry naming a project symbol to a URL, or None.
+
+    A dotted name whose leading segment is not this package is external and is
+    not resolved here -- see ``_external_autoref`` for why.
+
+    Classifying by leading segment is the only rule that works: the project
+    lookup is keyed by *short* name, so a dotted external name always misses it,
+    and stripping the qualifier first would let ``sklearn.linear_model.Ridge``
+    collide with a project symbol called ``Ridge``.
+    """
+    package = "sklearn_wrap"
+    if "." in name and name.split(".", 1)[0] != package:
+        return None
+
+    short_name = name.rsplit(".", 1)[-1]
+    project_root = Path(__file__).parent.parent
+    qualified = _get_api_name_lookup(project_root).get(short_name)
+    return f"../{qualified}/" if qualified is not None else None
+
+
+def _external_autoref(name, title):
+    """Defer an external name to autorefs, which resolves it later.
+
+    External names cannot be resolved here: mkdocstrings registers downloaded
+    inventories into the autorefs URL map, but autorefs applies them in its
+    ``on_env`` hook -- after ``on_page_content`` runs.  Asking for the URL now
+    raises ``KeyError`` even when the inventory is configured.
+
+    So emit autorefs' own markup and let it resolve at the right time.  The
+    ``optional`` attribute is what keeps an unresolvable name quiet: autorefs
+    logs it at debug level and renders the title as plain text, rather than
+    recording it as an unmapped reference and warning (which would fail a
+    ``--strict`` build for a docstring that names something undocumented).
+
+    Only dotted names get here.  A bare name is not offered to autorefs: it
+    could resolve to an unrelated symbol that happens to share the name in some
+    configured inventory, and a wrong link is worse than no link.
+    """
+    return f'<autoref optional identifier="{name}">{title}</autoref>'
+
+
+def _link_entry(name, title, colon, entry):
+    """Render one See Also entry: project link, deferred external ref, or as-is."""
+    url = _resolve_see_also_url(name)
+    if url:
+        return f'<a href="{url}">{title}</a>{colon}'
+    if "." in name and name.split(".", 1)[0] != "sklearn_wrap":
+        return _external_autoref(name, title) + colon
+    return entry
+
+
+def _linkify_see_also(html):
+    """Turn the names in a rendered See Also section into links.
+
+    Must run while the ``<details class="see-also">`` container still exists --
+    see the ordering comment in ``on_page_content``.  Unresolvable names are
+    left untouched: a docstring may reference a private helper or a concept,
+    and none of those are build errors.
+    """
+
+    def _process_block(block_match):
+        def _linkify_line(line):
+            entry_match = _SEE_ALSO_ENTRY_RE.match(line)
+            if not entry_match:
+                return line
+            lead, token, colon = entry_match.groups()
+            rest = line[entry_match.end() :]
+            code_match = re.fullmatch(r"<code>([^<]+)</code>", token)
+            name = code_match.group(1) if code_match else token
+            title = f"<code>{name}</code>" if code_match else name
+            return lead + _link_entry(name, title, colon, token + colon) + rest
+
+        def _process_container(container_match):
+            tag, inner = container_match.group(1), container_match.group(2)
+            # Leave an author's explicit [Name][target] reference alone: they have
+            # said what they mean, and autorefs resolves it later.
+            if "<a " in inner or "<autoref" in inner:
+                return container_match.group(0)
+            return f"<{tag}>" + "\n".join(_linkify_line(line) for line in inner.split("\n")) + f"</{tag}>"
+
+        # numpydoc renders See Also entries as a paragraph, one per line; an author
+        # may also write them as a markdown list, which renders as <li>. Both are
+        # ordinary numpydoc, so both get linked.
+        return re.sub(r"<(p|li)>(.*?)</\1>", _process_container, block_match.group(0), flags=re.DOTALL)
+
+    return _SEE_ALSO_BLOCK_RE.sub(_process_block, html)
 
 
 def _make_section_heading(slug, title, level=3):
@@ -853,7 +1241,8 @@ def _process_api_page_content(html, page, config):
     if examples_h2:
         old = examples_h2.group(0)
         new = (
-            old.replace('<h2 id="examples">', '<h3 id="tutorials">')
+            old
+            .replace('<h2 id="examples">', '<h3 id="tutorials">')
             .replace("</h2>", "</h3>")
             .replace(">Examples<", ">Tutorials<")
             .replace("#examples", "#tutorials")
@@ -905,12 +1294,40 @@ def _process_api_page_content(html, page, config):
     return html
 
 
+def on_config(config):
+    """Clear per-build caches.
+
+    `on_config` is the first event on every build, including each rebuild in a
+    `mkdocs serve` session -- which is the lifetime these caches need.
+
+    Deliberately not `on_startup`: that runs once per `mkdocs` invocation, so a
+    reset there fires when the caches are already empty and never again, and
+    `mkdocs serve` keeps serving the first build's content.
+    """
+    global _SUBMODULE_CACHE, _API_NAME_LOOKUP_CACHE, _GIT_REF_CACHE  # noqa: PLW0603
+    _SUBMODULE_CACHE = None
+    _API_NAME_LOOKUP_CACHE = None
+    _GIT_REF_CACHE = None
+    global _GALLERY_CACHE, _COMPANION_INDEX_CACHE, _NOTEBOOK_API_USAGE_CACHE, _GALLERY_PAGE_CACHE  # noqa: PLW0603
+    _GALLERY_CACHE = None
+    _COMPANION_INDEX_CACHE = None
+    _NOTEBOOK_API_USAGE_CACHE = None
+    _GALLERY_PAGE_CACHE = None
+    return config
+
+
 def on_page_content(html, page, config, files):
     """Post-process HTML: API page TOC and content restructuring."""
     src = page.file.src_path
 
     # Process generated API member pages (per-class/function detail pages)
     if src.startswith("pages/api/generated/"):
+        # ORDER IS LOAD-BEARING: mkdocstrings emits See Also as a
+        # <details class="see-also"> block, and _process_api_page_content
+        # dissolves that block for class-level docstrings.  Linkifying after it
+        # silently does nothing for class-level See Also sections -- the
+        # majority of them -- while appearing to work for method-level ones.
+        html = _linkify_see_also(html)
         html = _process_api_page_content(html, page, config)
 
     if src == "pages/reference/api.md":
@@ -965,6 +1382,15 @@ def on_page_markdown(markdown, page, config, files):
         gallery_html = _build_gallery_html(project_root)
         markdown = markdown.replace("<!-- GALLERY -->", gallery_html)
 
+    # COMPANION_NOTEBOOKS placeholder → cards for notebooks naming this page.
+    # Substituted here, before the URL rewrites below, so companion cards go
+    # through the same [View]/[Open in marimo] resolution as gallery cards.
+    # Emitting resolved HTML directly would bypass those markdown-syntax
+    # rewrites and ship unresolved links.
+    if "<!-- COMPANION_NOTEBOOKS -->" in markdown:
+        companion_html = _build_companion_cards_html(project_root, page.file.src_path)
+        markdown = markdown.replace("<!-- COMPANION_NOTEBOOKS -->", companion_html)
+
     # Resolve [Open in marimo] placeholder URLs → full marimo.app playground URLs
     markdown = re.sub(
         r"\[Open in marimo\]\(/examples/([^)]+?)/edit/\)",
@@ -974,6 +1400,10 @@ def on_page_markdown(markdown, page, config, files):
 
     # Rewrite [View] to relative paths pointing to local HTML exports
     markdown = re.sub(r"\]\(/examples/", f"]({prefix}examples/", markdown)
+
+    # Absolute doc-page links (e.g. the gallery overflow link) resolve to the
+    # current page's depth, the same way [View] does.
+    markdown = re.sub(r"\]\(/pages/", f"]({prefix}pages/", markdown)
 
     return markdown
 
