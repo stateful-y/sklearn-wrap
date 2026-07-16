@@ -2,11 +2,6 @@
 
 This guide shows you how to save and load wrapped estimators using `joblib`. Use this when you need to persist trained models, pipelines, or `GridSearchCV` results to disk.
 
-!!! tip "Interactive notebook available"
-
-    Try this guide as an interactive notebook:
-    [How to Serialize Estimators](/examples/serialization/)
-
 ## Prerequisites
 
 - sklearn-wrap installed ([Getting Started](../tutorials/getting-started.md))
