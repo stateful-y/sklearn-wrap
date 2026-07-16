@@ -435,7 +435,7 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
                 out.update((key + "__" + k, val) for k, val in deep_items)
             out[key] = value
 
-        out[self._estimator_name] = self.estimator_class
+        out[self.estimator_name] = self.estimator_class
 
         return out
 
