@@ -10,6 +10,8 @@ Install the config extra:
 pip install sklearn-wrap[config]
 ```
 
+<!-- COMPANION_NOTEBOOKS -->
+
 ## Build an Estimator from a Config
 
 Create an `EstimatorConfig` with a dotted import path and constructor parameters, then call `.build()`:

@@ -7,6 +7,8 @@ This guide shows you how to add parameter validation to your wrappers using Scik
 - sklearn-wrap installed ([Getting Started](../tutorials/getting-started.md))
 - A working wrapper class ([How to Wrap a Class](wrap-a-class.md))
 
+<!-- COMPANION_NOTEBOOKS -->
+
 ## Defining Parameter Constraints
 
 ### 1. Add `_parameter_constraints` to Your Wrapper

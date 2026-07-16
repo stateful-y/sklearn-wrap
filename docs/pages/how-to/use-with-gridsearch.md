@@ -7,6 +7,8 @@ This guide shows you how to tune hyperparameters of wrapped estimators using Sci
 - sklearn-wrap installed ([Getting Started](../tutorials/getting-started.md))
 - A working wrapper class ([How to Wrap a Class](wrap-a-class.md))
 
+<!-- COMPANION_NOTEBOOKS -->
+
 ## Define a Parameter Grid
 
 Wrapped estimators expose parameters through the standard `get_params()` / `set_params()` interface. Build your parameter grid using those parameter names:

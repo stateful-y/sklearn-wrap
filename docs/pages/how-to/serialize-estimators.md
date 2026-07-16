@@ -7,6 +7,8 @@ This guide shows you how to save and load wrapped estimators using `joblib`. Use
 - sklearn-wrap installed ([Getting Started](../tutorials/getting-started.md))
 - A working wrapper class ([How to Wrap a Class](wrap-a-class.md))
 
+<!-- COMPANION_NOTEBOOKS -->
+
 ## Save and Load a Single Estimator
 
 Use `joblib.dump()` and `joblib.load()` exactly as with any sklearn estimator:

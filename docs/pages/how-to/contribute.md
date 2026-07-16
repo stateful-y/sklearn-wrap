@@ -576,7 +576,7 @@ Run the example test suite to verify your notebook passes:
     uv run pytest tests/test_examples.py -m example
     ```
 
-Add a link to your example in `docs/pages/tutorials/examples.md`:
+Add a link to your example in `docs/pages/examples/index.md`:
 
 ```markdown
 - [Example Name](../examples/<name>/): Brief description

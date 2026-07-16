@@ -7,6 +7,8 @@ This guide shows you how to compose wrappers that contain other wrappers, and ho
 - sklearn-wrap installed ([Getting Started](../tutorials/getting-started.md))
 - A working wrapper class ([How to Wrap a Class](wrap-a-class.md))
 
+<!-- COMPANION_NOTEBOOKS -->
+
 ## Create a Nested Structure
 
 Pass inner wrappers as constructor parameters to an outer wrapper:

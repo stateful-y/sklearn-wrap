@@ -18,6 +18,6 @@ Step-by-step guides to installing and using Sklearn-Wrap in your project.
 
     Interactive notebooks covering core features, from basic wrapping and parameter validation to GridSearchCV integration and YAML configuration.
 
-    [Browse Examples](examples.md)
+    [Browse Examples](../examples/index.md)
 
 </div>

@@ -7,6 +7,8 @@ This guide shows you how to wrap any Python class into a Scikit-Learn compatible
 - sklearn-wrap installed ([Getting Started](../tutorials/getting-started.md))
 - Familiarity with Scikit-Learn's `fit`/`predict` pattern
 
+<!-- COMPANION_NOTEBOOKS -->
+
 ## Wrapping a Regressor
 
 ### 1. Define the Wrapper Class
