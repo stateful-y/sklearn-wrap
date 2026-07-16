@@ -386,11 +386,34 @@ rather than an API object — are left as plain text rather than failing the
 build, so you can reference anything that reads well.
 
 Fully qualified names work too (`sklearn_wrap.module.OtherClass`), and
-resolve to the same page as the short form. A name from another project (for
-example `sklearn.linear_model.Ridge`) links to that project's documentation
-when its inventory is configured in `mkdocs.yml`.
+resolve to the same page as the short form. A member reference
+(`OtherClass.method`) links to that member on its class page. A name from
+another project (for example `sklearn.linear_model.Ridge`) links to that
+project's documentation when its inventory is configured in `mkdocs.yml`.
 
 For hyperlinks, always use Markdown syntax: `[text](url)`.
+
+### Glossary
+
+A glossary is optional. Create `docs/pages/explanation/glossary.md` and define
+terms as a definition list, giving each one an explicit anchor:
+
+```markdown
+Memory buffer { #memory-buffer .autolink }
+:   The internal store of recent rows a stateful component maintains.
+
+Step { #step }
+:   One timestep.
+```
+
+A term marked `.autolink` has its **first** occurrence on every other page
+turned into a link to its definition. The glossary page is the only place terms
+are listed, so a definition and its links cannot drift apart.
+
+Opting in is per term because defining a word and advertising it everywhere are
+different decisions: a glossary is free to define short, common words — `step`
+above — and auto-linking those wherever prose happens to use them is noise. Text
+inside code, headings and existing links is never touched.
 
 ### Documentation
 

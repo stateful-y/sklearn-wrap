@@ -2,7 +2,10 @@
 
 import ast
 import fnmatch
+import hashlib
+import importlib.util
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -19,6 +22,7 @@ from pathlib import Path
 # `_CACHE` suffix, so a cache named otherwise escapes both, silently.
 _SUBMODULE_CACHE = None
 _API_NAME_LOOKUP_CACHE = None
+_GLOSSARY_TERMS_CACHE = None
 
 
 def _get_submodules(project_root):
@@ -165,8 +169,38 @@ def _resolve_import_from(node, init_file, pkg_dir):
     return None
 
 
+def _resolve_external_module(module_name):
+    """Locate a module that lives outside this package.
+
+    A package may deliberately re-export a dependency's symbol -- a convenience
+    shim such as ``from otherpkg.thing import Widget`` under its own ``__all__``.
+    That name is part of *this* package's public API, but no file under
+    ``pkg_dir`` declares it, so ``_resolve_import_from`` cannot reach it and the
+    symbol would silently vanish from the index and lose its page.
+
+    ``find_spec`` locates the module's source file so the kind and docstring can
+    be read from it like any other module, rather than guessed.  It imports the
+    *parent* package to do so, which is why this is only ever consulted for a
+    name the author listed in ``__all__``: an incidental ``from pathlib import
+    Path`` must never reach here.  Anything that does not resolve to readable
+    source is skipped, not invented.
+    """
+    try:
+        spec = importlib.util.find_spec(module_name)
+    except (ImportError, AttributeError, ValueError):
+        return None
+    if spec is None or not spec.origin or not spec.origin.endswith(".py"):
+        return None
+    return Path(spec.origin)
+
+
+def _reexports_a_dunder_all_name(node, exported):
+    """Whether this ImportFrom binds any name the package advertises in ``__all__``."""
+    return any((alias.asname or alias.name) in exported for alias in node.names if alias.name != "*")
+
+
 def _get_reexported_members(init_file, pkg_dir):
-    """Discover members a package exposes by re-export from its submodules.
+    """Discover members a module exposes by re-export rather than by declaring them.
 
     A re-exporting ``__init__.py`` declares no classes or functions of its own,
     so an AST scan of that file alone finds nothing.  This resolves each
@@ -177,6 +211,13 @@ def _get_reexported_members(init_file, pkg_dir):
     it is listed there (when present) *and* resolves to a class or function in
     its declaring module.  Constants and other exports are excluded, because
     only classes and functions get generated pages.
+
+    A plain module can be a re-export shim too, so this is not limited to
+    ``__init__.py`` -- but for one, an import is normally a private detail
+    (``from .base import Helper`` to use it), not an advertisement.  Only an
+    explicit ``__all__`` marks a plain module's imports as its public surface;
+    without one, nothing here is re-exported.  An ``__init__.py`` re-exports by
+    convention, so it needs no such marker.
     """
     try:
         tree = ast.parse(init_file.read_text(encoding="utf-8"))
@@ -184,6 +225,8 @@ def _get_reexported_members(init_file, pkg_dir):
         return {"classes": [], "functions": []}
 
     exported = _get_dunder_all(tree)
+    if exported is None and init_file.name != "__init__.py":
+        return {"classes": [], "functions": []}
     classes = []
     functions = []
     seen = set()
@@ -191,7 +234,15 @@ def _get_reexported_members(init_file, pkg_dir):
     for node in _iter_reexport_nodes(tree):
         decl_file = _resolve_import_from(node, init_file, pkg_dir)
         if decl_file is None:
-            continue
+            # The import leaves the package. That is normally an incidental
+            # third-party import and must stay out of the API -- unless the
+            # author advertised the name in __all__, which makes it this
+            # package's public API no matter where it was declared.
+            if exported is None or node.level or not node.module or not _reexports_a_dunder_all_name(node, exported):
+                continue
+            decl_file = _resolve_external_module(node.module)
+            if decl_file is None:
+                continue
         decl_members = None
         for alias in node.names:
             if alias.name == "*":
@@ -233,11 +284,10 @@ def _get_public_members(mod_file, pkg_dir):
         for entry in members[key]:
             entry.setdefault("origin", str(mod_file))
             entry.setdefault("reexported", False)
-    if mod_file.name == "__init__.py":
-        reexported = _get_reexported_members(mod_file, pkg_dir)
-        declared = {e["name"] for e in members["classes"] + members["functions"]}
-        for key in ("classes", "functions"):
-            members[key].extend(e for e in reexported[key] if e["name"] not in declared)
+    reexported = _get_reexported_members(mod_file, pkg_dir)
+    declared = {e["name"] for e in members["classes"] + members["functions"]}
+    for key in ("classes", "functions"):
+        members[key].extend(e for e in reexported[key] if e["name"] not in declared)
     return members
 
 
@@ -511,6 +561,33 @@ def _build_api_table_html(project_root):
 _GALLERY_CACHE = None
 _COMPANION_INDEX_CACHE = None
 _GALLERY_PAGE_CACHE = None
+
+# Written beside an exported notebook to record the source it was built from.
+# Deliberately not a _CACHE module global: this one has to outlive the process,
+# because its whole purpose is to skip work on a *later* build.
+_SOURCE_HASH_FILE = ".source_hash"
+
+
+def _notebook_content_hash(notebook):
+    """Hash a notebook's source, to tell an unchanged one from an edited one."""
+    return hashlib.sha256(notebook.read_bytes()).hexdigest()
+
+
+def _is_cached(output_dir, expected_hash):
+    """Whether this notebook's export is present and built from this exact source.
+
+    Requires the rendered page *and* a matching hash. Checking the hash alone
+    would reuse a directory whose html failed to write; checking the page alone
+    would serve a stale render of an edited notebook forever.
+    """
+    hash_file = output_dir / _SOURCE_HASH_FILE
+    if not (output_dir / "index.html").exists() or not hash_file.exists():
+        return False
+    try:
+        return hash_file.read_text(encoding="utf-8").strip() == expected_hash
+    except OSError:
+        return False
+
 
 # Max example cards on a single API page.  Most symbols are well under this
 # (a typical notebook demonstrates a handful of things); the cap exists for the
@@ -962,14 +1039,201 @@ def _external_autoref(name, title):
     return f'<autoref optional identifier="{name}">{title}</autoref>'
 
 
+def _resolve_member_identifier(name):
+    """Qualify a dotted ``Class.member`` See Also entry to its autoref identifier.
+
+    A member -- a method or attribute -- has no page of its own; it is an anchor
+    on its class page, so it cannot be resolved to a URL the way a class or a
+    function can.  This qualifies the entry to a full identifier and hands it to
+    autorefs, which does know the anchor.
+
+    ``OtherClass.build`` becomes ``sklearn_wrap.module.OtherClass.build``
+    via the short-name lookup; an entry already led by the package name is
+    returned unchanged (its trailing segment is a member, so
+    ``_resolve_see_also_url`` did not resolve it to a page).  Returns None when
+    the leading segment is neither this package nor a known project symbol, so a
+    genuinely external dotted name (``sklearn.linear_model.Ridge``) falls through
+    to external handling and keeps its own inventory link.
+    """
+    package = "sklearn_wrap"
+    if "." not in name:
+        return None
+    head, rest = name.split(".", 1)
+    if head == package:
+        return name
+    qualified_head = _get_api_name_lookup(Path(__file__).parent.parent).get(head)
+    if qualified_head is None:
+        return None
+    return f"{qualified_head}.{rest}"
+
+
 def _link_entry(name, title, colon, entry):
     """Render one See Also entry: project link, deferred external ref, or as-is."""
     url = _resolve_see_also_url(name)
     if url:
         return f'<a href="{url}">{title}</a>{colon}'
+    member_identifier = _resolve_member_identifier(name)
+    if member_identifier is not None:
+        return _external_autoref(member_identifier, title) + colon
     if "." in name and name.split(".", 1)[0] != "sklearn_wrap":
         return _external_autoref(name, title) + colon
     return entry
+
+
+# The glossary lives in the explanation quadrant by Diataxis convention. A
+# project without this page simply gets no glossary linking.
+_GLOSSARY_SRC_PATH = "pages/explanation/glossary.md"
+
+# Text inside these never becomes a glossary link: code is not prose, a heading
+# linking mid-title looks broken, and nesting an <a> inside an <a> is invalid.
+_GLOSSARY_SKIP_TAGS = frozenset({"code", "pre", "a", "h1", "h2", "h3", "h4", "h5", "h6", "script", "style"})
+
+# A definition-list term carrying attributes, e.g. ``Memory buffer { #memory-buffer .autolink }``.
+_GLOSSARY_TERM_RE = re.compile(r"^(?!\s)(.+?)\s*\{:?\s*([^}]*)\}\s*$")
+
+
+def _get_glossary_terms(project_root):
+    """Map each auto-linkable glossary term to its anchor (cached).
+
+    The glossary page is the single source of truth: terms are read from it, so
+    a term and its definition cannot drift apart the way a second list in this
+    file would.
+
+    A term opts in with ``.autolink``::
+
+        Memory buffer { #memory-buffer .autolink }
+        :   The internal store of recent rows...
+
+    Opting in is deliberate rather than automatic. A glossary defines whatever
+    its authors find worth defining, including short common words -- "step",
+    "pipeline", "ensemble" -- and auto-linking those wherever they appear in
+    prose produces noise, not navigation. Defining a term and advertising it
+    everywhere are separate editorial decisions, so they get separate syntax.
+    """
+    global _GLOSSARY_TERMS_CACHE  # noqa: PLW0603
+    if _GLOSSARY_TERMS_CACHE is not None:
+        return _GLOSSARY_TERMS_CACHE
+
+    terms = {}
+    page = project_root / "docs" / _GLOSSARY_SRC_PATH
+    try:
+        lines = page.read_text(encoding="utf-8").split("\n")
+    except (OSError, UnicodeDecodeError):
+        _GLOSSARY_TERMS_CACHE = terms
+        return terms
+
+    for i, line in enumerate(lines[:-1]):
+        match = _GLOSSARY_TERM_RE.match(line)
+        # The next line starting with ':' is what makes this a definition-list
+        # term rather than ordinary prose that happens to end in braces.
+        if not match or not lines[i + 1].lstrip().startswith(":"):
+            continue
+        attrs = match.group(2).split()
+        if ".autolink" not in attrs:
+            continue
+        anchor = next((a[1:] for a in attrs if a.startswith("#")), None)
+        if anchor:
+            terms[match.group(1).strip().lower()] = anchor
+
+    _GLOSSARY_TERMS_CACHE = terms
+    return terms
+
+
+def _glossary_link_replacer(terms, rel_glossary, linked):
+    """Build the text-node rewriter that links a term's first occurrence."""
+    # Longest first, so "seasonal naive forecaster" wins over "forecaster"
+    # rather than being shadowed by the shorter term inside it.
+    pattern = re.compile(
+        r"\b(" + "|".join(re.escape(t) for t in sorted(terms, key=len, reverse=True)) + r")\b",
+        re.IGNORECASE,
+    )
+
+    def _replace(text):
+        def _sub(match):
+            term = match.group(1).lower()
+            if term in linked:
+                return match.group(0)
+            linked.add(term)
+            return f'<a href="{rel_glossary}/#{terms[term]}">{match.group(0)}</a>'
+
+        return pattern.sub(_sub, text)
+
+    return _replace
+
+
+class _GlossaryLinker(HTMLParser):
+    """Rewrites text nodes into glossary links, leaving markup untouched.
+
+    Parsed rather than regexed over the whole page: a bare regex would match
+    inside tag attributes and code blocks, producing broken markup from a
+    document that was fine.
+    """
+
+    def __init__(self, replace):
+        super().__init__(convert_charrefs=False)
+        self._replace = replace
+        self.result = []
+        self._skip_depth = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() in _GLOSSARY_SKIP_TAGS:
+            self._skip_depth += 1
+        self.result.append(self.get_starttag_text())
+
+    def handle_startendtag(self, tag, attrs):
+        self.result.append(self.get_starttag_text())
+
+    def handle_endtag(self, tag):
+        if tag.lower() in _GLOSSARY_SKIP_TAGS:
+            self._skip_depth = max(0, self._skip_depth - 1)
+        self.result.append(f"</{tag}>")
+
+    def handle_data(self, data):
+        self.result.append(data if self._skip_depth else self._replace(data))
+
+    def handle_entityref(self, name):
+        self.result.append(f"&{name};")
+
+    def handle_charref(self, name):
+        self.result.append(f"&#{name};")
+
+    def handle_comment(self, data):
+        self.result.append(f"<!--{data}-->")
+
+    def handle_decl(self, decl):
+        self.result.append(f"<!{decl}>")
+
+    def get_html(self):
+        """Return the rewritten HTML."""
+        return "".join(self.result)
+
+
+def _linkify_glossary_terms(html, page, project_root):
+    """Link the first occurrence of each glossary term on a page.
+
+    First occurrence only: linking every "memory buffer" in a paragraph is
+    noise, and the reader only needs the definition once.
+
+    The glossary page itself is skipped -- it would link its own terms to
+    themselves.
+    """
+    src = page.file.src_path
+    if src == _GLOSSARY_SRC_PATH or not src.startswith("pages/"):
+        return html
+
+    terms = _get_glossary_terms(project_root)
+    if not terms:
+        return html
+
+    # Relative, not absolute: the site may be served under a subpath, and
+    # use_directory_urls means a page's own URL is a directory.
+    dest_dir = posixpath.dirname(page.file.dest_path)
+    rel_glossary = posixpath.relpath(posixpath.splitext(_GLOSSARY_SRC_PATH)[0], dest_dir)
+
+    linker = _GlossaryLinker(_glossary_link_replacer(terms, rel_glossary, set()))
+    linker.feed(html)
+    linker.close()
+    return linker.get_html()
 
 
 def _linkify_see_also(html):
@@ -1304,10 +1568,11 @@ def on_config(config):
     reset there fires when the caches are already empty and never again, and
     `mkdocs serve` keeps serving the first build's content.
     """
-    global _SUBMODULE_CACHE, _API_NAME_LOOKUP_CACHE, _GIT_REF_CACHE  # noqa: PLW0603
+    global _SUBMODULE_CACHE, _API_NAME_LOOKUP_CACHE, _GIT_REF_CACHE, _GLOSSARY_TERMS_CACHE  # noqa: PLW0603
     _SUBMODULE_CACHE = None
     _API_NAME_LOOKUP_CACHE = None
     _GIT_REF_CACHE = None
+    _GLOSSARY_TERMS_CACHE = None
     global _GALLERY_CACHE, _COMPANION_INDEX_CACHE, _NOTEBOOK_API_USAGE_CACHE, _GALLERY_PAGE_CACHE  # noqa: PLW0603
     _GALLERY_CACHE = None
     _COMPANION_INDEX_CACHE = None
@@ -1340,6 +1605,10 @@ def on_page_content(html, page, config, files):
     ):
         # Submodule page: module list with active/children expansion
         page.meta["module_toc"] = _build_module_toc(config, current_src_path=src)
+
+    # Last: the API restructuring above rewrites whole regions, so linking
+    # before it would have its links discarded with the markup they sat in.
+    html = _linkify_glossary_terms(html, page, Path(__file__).parent.parent)
 
     return html
 
@@ -1443,6 +1712,13 @@ def on_pre_build(config):
         rel_path = notebook.relative_to(project_root)
         output_dir = docs_examples / notebook.stem
 
+        # Exporting a notebook means executing it, which dominates the build.
+        # Skip the ones whose source has not changed since their last export.
+        content_hash = _notebook_content_hash(notebook)
+        if _is_cached(output_dir, content_hash):
+            print(f"[hooks] unchanged, reusing export: {rel_path}")
+            continue
+
         # Clean previous export artifacts before re-exporting
         if output_dir.exists():
             shutil.rmtree(output_dir)
@@ -1470,6 +1746,10 @@ def on_pre_build(config):
                 text=True,
             )
             print(f"[hooks] exported html {rel_path} -> {static_file.relative_to(project_root)}")
+            # Stamp the source hash only after a successful export, so a failed
+            # or interrupted run re-exports next time instead of caching a
+            # half-written page.
+            (output_dir / _SOURCE_HASH_FILE).write_text(content_hash, encoding="utf-8")
         except subprocess.CalledProcessError as e:
             failed.append(str(rel_path))
             print(f"[hooks] FAILED html {rel_path}: {e}", file=sys.stderr)

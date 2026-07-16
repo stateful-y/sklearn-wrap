@@ -39,11 +39,7 @@ CODE_OF_CONDUCT.md
 CONTRIBUTING.md
 docs/api-submodule.html
 docs/assets/.gitkeep
-docs/assets/favicon.png
-docs/assets/logo.png
-docs/assets/logo_dark.png
-docs/assets/logo_light.png
-docs/assets/made_by_stateful-y.png
+docs/assets/made_by_stateful-y.png   # the "made by stateful-y" mark is template branding
 docs/assets/README.md
 docs/hooks.py
 docs/pages/reference/changelog.md   # one-line include of the root CHANGELOG.md
@@ -96,6 +92,14 @@ Project-specific files where the template only provides initial scaffolding. Nev
 src/<package_name>/**              # All source code
 tests/**                           # All test files
 examples/**                        # conditional: include_examples
+docs/assets/favicon.png            # The template seeds a placeholder logo/favicon
+docs/assets/logo.png               # and the project replaces it with its own
+docs/assets/logo_dark.png          # branding. These are binary, so a template
+docs/assets/logo_light.png         # update overwrites them with no conflict and
+                                   # no signal -- the project's brand is silently
+                                   # lost. Never overwrite. (made_by_stateful-y.png
+                                   # is the exception: it is template branding and
+                                   # stays Tier 1.)
 docs/pages/explanation/concepts.md
 docs/pages/tutorials/getting-started.md
 docs/pages/how-to/configure.md         # The template seeds these two pages and

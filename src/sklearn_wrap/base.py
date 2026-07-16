@@ -106,9 +106,10 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
     >>> estimator.set_params(multiplier=3.0, offset=0.5).fit(X, y).predict(X)
     array([3.5, 3.5, 3.5])
 
-    See Also
-    --------
-    _fit_context : Decorator for automatic instantiation during fit.
+    Notes
+    -----
+    `_fit_context` decorates a subclass's `fit` to instantiate the wrapped
+    estimator automatically; the example above shows its use.
 
     References
     ----------
@@ -362,7 +363,11 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
         See Also
         --------
         BaseClassWrapper.instantiate : Creates the wrapped instance (does not mark as fitted).
-        _fit_context : Decorator that sets the fitted state after successful fit.
+
+        Notes
+        -----
+        The fitted state is set by the `_fit_context` decorator after a
+        successful `fit`.
         """
         # Check internal _fitted flag first (for backward compatibility)
         if getattr(self, "_fitted", False):
@@ -381,8 +386,12 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
 
         See Also
         --------
-        _fit_context : Decorator that calls instantiate automatically during fit.
-        BaseClassWrapper._validate_params : Parameter validation called by this method.
+        BaseClassWrapper.get_params : Parameters this method validates before instantiating.
+
+        Notes
+        -----
+        Called automatically during `fit` by the `_fit_context` decorator, and
+        validates parameters via `_validate_params` before creating the instance.
         """
         self._validate_params()
 
