@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -64,7 +64,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -99,7 +99,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -131,7 +131,7 @@ jobs:
           file: '${{ github.workspace }}/junit.${{ matrix.python-version }}.xml'
 
       - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         if: ${{ matrix.python-version == '3.11' && env.CODECOV_TOKEN != '' }}
         with:
           token: ${{ env.CODECOV_TOKEN }}
@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -171,7 +171,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -191,13 +191,43 @@ jobs:
         run: nox -s test_docstrings
 
 
+  check_docs:
+    name: Docs build (strict)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          lfs: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Install nox
+        run: uv tool install nox
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      # docs/hooks.py warns when a marker resolves to nothing. Nothing ran with
+      # warnings fatal, so those warnings went to a log nobody reads and pages
+      # kept silently shipping blank space where a card grid or an index should
+      # be. This is the job that makes them count.
+      - name: Build docs with warnings fatal
+        run: nox -s check_docs
+
+
   examples:
     name: Run example notebooks
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           lfs: true
 

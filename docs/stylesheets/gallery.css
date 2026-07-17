@@ -13,3 +13,28 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Companion notebook cards: rendered on docs pages via the
+   <!-- COMPANION_NOTEBOOKS --> placeholder.  Uses the same grid as the
+   gallery so a companion card and a gallery card read as one system. */
+
+.md-typeset .companion-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0.5rem 0 0;
+}
+
+.md-typeset .companion-card {
+  flex: 1 1 calc(50% - 0.75rem);
+  min-width: 12rem;
+  padding: 0.8rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.2rem;
+}
+
+@media screen and (max-width: 44.9375em) {
+  .md-typeset .companion-card {
+    flex: 1 1 100%;
+  }
+}
