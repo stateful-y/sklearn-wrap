@@ -169,17 +169,22 @@ nav:
     - Contributing: pages/how-to/contribute.md
   - Examples:
     - pages/examples/index.md
-  - Reference:
-    - pages/reference/index.md
-    - API: pages/reference/api.md
-    - Changelog: pages/reference/changelog.md
-    - Configuration: pages/reference/configuration.md
   - Explanation:
     - pages/explanation/index.md
     - The Delegation Pattern: pages/explanation/delegation-pattern.md
     - The Fit Context Lifecycle: pages/explanation/fit-context-lifecycle.md
     - Trade-offs and Limitations: pages/explanation/trade-offs.md
     - YAML Configuration Design: pages/explanation/yaml-config-design.md
+  # Reference is last on purpose: it is the section you arrive at knowing what
+  # you want, so it earns its place by being findable, not by being passed
+  # through. Everything above it is read in roughly the order a newcomer needs
+  # it -- learn, do, see, understand -- and reference is where you stop reading
+  # and start looking things up.
+  - Reference:
+    - pages/reference/index.md
+    - API: pages/reference/api.md
+    - Changelog: pages/reference/changelog.md
+    - Configuration: pages/reference/configuration.md
 
 extra:
   social:
