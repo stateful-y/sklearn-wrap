@@ -2,15 +2,12 @@
 
 This guide shows you how to compose wrappers that contain other wrappers, and how to control parameters at any nesting depth using the double-underscore (`__`) syntax.
 
-!!! tip "Interactive notebook available"
-
-    Try this guide as an interactive notebook:
-    [Nested Wrapper Parameters](/examples/nested_wrappers/)
-
 ## Prerequisites
 
 - sklearn-wrap installed ([Getting Started](../tutorials/getting-started.md))
 - A working wrapper class ([How to Wrap a Class](wrap-a-class.md))
+
+<!-- COMPANION_NOTEBOOKS -->
 
 ## Create a Nested Structure
 

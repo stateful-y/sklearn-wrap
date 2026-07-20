@@ -32,10 +32,10 @@ cd sklearn-wrap
 uv sync --group dev
 ```
 
-4. Install pre-commit hooks:
+4. Install the git hooks (required):
 
 ```bash
-uv run pre-commit install
+uv run prek install
 ```
 
 ## Development Workflow
@@ -99,7 +99,7 @@ git add .
 git commit -m "feat: add my feature"
 ```
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/) for commit messages. The commit message format is enforced by commitizen pre-commit hooks, which will validate your commit messages automatically.
+We follow [Conventional Commits](https://www.conventionalcommits.org/) for commit messages. The format is enforced by a commitizen commit-msg hook, which validates your commit messages automatically.
 
 **Valid commit message examples:**
 
@@ -236,21 +236,21 @@ This runs all notebooks in the `examples/` directory as Python scripts in parall
 Mark your tests appropriately to help maintain fast feedback during development:
 
 - Use `@pytest.mark.slow` for tests that:
-  - Take more than a few seconds to run
-  - Perform heavy computations
-  - Make network requests
-  - Access external resources
+    - Take more than a few seconds to run
+    - Perform heavy computations
+    - Make network requests
+    - Access external resources
 
 - Use `@pytest.mark.integration` for tests that:
-  - Run subprocess commands
-  - Test multiple components working together
-  - Require complex setup or teardown
-  - Exercise end-to-end workflows
+    - Run subprocess commands
+    - Test multiple components working together
+    - Require complex setup or teardown
+    - Exercise end-to-end workflows
 
 - `@pytest.mark.example` is used in `tests/test_examples.py` to:
-  - Validate example notebooks execute without errors
-  - Run notebooks in the `examples/` directory
-  - Test interactive documentation and tutorials
+    - Validate example notebooks execute without errors
+    - Run notebooks in the `examples/` directory
+    - Test interactive documentation and tutorials
 
 
 Example:
@@ -285,8 +285,8 @@ Follow these conventions when writing tests:
 The CI pipeline uses a two-tier testing strategy optimized for fast feedback:
 
 1. **Fast tests** (`test-fast` job): Runs on minimum and maximum Python versions (3.11, 3.14) only:
-   - **Draft PRs**: Ubuntu only - Quick feedback in ~2-3 minutes
-   - **Ready PRs/Main**: All OS - Ubuntu, Windows, macOS - Cross-platform validation
+    - **Draft PRs**: Ubuntu only - Quick feedback in ~2-3 minutes
+    - **Ready PRs/Main**: All OS - Ubuntu, Windows, macOS - Cross-platform validation
 
 2. **Full test suite** (`test-full` job): Runs all tests (fast + slow + integration) on Ubuntu across all Python versions (3.11-3.14) when the PR is not in draft mode or on the main branch. This comprehensive validation includes coverage reporting on the minimum supported Python version.
 
@@ -371,9 +371,49 @@ uvx interrogate src
 
 **`See Also` format:**
 
-Use standard numpydoc format with short backtick names. The `mkdocs-autorefs` plugin automatically links backtick references (e.g., `` `ClassName` ``) to the corresponding API pages in rendered documentation. This means plain backtick-wrapped names in docstrings become clickable links in the docs site without any special syntax.
+Use standard numpydoc format with short names:
+
+```python
+See Also
+--------
+OtherClass : One-line description of how it relates.
+other_function : Another related object.
+```
+
+Names are linked to their API pages automatically, whether or not you wrap them
+in backticks. Names that cannot be resolved (a private helper, or a concept
+rather than an API object) are left as plain text rather than failing the
+build, so you can reference anything that reads well.
+
+Fully qualified names work too (`sklearn_wrap.module.OtherClass`), and
+resolve to the same page as the short form. A member reference
+(`OtherClass.method`) links to that member on its class page. A name from
+another project (for example `sklearn.linear_model.Ridge`) links to that
+project's documentation when its inventory is configured in `mkdocs.yml`.
 
 For hyperlinks, always use Markdown syntax: `[text](url)`.
+
+### Glossary
+
+A glossary is optional. Create `docs/pages/explanation/glossary.md` and define
+terms as a definition list, giving each one an explicit anchor:
+
+```markdown
+Memory buffer { #memory-buffer .autolink }
+:   The internal store of recent rows a stateful component maintains.
+
+Step { #step }
+:   One timestep.
+```
+
+A term marked `.autolink` has its **first** occurrence on every other page
+turned into a link to its definition. The glossary page is the only place terms
+are listed, so a definition and its links cannot drift apart.
+
+Opting in is per term because defining a word and advertising it everywhere are
+different decisions. A glossary is free to define short, common words such as
+`step` above, and auto-linking those wherever prose happens to use them is
+noise. Text inside code, headings and existing links is never touched.
 
 ### Documentation
 
@@ -464,25 +504,24 @@ Notebooks serve **tutorials** or **how-to guides** only - never explanation or r
 **Example intro cell (tutorial)**:
 
 ```markdown
-# Your First Hyperparameter Search
+# Your First Pipeline
 
-In this notebook, we will run a hyperparameter search using OptunaSearchCV
-and inspect the results.
+In this notebook, we will build a small Sklearn-Wrap pipeline end to end
+and inspect what it produces.
 
-**Prerequisites:** Python 3.11+ and familiarity with sklearn's fit/predict API.
+**Prerequisites:** Python 3.11+ and basic familiarity with sklearn_wrap.
 ```
 
 **Example intro cell (how-to)**:
 
 ```markdown
-# How to Stop Optimization Early with Callbacks
+# How to Handle Missing Values
 
-This notebook shows how to attach Optuna callbacks to OptunaSearchCV
-to stop a search after a fixed number of trials.
+This notebook shows how to configure sklearn_wrap to drop incomplete
+records before processing.
 
 **Prerequisites:** Familiarity with the
-OptunaSearchCV quickstart
-([View](/examples/quickstart/) · [Open in marimo](/examples/quickstart/edit/)).
+quickstart ([View](/examples/quickstart/) · [Open in marimo](/examples/quickstart/edit/)).
 ```
 
 #### Marimo Cell Conventions
@@ -537,7 +576,7 @@ Run the example test suite to verify your notebook passes:
     uv run pytest tests/test_examples.py -m example
     ```
 
-Add a link to your example in `docs/pages/tutorials/examples.md`:
+Add a link to your example in `docs/pages/examples/index.md`:
 
 ```markdown
 - [Example Name](../examples/<name>/): Brief description
@@ -605,7 +644,10 @@ git commit -m "feat!: redesign authentication system
 BREAKING CHANGE: authentication now requires API keys instead of passwords"
 ```
 
-The pre-commit hook will validate your commit messages and prevent commits that don't follow the convention.
+The commit-msg hook validates your commit messages and prevents commits that don't follow the
+convention. CI validates them again on single-commit PRs, which is the case where your commit
+message, not the PR title, becomes the squash commit and lands in the changelog. On a multi-commit
+PR the PR title ships instead, and the individual commit messages are free-form.
 
 ## Release Process
 
@@ -639,31 +681,31 @@ graph LR
     ```
 
 2. **Automated changelog workflow** (`changelog.yml`):
-   - Generates changelog from conventional commits using git-cliff
-   - Creates a **Pull Request** with the updated CHANGELOG.md
-   - Builds the package distributions (wheels and sdist) for **immediate validation**
-   - Stores distributions as workflow artifacts (reused later to avoid rebuilding)
+    - Generates changelog from conventional commits using git-cliff
+    - Creates a **Pull Request** with the updated CHANGELOG.md
+    - Builds the package distributions (wheels and sdist) for **immediate validation**
+    - Stores distributions as workflow artifacts (reused later to avoid rebuilding)
 
 3. **Review and merge the changelog PR:**
-   - A maintainer reviews the generated changelog
-   - Once approved, merge the PR to main
+    - A maintainer reviews the generated changelog
+    - Once approved, merge the PR to main
 
 4. **Automated release workflow** (`publish-release.yml`):
-   - Creates a GitHub Release with generated release notes
-   - Attaches distribution files to the release
-   - **Waits for manual approval** before proceeding to PyPI
+    - Creates a GitHub Release with generated release notes
+    - Attaches distribution files to the release
+    - **Waits for manual approval** before proceeding to PyPI
 
 5. **Manual approval for PyPI publishing:**
-   - Designated reviewers receive a notification
-   - Review the GitHub Release to verify everything is correct
-   - Approve the deployment to publish to PyPI
-   - Package is published using Trusted Publishing (OIDC, no tokens needed)
+    - Designated reviewers receive a notification
+    - Review the GitHub Release to verify everything is correct
+    - Approve the deployment to publish to PyPI
+    - Package is published using Trusted Publishing (OIDC, no tokens needed)
 
 6. **Release notes generation:**
-   - All commits since the last tag are analyzed
-   - Commits are grouped by type (Added, Fixed, Documentation, etc.)
-   - Only commits following conventional format are included
-   - Breaking changes are highlighted
+    - All commits since the last tag are analyzed
+    - Commits are grouped by type (Added, Fixed, Documentation, etc.)
+    - Only commits following conventional format are included
+    - Breaking changes are highlighted
 
 ### Version Numbering
 

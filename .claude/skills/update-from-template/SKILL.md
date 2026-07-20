@@ -35,6 +35,20 @@ Determine the target version:
 - Default: latest (omit `--vcs-ref`)
 - If user specifies a version: use `--vcs-ref=<tag>` (e.g., `--vcs-ref=v1.2.0`)
 
+**"Latest" means the template's newest released tag, not its newest commit.**
+Two consequences worth knowing before you start, because copier states the facts
+without explaining them:
+
+- Work that is merged but unreleased is **not reachable**. The update reports
+  `Keeping template version <x>` and changes nothing. If you are waiting on a
+  fix that has landed on the template's main branch, it needs a release first.
+- A project whose `_commit` is **ahead of the newest tag** cannot update at all.
+  It fails as `You are downgrading from <newer> to <tag>. Downgrades are not
+  supported.` — not as a no-op. This happens when a project was generated or
+  updated with an explicit `--vcs-ref <commit>` pointing at an unreleased
+  commit. It stays stuck until the template cuts a release newer than that
+  commit. Prefer pinning to tags for exactly this reason.
+
 ### Step 2: Detect Customizations
 
 Generate a clean baseline to identify which files have local customizations:
@@ -106,11 +120,16 @@ Read [references/conflict-resolution.md](references/conflict-resolution.md) for 
 
 For each `.rej` file, determine the base file's tier from Step 2:
 
+**A `.rej` does NOT mean the file is untouched.** `git apply --reject` applies every hunk
+that applies cleanly and rejects only the rest, so a conflicted file is already *partially*
+updated. Deleting the `.rej` keeps those applied hunks — which is wrong for any tier that
+was supposed to reject them.
+
 | Tier | Action |
 |------|--------|
-| **Tier 1** (template-managed) | Read `.rej`, apply changes to local file (template wins). Delete `.rej`. |
-| **Tier 2** (merge-required) | Read both local file and `.rej`. Merge: accept template improvements, preserve local additions. Delete `.rej`. |
-| **Tier 3** (local-owned) | Delete `.rej` without applying. |
+| **Tier 1** (template-managed) | Read `.rej`, apply its hunks to the local file (template wins). Delete `.rej`. |
+| **Tier 2** (merge-required) | `git diff HEAD -- <file>` first, to see which hunks already landed. Then merge: accept template improvements, restore any local content those hunks removed. Delete `.rej`. |
+| **Tier 3** (local-owned) | `git checkout HEAD -- <file>` to undo the hunks that already applied, then `rm <file>.rej`. Deleting the `.rej` alone leaves the template's changes in a file the project owns. |
 
 #### 5b: Handle files modified without conflict
 
@@ -141,10 +160,24 @@ grep -r '<<<<<<<' . --include='*.py' --include='*.yml' --include='*.yaml' --incl
 just test-fast 2>/dev/null || uv run pytest 2>/dev/null || echo "No test runner found"
 
 # Run linting if available
-just fix 2>/dev/null || uvx pre-commit run --all-files 2>/dev/null || echo "No linter found"
+just fix 2>/dev/null || uv run --locked prek run --all-files 2>/dev/null || echo "No linter found"
 ```
 
-Stage and commit:
+### Re-install the git hooks after this update
+
+`copier update` cannot touch `.git/hooks` — it works through git, and `.git/` is not part of
+the working tree. So an update that changes the hook runner leaves every existing clone
+running the old shim, silently, until each person re-installs by hand:
+
+```bash
+uv run prek install -f
+```
+
+`-f` is required: the existing shim was written by another tool and is not overwritten
+without it. Anyone who skips this keeps invoking a runner that can no longer parse
+`.pre-commit-config.yaml` (it declares `repo: builtin`, which only prek understands), so
+they get a confusing failure rather than a clean one. Tell every contributor, not just
+whoever ran the update.
 
 ```bash
 git add -A

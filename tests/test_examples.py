@@ -27,11 +27,16 @@ def test_notebook_runs_without_error(notebook_file: pathlib.Path) -> None:
     Args:
         notebook_file: Path to the notebook file to test.
     """
+    # stdin is closed and the run is bounded: a notebook that blocks on input --
+    # a stray breakpoint(), an input() -- otherwise inherits the terminal's stdin
+    # and hangs here forever with no output instead of failing.
     result = subprocess.run(
         ["python", str(notebook_file)],
         capture_output=True,
         text=True,
         check=False,
+        stdin=subprocess.DEVNULL,
+        timeout=300,
     )
     assert result.returncode == 0, (
         f"Notebook {notebook_file.name} failed with:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"

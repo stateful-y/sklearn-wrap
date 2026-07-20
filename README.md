@@ -113,7 +113,7 @@ Full documentation is available at [https://sklearn-wrap.readthedocs.io/](https:
 
 Interactive examples are available in the `examples/` directory:
 
-- **Online**: [https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/)
+- **Online**: [https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/)
 - **Locally**: Run `just example first_wrapper.py` or `uv run marimo edit examples/first_wrapper.py` to open an interactive notebook
 
 ## Can I contribute?
@@ -129,7 +129,7 @@ If you are interested in becoming a maintainer or taking a more active role, ple
 ## Where can I learn more?
 
 - Full documentation: [https://sklearn-wrap.readthedocs.io/](https://sklearn-wrap.readthedocs.io/)
-- Interactive Examples: [https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/)
+- Interactive Examples: [https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/)
 
 For questions and discussions, you can also open a [discussion](https://github.com/stateful-y/sklearn-wrap/discussions).
 

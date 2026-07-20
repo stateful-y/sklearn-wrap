@@ -71,7 +71,16 @@ markdown_extensions:
   - pymdownx.magiclink
   - pymdownx.mark
   - pymdownx.smartsymbols
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      # Ordered: docs-relative includes win, but a page can still reach the
+      # repo root (e.g. CHANGELOG.md).  Do not narrow this to [docs] -- a
+      # project may legitimately include a file from src/ or the repo root.
+      base_path:
+        - docs
+        - .
+      # Without this a missing include is dropped silently, rendering a page
+      # that looks deliberate and is empty.
+      check_paths: true
   - pymdownx.superfences:
       custom_fences:
         - class: mermaid
@@ -125,6 +134,11 @@ plugins:
       handlers:
         python:
           paths: [src]
+          inventories:
+            # Resolves standard-library types in signatures and See Also
+            # entries.  Add your dependencies' inventories here too, e.g.
+            #   - https://numpy.org/doc/stable/objects.inv
+            - https://docs.python.org/3/objects.inv
           options:
             docstring_style: numpy
             show_source: true
@@ -141,7 +155,6 @@ nav:
   - Tutorials:
     - pages/tutorials/index.md
     - Getting Started: pages/tutorials/getting-started.md
-    - Examples: pages/tutorials/examples.md
   - How-to Guides:
     - pages/how-to/index.md
     - Wrap a Class: pages/how-to/wrap-a-class.md
@@ -154,16 +167,24 @@ nav:
     - Test Your Wrapper: pages/how-to/test-wrappers.md
     - Troubleshooting: pages/how-to/troubleshooting.md
     - Contributing: pages/how-to/contribute.md
-  - Reference:
-    - pages/reference/index.md
-    - API: pages/reference/api.md
-    - Configuration: pages/reference/configuration.md
+  - Examples:
+    - pages/examples/index.md
   - Explanation:
     - pages/explanation/index.md
     - The Delegation Pattern: pages/explanation/delegation-pattern.md
     - The Fit Context Lifecycle: pages/explanation/fit-context-lifecycle.md
     - Trade-offs and Limitations: pages/explanation/trade-offs.md
     - YAML Configuration Design: pages/explanation/yaml-config-design.md
+  # Reference is last on purpose: it is the section you arrive at knowing what
+  # you want, so it earns its place by being findable, not by being passed
+  # through. Everything above it is read in roughly the order a newcomer needs
+  # it -- learn, do, see, understand -- and reference is where you stop reading
+  # and start looking things up.
+  - Reference:
+    - pages/reference/index.md
+    - API: pages/reference/api.md
+    - Changelog: pages/reference/changelog.md
+    - Configuration: pages/reference/configuration.md
 
 extra:
   social:
@@ -173,4 +194,7 @@ extra:
 watch:
   - mkdocs.yml
   - docs
+  # The API pages are generated from the package source, so a source edit must
+  # trigger a rebuild -- otherwise adding a class shows nothing until restart.
+  - src
   - examples
