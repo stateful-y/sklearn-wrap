@@ -582,7 +582,7 @@ Add a link to your example in `docs/pages/examples/index.md`:
 - [Example Name](../examples/<name>/): Brief description
 ```
 
-The mkdocs hooks automatically export notebooks to HTML during docs build. All notebooks in `examples/` are automatically discovered and tested by `test_examples.py` using pytest's parametrization feature, which runs them in parallel for fast validation.
+The mkdocs hooks automatically export notebooks to HTML during docs build. The export itself lives in `docs/_notebooks.py`, which you can also run on its own with `uvx nox -s build_steps` when you want to re-export without building the whole site. All notebooks in `examples/` are automatically discovered and tested by `test_examples.py` using pytest's parametrization feature, which runs them in parallel for fast validation.
 
 ## Before You Open a PR
 
