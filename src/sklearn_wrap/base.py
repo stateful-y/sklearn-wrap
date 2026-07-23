@@ -135,7 +135,7 @@ class BaseClassWrapper(BaseEstimator, metaclass=abc.ABCMeta):
 
         See Also
         --------
-        BaseClassWrapper.__init__ : Constructor that consumes the required parameter.
+        BaseClassWrapper : The wrapper whose constructor consumes the required parameter.
         """
         super().__init_subclass__(**kwargs)
         name = getattr(cls, "_estimator_name", None)
