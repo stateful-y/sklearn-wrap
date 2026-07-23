@@ -89,7 +89,7 @@ src/sklearn_wrap/_version.py
 # Documentation examples
 docs/examples/*/
 
-# Auto-generated API submodule pages (created by docs/hooks.py)
+# Auto-generated API submodule pages (created by docs_build/build.py)
 docs/pages/api/
 
 # Worktrees

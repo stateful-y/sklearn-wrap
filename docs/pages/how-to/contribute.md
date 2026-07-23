@@ -437,7 +437,12 @@ Build documentation:
     uv run mkdocs build
     ```
 
-Serve documentation locally:
+Serve documentation locally. `just serve` and `nox -s serve_docs` run the
+preview supervisor (`docs_build/serve.py`), which watches `src/` and regenerates
+the API pages when you add or change a public symbol, so it appears in the
+preview without a restart. Raw `mkdocs serve` still works but is a **static**
+preview: it does not regenerate the API pages on a source edit, because that
+regeneration is not tied to the documentation engine.
 
 === "just"
 
@@ -451,7 +456,7 @@ Serve documentation locally:
     uvx nox -s serve_docs
     ```
 
-=== "uv run"
+=== "uv run (static preview)"
 
     ```bash
     uv run mkdocs serve
@@ -582,7 +587,7 @@ Add a link to your example in `docs/pages/examples/index.md`:
 - [Example Name](../examples/<name>/): Brief description
 ```
 
-The mkdocs hooks automatically export notebooks to HTML during docs build. The export itself lives in `docs/_notebooks.py`, which you can also run on its own with `uvx nox -s build_steps` when you want to re-export without building the whole site. All notebooks in `examples/` are automatically discovered and tested by `test_examples.py` using pytest's parametrization feature, which runs them in parallel for fast validation.
+The mkdocs hooks automatically export notebooks to HTML during docs build. The export itself lives in `docs_build/_notebooks.py`, which you can also run on its own with `uvx nox -s build_steps` when you want to re-export without building the whole site. All notebooks in `examples/` are automatically discovered and tested by `test_examples.py` using pytest's parametrization feature, which runs them in parallel for fast validation.
 
 ## Before You Open a PR
 
