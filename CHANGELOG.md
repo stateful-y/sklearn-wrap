@@ -8,6 +8,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0-alpha.7] - 2026-07-30
 
+This **minor release** includes 20 commits.
+
+
+### Features
+- Prune defaults and use public class paths in captures  ([#75](https://github.com/stateful-y/sklearn-wrap/pull/75)) by @gtauzin
+
+### Bug Fixes
+- Pin exact uv version in setup-uv steps (template v0.29.6)  ([#63](https://github.com/stateful-y/sklearn-wrap/pull/63)) by @gtauzin
+- Pin ossf/scorecard-action to v2.4.4 (@v2 tag does not exist) by @gtauzin
+- Authenticate git-cliff's GitHub API calls  ([#76](https://github.com/stateful-y/sklearn-wrap/pull/76)) by @gtauzin
+- Use --output-file for CycloneDX SBOM and pin cyclonedx-bom  ([#78](https://github.com/stateful-y/sklearn-wrap/pull/78)) by @gtauzin
+- Create the GitHub Release as a draft until PyPI publish succeeds  ([#80](https://github.com/stateful-y/sklearn-wrap/pull/80)) by @gtauzin
+
+### Documentation
+- Migrate docs engine from MkDocs to Zensical (template v0.30.1)  ([#64](https://github.com/stateful-y/sklearn-wrap/pull/64)) by @gtauzin
+
+### Miscellaneous Tasks
+- Update from template v0.26.1  ([#51](https://github.com/stateful-y/sklearn-wrap/pull/51)) by @gtauzin
+- Update from template v0.27.0  ([#53](https://github.com/stateful-y/sklearn-wrap/pull/53)) by @gtauzin
+- Update from template v0.27.3  ([#55](https://github.com/stateful-y/sklearn-wrap/pull/55)) by @gtauzin
+- Update from template v0.28.1  ([#56](https://github.com/stateful-y/sklearn-wrap/pull/56)) by @gtauzin
+- Update from template v0.28.3  ([#57](https://github.com/stateful-y/sklearn-wrap/pull/57)) by @gtauzin
+- Update from template v0.28.4  ([#58](https://github.com/stateful-y/sklearn-wrap/pull/58)) by @gtauzin
+- Update from template v0.29.3  ([#59](https://github.com/stateful-y/sklearn-wrap/pull/59)) by @gtauzin
+- Update from template v0.31.1 (Renovate replaces Dependabot)  ([#66](https://github.com/stateful-y/sklearn-wrap/pull/66)) by @gtauzin
+- Update to v0.32.1 (pre-push gates + CI roll-up)  ([#68](https://github.com/stateful-y/sklearn-wrap/pull/68)) by @gtauzin
+- Sync to v0.35.0  ([#69](https://github.com/stateful-y/sklearn-wrap/pull/69)) by @gtauzin
+- Sync to v0.36.0 (Codecov OIDC + scorecard pin)  ([#70](https://github.com/stateful-y/sklearn-wrap/pull/70)) by @gtauzin
+- Sync to v0.37.0 (gitsign tag-signing docs)  ([#71](https://github.com/stateful-y/sklearn-wrap/pull/71)) by @gtauzin
+- Update from python-package-copier v0.38.0  ([#72](https://github.com/stateful-y/sklearn-wrap/pull/72)) by @gtauzin
+
+### Contributors
+
+Thanks to all contributors for this release:
+- @gtauzin
+
+## [0.1.0-alpha.7] - 2026-07-30
+
 This **minor release** includes 18 commits.
 
 
