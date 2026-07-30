@@ -15,27 +15,43 @@ This **minor release** includes 18 commits.
 - Capture only explicitly set parameters, and classes at their public import path  ([#75](https://github.com/stateful-y/sklearn-wrap/pull/75)) by @gtauzin
 
 ### Bug Fixes
+- Install git hooks with prek install -f so an existing hook is replaced  ([#58](https://github.com/stateful-y/sklearn-wrap/pull/58)) by @gtauzin
 - Pin an exact uv version in every CI workflow  ([#63](https://github.com/stateful-y/sklearn-wrap/pull/63)) by @gtauzin
 - Pin ossf/scorecard-action to v2.4.4 (@v2 tag does not exist) by @gtauzin
 - Stop the changelog workflow failing on GitHub API rate limits  ([#76](https://github.com/stateful-y/sklearn-wrap/pull/76)) by @gtauzin
 
 ### Documentation
+- Build See Also links from each page's own depth  ([#51](https://github.com/stateful-y/sklearn-wrap/pull/51)) by @gtauzin
+- Stop publishing the docs build tooling's source on the documentation site  ([#55](https://github.com/stateful-y/sklearn-wrap/pull/55)) by @gtauzin
+- Warn instead of silently dropping API entries that cannot be resolved  ([#57](https://github.com/stateful-y/sklearn-wrap/pull/57)) by @gtauzin
+- Fix a See Also cross-reference that broke the strict documentation build  ([#59](https://github.com/stateful-y/sklearn-wrap/pull/59)) by @gtauzin
+- Improve See Also rendering for external packages and name-only targets  ([#59](https://github.com/stateful-y/sklearn-wrap/pull/59)) by @gtauzin
 - Migrate the documentation engine from MkDocs to Zensical  ([#64](https://github.com/stateful-y/sklearn-wrap/pull/64)) by @gtauzin
+- Add a page describing the project's security posture  ([#69](https://github.com/stateful-y/sklearn-wrap/pull/69)) by @gtauzin
+- Document signing release tags with gitsign  ([#71](https://github.com/stateful-y/sklearn-wrap/pull/71)) by @gtauzin
+
+### Refactoring
+- Split the docs build tooling out of a single hooks module  ([#55](https://github.com/stateful-y/sklearn-wrap/pull/55)) by @gtauzin
+- Build API pages from mkdocstrings templates instead of rewriting HTML  ([#56](https://github.com/stateful-y/sklearn-wrap/pull/56)) by @gtauzin
+- Discover the public API with Griffe instead of hand-rolled AST analysis  ([#57](https://github.com/stateful-y/sklearn-wrap/pull/57)) by @gtauzin
+- Move the docs build tooling from docs/ to docs_build/  ([#59](https://github.com/stateful-y/sklearn-wrap/pull/59)) by @gtauzin
 
 ### Miscellaneous Tasks
-- Update to python-package-copier v0.26.1  ([#51](https://github.com/stateful-y/sklearn-wrap/pull/51)) by @gtauzin
-- Update to python-package-copier v0.27.0 (prek replaces pre-commit)  ([#53](https://github.com/stateful-y/sklearn-wrap/pull/53)) by @gtauzin
-- Update to python-package-copier v0.27.3 (split the docs build tooling)  ([#55](https://github.com/stateful-y/sklearn-wrap/pull/55)) by @gtauzin
-- Update to python-package-copier v0.28.1 (API pages from templates)  ([#56](https://github.com/stateful-y/sklearn-wrap/pull/56)) by @gtauzin
-- Update to python-package-copier v0.28.3 (Griffe-based API discovery)  ([#57](https://github.com/stateful-y/sklearn-wrap/pull/57)) by @gtauzin
-- Update to python-package-copier v0.28.4 (fix chained git hooks)  ([#58](https://github.com/stateful-y/sklearn-wrap/pull/58)) by @gtauzin
-- Update to python-package-copier v0.29.3 (move docs tooling out of docs/)  ([#59](https://github.com/stateful-y/sklearn-wrap/pull/59)) by @gtauzin
-- Update to python-package-copier v0.31.1 (Renovate replaces Dependabot)  ([#66](https://github.com/stateful-y/sklearn-wrap/pull/66)) by @gtauzin
-- Update to python-package-copier v0.32.1 (pre-push lint gates)  ([#68](https://github.com/stateful-y/sklearn-wrap/pull/68)) by @gtauzin
-- Update to python-package-copier v0.35.0 (CI security hardening)  ([#69](https://github.com/stateful-y/sklearn-wrap/pull/69)) by @gtauzin
-- Update to python-package-copier v0.36.0 (tokenless Codecov uploads)  ([#70](https://github.com/stateful-y/sklearn-wrap/pull/70)) by @gtauzin
-- Update to python-package-copier v0.37.0 (document signed release tags)  ([#71](https://github.com/stateful-y/sklearn-wrap/pull/71)) by @gtauzin
-- Update to python-package-copier v0.38.0 (seed CLAUDE.md)  ([#72](https://github.com/stateful-y/sklearn-wrap/pull/72)) by @gtauzin
+- Switch the git hook runner from pre-commit to prek  ([#53](https://github.com/stateful-y/sklearn-wrap/pull/53)) by @gtauzin
+- Check that pull request commit messages follow Conventional Commits  ([#53](https://github.com/stateful-y/sklearn-wrap/pull/53)) by @gtauzin
+- Replace Dependabot with Renovate for dependency updates  ([#66](https://github.com/stateful-y/sklearn-wrap/pull/66)) by @gtauzin
+- Run the slower lint gates at pre-push instead of on every commit  ([#68](https://github.com/stateful-y/sklearn-wrap/pull/68)) by @gtauzin
+- Add a single CI passed roll-up job for the required checks  ([#68](https://github.com/stateful-y/sklearn-wrap/pull/68)) by @gtauzin
+- Seed a CLAUDE.md with project instructions for AI coding assistants  ([#72](https://github.com/stateful-y/sklearn-wrap/pull/72)) by @gtauzin
+
+### Security
+- Restrict GitHub Actions workflows to read-only permissions by default  ([#69](https://github.com/stateful-y/sklearn-wrap/pull/69)) by @gtauzin
+- Scan for hardcoded secrets from a git hook and a CI job  ([#69](https://github.com/stateful-y/sklearn-wrap/pull/69)) by @gtauzin
+- Add CodeQL and OpenSSF Scorecard analysis workflows  ([#69](https://github.com/stateful-y/sklearn-wrap/pull/69)) by @gtauzin
+- Enable ruff's flake8-bandit rules on the source tree  ([#69](https://github.com/stateful-y/sklearn-wrap/pull/69)) by @gtauzin
+- Attach a CycloneDX SBOM to published release artifacts  ([#69](https://github.com/stateful-y/sklearn-wrap/pull/69)) by @gtauzin
+- Add a security policy and a CODEOWNERS file  ([#69](https://github.com/stateful-y/sklearn-wrap/pull/69)) by @gtauzin
+- Upload coverage with GitHub OIDC instead of a stored Codecov token  ([#70](https://github.com/stateful-y/sklearn-wrap/pull/70)) by @gtauzin
 
 ### Contributors
 
