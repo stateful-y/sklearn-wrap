@@ -139,12 +139,17 @@ jobs:
           name: ${{ env.sbom-artifact-name }}
           path: sbom/
 
-      - name: Create GitHub Release
+      # Created as a draft: a draft release is visible to maintainers only, so nothing
+      # is public until the `pypi` environment gate has been approved and the upload
+      # has succeeded. `finalize-release` undrafts it. If the gate is rejected or the
+      # upload fails, the draft is all that exists and can simply be deleted.
+      - name: Create draft GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ needs.build.outputs.version }}"
           gh release create "$VERSION" \
+            --draft \
             --title "$VERSION" \
             --notes "${{ steps.release_notes.outputs.notes }}" \
             dist/* sbom/sbom.cdx.json
@@ -173,3 +178,20 @@ jobs:
         with:
           attestations: true
           verify-metadata: false
+
+  # Last step in the chain: make the release public only once the artifacts are
+  # actually on PyPI, so the GitHub Release and the PyPI record cannot disagree.
+  finalize-release:
+    name: Publish the GitHub Release
+    needs:
+      - build
+      - pypi-publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Undraft the GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release edit "${{ needs.build.outputs.version }}" --draft=false
