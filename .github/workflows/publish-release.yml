@@ -64,10 +64,11 @@ jobs:
       # Software bill of materials (CycloneDX) for the release, generated from the
       # locked dependency set so it enumerates exactly what this release resolves.
       - name: Generate SBOM (CycloneDX)
+        # renovate: datasource=pypi depName=cyclonedx-bom
         run: |
           uv export --frozen --no-emit-project --format requirements-txt -o sbom-requirements.txt
-          uvx --from cyclonedx-bom cyclonedx-py requirements sbom-requirements.txt \
-            --output-format JSON --outfile sbom.cdx.json
+          uvx --from cyclonedx-bom==7.3.1 cyclonedx-py requirements sbom-requirements.txt \
+            --output-format JSON --output-file sbom.cdx.json
 
       - name: Store the distribution packages
         uses: actions/upload-artifact@v7
