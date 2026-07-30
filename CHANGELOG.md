@@ -12,30 +12,30 @@ This **minor release** includes 18 commits.
 
 
 ### Features
-- Prune defaults and use public class paths in captures  ([#75](https://github.com/stateful-y/sklearn-wrap/pull/75)) by @gtauzin
+- Capture only explicitly set parameters, and classes at their public import path  ([#75](https://github.com/stateful-y/sklearn-wrap/pull/75)) by @gtauzin
 
 ### Bug Fixes
-- Pin exact uv version in setup-uv steps (template v0.29.6)  ([#63](https://github.com/stateful-y/sklearn-wrap/pull/63)) by @gtauzin
+- Pin an exact uv version in every CI workflow  ([#63](https://github.com/stateful-y/sklearn-wrap/pull/63)) by @gtauzin
 - Pin ossf/scorecard-action to v2.4.4 (@v2 tag does not exist) by @gtauzin
-- Authenticate git-cliff's GitHub API calls  ([#76](https://github.com/stateful-y/sklearn-wrap/pull/76)) by @gtauzin
+- Stop the changelog workflow failing on GitHub API rate limits  ([#76](https://github.com/stateful-y/sklearn-wrap/pull/76)) by @gtauzin
 
 ### Documentation
-- Migrate docs engine from MkDocs to Zensical (template v0.30.1)  ([#64](https://github.com/stateful-y/sklearn-wrap/pull/64)) by @gtauzin
+- Migrate the documentation engine from MkDocs to Zensical  ([#64](https://github.com/stateful-y/sklearn-wrap/pull/64)) by @gtauzin
 
 ### Miscellaneous Tasks
-- Update from template v0.26.1  ([#51](https://github.com/stateful-y/sklearn-wrap/pull/51)) by @gtauzin
-- Update from template v0.27.0  ([#53](https://github.com/stateful-y/sklearn-wrap/pull/53)) by @gtauzin
-- Update from template v0.27.3  ([#55](https://github.com/stateful-y/sklearn-wrap/pull/55)) by @gtauzin
-- Update from template v0.28.1  ([#56](https://github.com/stateful-y/sklearn-wrap/pull/56)) by @gtauzin
-- Update from template v0.28.3  ([#57](https://github.com/stateful-y/sklearn-wrap/pull/57)) by @gtauzin
-- Update from template v0.28.4  ([#58](https://github.com/stateful-y/sklearn-wrap/pull/58)) by @gtauzin
-- Update from template v0.29.3  ([#59](https://github.com/stateful-y/sklearn-wrap/pull/59)) by @gtauzin
-- Update from template v0.31.1 (Renovate replaces Dependabot)  ([#66](https://github.com/stateful-y/sklearn-wrap/pull/66)) by @gtauzin
-- Update to v0.32.1 (pre-push gates + CI roll-up)  ([#68](https://github.com/stateful-y/sklearn-wrap/pull/68)) by @gtauzin
-- Sync to v0.35.0  ([#69](https://github.com/stateful-y/sklearn-wrap/pull/69)) by @gtauzin
-- Sync to v0.36.0 (Codecov OIDC + scorecard pin)  ([#70](https://github.com/stateful-y/sklearn-wrap/pull/70)) by @gtauzin
-- Sync to v0.37.0 (gitsign tag-signing docs)  ([#71](https://github.com/stateful-y/sklearn-wrap/pull/71)) by @gtauzin
-- Update from python-package-copier v0.38.0  ([#72](https://github.com/stateful-y/sklearn-wrap/pull/72)) by @gtauzin
+- Update to python-package-copier v0.26.1  ([#51](https://github.com/stateful-y/sklearn-wrap/pull/51)) by @gtauzin
+- Update to python-package-copier v0.27.0 (prek replaces pre-commit)  ([#53](https://github.com/stateful-y/sklearn-wrap/pull/53)) by @gtauzin
+- Update to python-package-copier v0.27.3 (split the docs build tooling)  ([#55](https://github.com/stateful-y/sklearn-wrap/pull/55)) by @gtauzin
+- Update to python-package-copier v0.28.1 (API pages from templates)  ([#56](https://github.com/stateful-y/sklearn-wrap/pull/56)) by @gtauzin
+- Update to python-package-copier v0.28.3 (Griffe-based API discovery)  ([#57](https://github.com/stateful-y/sklearn-wrap/pull/57)) by @gtauzin
+- Update to python-package-copier v0.28.4 (fix chained git hooks)  ([#58](https://github.com/stateful-y/sklearn-wrap/pull/58)) by @gtauzin
+- Update to python-package-copier v0.29.3 (move docs tooling out of docs/)  ([#59](https://github.com/stateful-y/sklearn-wrap/pull/59)) by @gtauzin
+- Update to python-package-copier v0.31.1 (Renovate replaces Dependabot)  ([#66](https://github.com/stateful-y/sklearn-wrap/pull/66)) by @gtauzin
+- Update to python-package-copier v0.32.1 (pre-push lint gates)  ([#68](https://github.com/stateful-y/sklearn-wrap/pull/68)) by @gtauzin
+- Update to python-package-copier v0.35.0 (CI security hardening)  ([#69](https://github.com/stateful-y/sklearn-wrap/pull/69)) by @gtauzin
+- Update to python-package-copier v0.36.0 (tokenless Codecov uploads)  ([#70](https://github.com/stateful-y/sklearn-wrap/pull/70)) by @gtauzin
+- Update to python-package-copier v0.37.0 (document signed release tags)  ([#71](https://github.com/stateful-y/sklearn-wrap/pull/71)) by @gtauzin
+- Update to python-package-copier v0.38.0 (seed CLAUDE.md)  ([#72](https://github.com/stateful-y/sklearn-wrap/pull/72)) by @gtauzin
 
 ### Contributors
 
