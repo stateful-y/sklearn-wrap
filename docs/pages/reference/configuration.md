@@ -83,7 +83,7 @@ with config_context(trusted_modules=frozenset({"sklearn", "xgboost"})):
 | Method | Signature | Description |
 |---|---|---|
 | `build` | `(trusted_modules=None) -> object` | Import the class, validate params, return an instance. Uses thread config if `trusted_modules` is `None`. |
-| `from_estimator` | `(estimator) -> EstimatorConfig` | Class method. Capture config from an existing sklearn-compatible estimator. |
+| `from_estimator` | `(estimator, *, prune_defaults=True) -> EstimatorConfig` | Class method. Capture config from an existing sklearn-compatible estimator. With `prune_defaults=True` (the default), parameters left at their constructor default are omitted at every level of nesting; pass `False` to record the full parameter set. |
 | `from_yaml` | `(path) -> EstimatorConfig` | Class method. Load from a YAML file. Supports `!include` tags. |
 | `to_yaml` | `(path) -> None` | Save the config to a YAML file. |
 

@@ -156,3 +156,8 @@ llm-instructions/
 .cursor/
 .aider*
 .continue/
+
+# openspec also installs Copilot-side prompts mirroring its skills. Same argument
+# as .github/skills above: generated tool state, rewritten by openspec, never
+# project content.
+.github/prompts/opsx-*.prompt.md

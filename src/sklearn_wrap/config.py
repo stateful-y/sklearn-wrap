@@ -12,6 +12,7 @@ import contextlib
 import importlib
 import inspect
 import os
+import sys
 import threading
 from collections.abc import Generator
 from pathlib import Path
@@ -21,6 +22,13 @@ import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ._validation import validate_class_params, validate_dotted_path
+
+# Importing `base` here is a one-way edge, not a cycle: `base` imports only
+# `._validation`, never `config`, and `__init__` already imports `base`
+# unconditionally. `_validation` remains the shared seam for everything else --
+# this import exists solely because pruning has to know that a wrapper's real
+# defaults live on the class it wraps, not on its own `**params` constructor.
+from .base import BaseClassWrapper
 
 __all__ = [
     "EstimatorConfig",
@@ -226,7 +234,18 @@ def _import_class(dotted_path: str, trusted_modules: frozenset[str] = DEFAULT_TR
 
 
 def _class_to_dotted_path(cls: type) -> str:
-    """Build a dotted import path from a class.
+    """Build a dotted import path from a class, preferring its public re-export.
+
+    Walks the defining module's ancestors from the top-level package downward and
+    returns the first one that exposes *cls* under its own name. This yields the
+    path a library documents (``sklearn.linear_model.Ridge``) rather than the
+    module the class happens to be defined in
+    (``sklearn.linear_model._ridge.Ridge``), so a config does not pin the
+    library's private module layout.
+
+    Only already-imported modules are consulted: every ancestor of an imported
+    module is itself imported, so the walk needs no imports and has no side
+    effects.
 
     Parameters
     ----------
@@ -236,13 +255,38 @@ def _class_to_dotted_path(cls: type) -> str:
     Returns
     -------
     str
-        Dotted path such as ``"sklearn.linear_model.Ridge"``.
+        Dotted path such as ``"sklearn.linear_model.Ridge"``. Falls back to
+        ``f"{cls.__module__}.{cls.__qualname__}"`` when no ancestor re-exports
+        the class, and for nested classes, whose ``__qualname__`` differs from
+        their ``__name__``.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import Ridge
+    >>> _class_to_dotted_path(Ridge)
+    'sklearn.linear_model.Ridge'
+    >>> _class_to_dotted_path(dict)
+    'builtins.dict'
 
     See Also
     --------
     _import_class : Reverse operation, importing a class from a dotted path.
     """
-    return f"{cls.__module__}.{cls.__qualname__}"
+    defining_path = f"{cls.__module__}.{cls.__qualname__}"
+
+    # A nested class is not reachable as `getattr(module, name)`, so the
+    # re-export probe below would be meaningless for it.
+    if cls.__qualname__ != cls.__name__:
+        return defining_path
+
+    parts = cls.__module__.split(".")
+    for i in range(1, len(parts) + 1):
+        module_path = ".".join(parts[:i])
+        module = sys.modules.get(module_path)
+        if module is not None and getattr(module, cls.__name__, None) is cls:
+            return f"{module_path}.{cls.__name__}"
+
+    return defining_path
 
 
 class _IncludeLoader(yaml.SafeLoader):
@@ -484,18 +528,37 @@ class EstimatorConfig(BaseModel):
         return cls(**resolved)
 
     @classmethod
-    def from_estimator(cls, estimator: Any) -> EstimatorConfig:
+    def from_estimator(cls, estimator: Any, *, prune_defaults: bool = True) -> EstimatorConfig:
         """Create a configuration from an existing estimator instance.
 
         Parameters
         ----------
         estimator : BaseEstimator
             A scikit-learn compatible estimator (must implement ``get_params``).
+        prune_defaults : bool, default=True
+            If True, omit parameters left at their constructor default, at every
+            level of nesting, so the config records what the author chose rather
+            than the estimator's full parameter set. If False, record every
+            parameter ``get_params(deep=False)`` returns.
 
         Returns
         -------
         EstimatorConfig
             The configuration capturing the estimator's class and parameters.
+
+        Notes
+        -----
+        A pruned config is shorter and diffs cleanly against a hand-written one,
+        but it no longer pins the values it omits: it adopts whatever the library
+        makes the default. If scikit-learn later ships ``n_estimators=200``, a
+        pruned config that relied on today's ``100`` silently builds a different
+        estimator, without error. Pass ``prune_defaults=False`` where exact
+        reproducibility matters more than readability.
+
+        Class paths are recorded at their shortest public re-export, so
+        ``Ridge`` is written as ``sklearn.linear_model.Ridge`` rather than the
+        private module it is defined in. Configs naming the private path still
+        build.
 
         Examples
         --------
@@ -503,9 +566,18 @@ class EstimatorConfig(BaseModel):
         >>> est = Ridge(alpha=3.0)
         >>> config = EstimatorConfig.from_estimator(est)
         >>> config.estimator_class
-        'sklearn.linear_model._ridge.Ridge'
-        >>> config.params["alpha"]
+        'sklearn.linear_model.Ridge'
+        >>> config.params
+        {'alpha': 3.0}
+
+        Everything else `Ridge` accepts is left at its default, so pruning omits
+        it. Turn pruning off to capture the full set:
+
+        >>> full = EstimatorConfig.from_estimator(est, prune_defaults=False)
+        >>> full.params["alpha"]
         3.0
+        >>> full.params["fit_intercept"]
+        True
 
         See Also
         --------
@@ -514,7 +586,9 @@ class EstimatorConfig(BaseModel):
         """
         dotted = _class_to_dotted_path(type(estimator))
         raw_params = estimator.get_params(deep=False)
-        params = _serialize_params(raw_params)
+        if prune_defaults:
+            raw_params = _prune_defaults(estimator, raw_params)
+        params = _serialize_params(raw_params, prune_defaults=prune_defaults)
         return cls(estimator_class=dotted, params=params)
 
     def to_yaml(self, path: str | Path) -> None:
@@ -607,24 +681,157 @@ def _resolve_value(value: Any, *, trusted_modules: frozenset[str]) -> Any:
     return value
 
 
-def _serialize_params(params: dict[str, Any]) -> dict[str, Any]:
+def _equals_default(value: Any, default: Any) -> bool:
+    """Report whether *value* is unambiguously the constructor default.
+
+    Deliberately asymmetric: a missed match only leaves a redundant line in the
+    config, while a false match silently drops a parameter the caller set. So
+    anything short of certainty answers ``False``.
+
+    The type check is what stops ``True`` matching a default of ``1``, ``0``
+    matching ``0.0``, and ``0`` matching ``False``. The ``bool`` check on the
+    result is what stops a numpy array, whose ``==`` returns an array rather
+    than a scalar, from being read as a match.
+
+    Parameters
+    ----------
+    value : Any
+        The value the estimator currently holds.
+    default : Any
+        The value the constructor signature declares.
+
+    Returns
+    -------
+    bool
+        True only when the two are certainly the same value.
+
+    Examples
+    --------
+    >>> _equals_default(1.0, 1.0)
+    True
+    >>> _equals_default(True, 1)
+    False
+
+    See Also
+    --------
+    _constructor_defaults : Supplies the defaults compared against here.
+    """
+    if value is default:
+        return True
+    if type(value) is not type(default):
+        return False
+    try:
+        result = value == default
+    except Exception:
+        return False
+    return result is True
+
+
+def _constructor_defaults(estimator: Any) -> dict[str, Any]:
+    """Collect the constructor defaults an estimator's parameters can be compared to.
+
+    For a `BaseClassWrapper` the defaults live on the wrapped class, not on the
+    wrapper: `BaseClassWrapper.__init__` takes ``**params`` and declares no named
+    defaults, while its constructor eagerly fills in every default of
+    ``estimator_class``. Reading the wrapper's own signature would therefore find
+    nothing to prune on the one type that needs it most.
+
+    Parameters
+    ----------
+    estimator : BaseEstimator
+        The estimator whose defaults are wanted.
+
+    Returns
+    -------
+    dict[str, Any]
+        Parameter names mapped to their declared defaults. Parameters without a
+        default are absent, as are ``*args`` and ``**kwargs``. Empty when the
+        signature cannot be inspected.
+
+    See Also
+    --------
+    _equals_default : Compares a live value against one of these defaults.
+    """
+    target = estimator.estimator_class if isinstance(estimator, BaseClassWrapper) else type(estimator)
+
+    try:
+        signature = inspect.signature(target.__init__)
+    except (ValueError, TypeError):
+        return {}
+
+    defaults = {
+        name: param.default
+        for name, param in signature.parameters.items()
+        if name != "self"
+        and param.default is not inspect.Parameter.empty
+        and param.kind not in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL)
+    }
+
+    # `get_params` reports the wrapped class under the wrapper's estimator name.
+    # When the wrapper declares a default class, that key has a default too and
+    # is prunable: `build()` restores it from `_estimator_default_class`.
+    if isinstance(estimator, BaseClassWrapper):
+        default_class = estimator._estimator_default_class
+        if default_class is not None:
+            defaults[estimator.estimator_name] = default_class
+
+    return defaults
+
+
+def _prune_defaults(estimator: Any, params: dict[str, Any]) -> dict[str, Any]:
+    """Drop parameters left at their constructor default.
+
+    Runs on the raw values from ``get_params(deep=False)``, before serialization.
+    The order matters: a nested estimator becomes a config dict once serialized,
+    and a dict never matches the live default object it came from, so pruning
+    after serialization would spare exactly the nested parameters this exists to
+    remove.
+
+    Parameters
+    ----------
+    estimator : BaseEstimator
+        The estimator the parameters came from.
+    params : dict[str, Any]
+        Raw parameters as returned by ``get_params(deep=False)``.
+
+    Returns
+    -------
+    dict[str, Any]
+        The parameters the caller did not leave at their default. Keys with no
+        corresponding constructor default are always kept.
+
+    See Also
+    --------
+    EstimatorConfig.from_estimator : Caller that decides whether to prune.
+    """
+    defaults = _constructor_defaults(estimator)
+    return {
+        key: value for key, value in params.items() if not (key in defaults and _equals_default(value, defaults[key]))
+    }
+
+
+def _serialize_params(params: dict[str, Any], *, prune_defaults: bool) -> dict[str, Any]:
     """Convert runtime param values to serializable form."""
     out: dict[str, Any] = {}
     for key, value in params.items():
-        out[key] = _serialize_value(value)
+        out[key] = _serialize_value(value, prune_defaults=prune_defaults)
     return out
 
 
-def _serialize_value(value: Any) -> Any:
-    """Convert a single runtime value to its serializable form."""
+def _serialize_value(value: Any, *, prune_defaults: bool) -> Any:
+    """Convert a single runtime value to its serializable form.
+
+    *prune_defaults* is carried through rather than read from a default, so a
+    nested estimator is pruned on the same terms as the one that contains it.
+    """
     if inspect.isclass(value):
         return {"__type__": _class_to_dotted_path(value)}
     if hasattr(value, "get_params") and not isinstance(value, type):
-        return EstimatorConfig.from_estimator(value).model_dump()
+        return EstimatorConfig.from_estimator(value, prune_defaults=prune_defaults).model_dump()
     if isinstance(value, tuple):
-        return [_serialize_value(item) for item in value]
+        return [_serialize_value(item, prune_defaults=prune_defaults) for item in value]
     if isinstance(value, list):
-        return [_serialize_value(item) for item in value]
+        return [_serialize_value(item, prune_defaults=prune_defaults) for item in value]
     if isinstance(value, dict):
-        return {k: _serialize_value(v) for k, v in value.items()}
+        return {k: _serialize_value(v, prune_defaults=prune_defaults) for k, v in value.items()}
     return value
