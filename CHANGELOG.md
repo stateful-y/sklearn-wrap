@@ -12,16 +12,16 @@ This **minor release** includes 6 commits.
 
 
 ### Bug Fixes
-- Stop the nightly coverage upload relying on a fallback search  ([#90](https://github.com/stateful-y/sklearn-wrap/pull/90)) by @gtauzin
+- Stop the nightly coverage upload from silently uploading the wrong report  ([#90](https://github.com/stateful-y/sklearn-wrap/pull/90)) by @gtauzin
 
 ### Refactoring
 - Move throwaway build output to .artifacts/ and config to .github/  ([#89](https://github.com/stateful-y/sklearn-wrap/pull/89)) by @gtauzin
 
 ### Miscellaneous Tasks
-- Update from template v0.39.0  ([#82](https://github.com/stateful-y/sklearn-wrap/pull/82)) by @gtauzin
-- Update from template v0.39.1  ([#83](https://github.com/stateful-y/sklearn-wrap/pull/83)) by @gtauzin
-- Update from template v0.40.0  ([#84](https://github.com/stateful-y/sklearn-wrap/pull/84)) by @gtauzin
-- Update to python-package-copier v0.40.1  ([#88](https://github.com/stateful-y/sklearn-wrap/pull/88)) by @gtauzin
+- Fix three release-pipeline defects (template v0.39.0)  ([#82](https://github.com/stateful-y/sklearn-wrap/pull/82)) by @gtauzin
+- Let Renovate see the SBOM tool's version pin (template v0.39.1)  ([#83](https://github.com/stateful-y/sklearn-wrap/pull/83)) by @gtauzin
+- Add a nightly job that exercises the release path (template v0.40.0)  ([#84](https://github.com/stateful-y/sklearn-wrap/pull/84)) by @gtauzin
+- Fix a shell injection in the release publish job (template v0.40.1)  ([#88](https://github.com/stateful-y/sklearn-wrap/pull/88)) by @gtauzin
 
 ### Contributors
 
