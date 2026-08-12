@@ -274,6 +274,7 @@ nav:
     - API: pages/reference/api.md
     - Changelog: pages/reference/changelog.md
     - Configuration: pages/reference/configuration.md
+    - Citation: pages/reference/citation.md
 
 extra:
   social:
