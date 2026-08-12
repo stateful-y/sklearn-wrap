@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.1.0-alpha.8] - 2026-08-12
+
+This **minor release** includes 7 commits.
+
+
+### Bug Fixes
+- Stop the nightly coverage upload from silently uploading the wrong report  ([#90](https://github.com/stateful-y/sklearn-wrap/pull/90)) by @gtauzin
+- Unblock PyPI publishing on metadata 2.5  ([#94](https://github.com/stateful-y/sklearn-wrap/pull/94)) by @gtauzin
+
+### Refactoring
+- Move throwaway build output to .artifacts/ and config to .github/  ([#89](https://github.com/stateful-y/sklearn-wrap/pull/89)) by @gtauzin
+
+### Miscellaneous Tasks
+- Fix three release-pipeline defects (template v0.39.0)  ([#82](https://github.com/stateful-y/sklearn-wrap/pull/82)) by @gtauzin
+- Let Renovate see the SBOM tool's version pin (template v0.39.1)  ([#83](https://github.com/stateful-y/sklearn-wrap/pull/83)) by @gtauzin
+- Add a nightly job that exercises the release path (template v0.40.0)  ([#84](https://github.com/stateful-y/sklearn-wrap/pull/84)) by @gtauzin
+- Fix a shell injection in the release publish job (template v0.40.1)  ([#88](https://github.com/stateful-y/sklearn-wrap/pull/88)) by @gtauzin
+
+### Contributors
+
+Thanks to all contributors for this release:
+- @gtauzin
+
 ## [0.1.0-alpha.7] - 2026-07-30
 
 This **minor release** includes 18 commits.
