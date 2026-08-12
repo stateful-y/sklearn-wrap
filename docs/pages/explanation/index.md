@@ -6,3 +6,4 @@ Background on design decisions, architecture, and the concepts behind Sklearn-Wr
 - [The Fit Context Lifecycle](fit-context-lifecycle.md): How `_fit_context` automates instantiation, validation, and context management.
 - [Trade-offs and Limitations](trade-offs.md): Immutability, validation overhead, metadata routing, and proxy boundaries.
 - [YAML Configuration Design](yaml-config-design.md): Why declarative config, the trusted modules security model, and `!include` composition.
+- [Security](security.md): The hardened release pipeline, what each measure protects against, and how to verify a published release.
