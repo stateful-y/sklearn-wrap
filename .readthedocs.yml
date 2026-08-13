@@ -25,8 +25,9 @@ build:
     # The `config` extra (pydantic/pyyaml) is required so the notebook export in
     # the prebuild step can execute examples/yaml_config.py.
     - asdf plugin add uv || true
-    - asdf install uv latest
-    - asdf global uv latest
+    # renovate: datasource=github-releases depName=astral-sh/uv
+    - asdf install uv 0.10.0
+    - asdf global uv 0.10.0
     - uv sync --group docs --extra config
     # Generate the API pages and export the notebooks -- the explicit step that
     # replaced the deleted on_pre_build hook.
