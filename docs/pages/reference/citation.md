@@ -8,14 +8,14 @@ If you use Sklearn-Wrap in work you publish, please cite it.
 
 ## Plain text
 
-Guillaume Tauzin. Sklearn-Wrap. https://github.com/stateful-y/sklearn-wrap
+Guillaume Tauzin. Sklearn-Wrap: A Package for wrapping Python classes into Scikit-Learn estimators. https://github.com/stateful-y/sklearn-wrap
 
 ## BibTeX
 
 ```bibtex
 @software{sklearn_wrap,
   author  = "Guillaume Tauzin",
-  title   = "{Sklearn-Wrap}",
+  title   = "{Sklearn-Wrap: A Package for wrapping Python classes into Scikit-Learn estimators}",
   url     = "https://github.com/stateful-y/sklearn-wrap",
   license = "Apache-2.0"
 }
