@@ -82,7 +82,7 @@ docs = [
     "mkdocs-autorefs>=1.0",
     "mkdocs-material>=9.7",
     "mkdocstrings[python]>=0.26.0",
-    "pygments>=2.18,<2.21",
+    "pygments>=2.21,<2.22",
     # The documentation engine. Zensical is the maintained successor to Material
     # for MkDocs (which reaches a hard EOL on 2026-11-05); it reads this project's
     # mkdocs.yml natively and forwards the API reference to the real mkdocstrings
