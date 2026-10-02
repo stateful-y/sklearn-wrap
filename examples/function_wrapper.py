@@ -39,17 +39,17 @@ def _():
     from sklearn.pipeline import Pipeline
 
     from sklearn_wrap import FunctionWrapper
-    from sklearn_wrap.base import _fit_context
+    from sklearn_wrap import base as skw_base
 
     return (
         FunctionWrapper,
         GridSearchCV,
         Pipeline,
         RegressorMixin,
-        _fit_context,
         clone,
         cross_val_score,
         np,
+        skw_base,
     )
 
 
@@ -147,11 +147,11 @@ def _(mo):
 
 
 @app.cell
-def _(FunctionWrapper, RegressorMixin, _fit_context, np):
+def _(FunctionWrapper, RegressorMixin, np, skw_base):
     class FunctionRegressor(FunctionWrapper, RegressorMixin):
         _callable_name = "fn"
 
-        @_fit_context(prefer_skip_nested_validation=True)
+        @skw_base._fit_context(prefer_skip_nested_validation=True)
         def fit(self, X, y=None):
             self.n_features_in_ = np.asarray(X).shape[1]
             return self
