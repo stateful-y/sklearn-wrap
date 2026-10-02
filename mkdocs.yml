@@ -1,16 +1,32 @@
 site_name: Sklearn-Wrap
 site_description: A Package for wrapping Python classes into Scikit-Learn estimators
 site_url: https://sklearn-wrap.readthedocs.io/
+# The built site is throwaway output, so it goes under `.artifacts/` with the
+# caches and coverage reports instead of dropping a `site/` at the repo root.
+#
+# This must stay `.artifacts/site` and never `.artifacts` itself: the build empties
+# site_dir before writing, so pointing it at the parent would delete the nox
+# environments and every cache on each docs build.
+#
+# Zensical has no site-dir flag, so this key is the ONLY thing that decides where
+# the site lands. Everything that reads the built site derives its path from here
+# (`.readthedocs.yml`, the justfile `link` recipe, the noxfile's `SITE_DIR`, and the
+# API-page count in tests.yml); `tests/test_artifact_paths.py` enforces that.
+site_dir: .artifacts/site
 repo_url: https://github.com/stateful-y/sklearn-wrap
 repo_name: stateful-y/sklearn-wrap
 edit_uri: edit/main/docs/
 
-hooks:
-  - docs/hooks.py
-
 theme:
   name: material
-  custom_dir: docs/material/overrides
+  # Zensical defaults its theme to the "modern" variant, a fresh redesign with
+  # different fonts and colour treatment -- so the custom palette in
+  # stylesheets/theme.css renders as a different-looking site. "classic" is the
+  # variant that reproduces the Material for MkDocs look this palette was written
+  # for. MkDocs ignores this key (it is not a Material theme option); Zensical
+  # reads it. Without it, every generated site silently changes appearance.
+  variant: classic
+  custom_dir: docs_build/overrides
   favicon: assets/favicon.png
   logo: assets/logo.png
 
@@ -55,6 +71,14 @@ markdown_extensions:
   - sane_lists
   - toc:
       permalink: true
+      # API member pages carry two levels of section heading: the class's own
+      # (h3) and each method's (h5). Only the first belongs in the table of
+      # contents -- listing every method's Parameters/Returns/Source Code turns a
+      # class page's ToC into a wall. The hooks used to get this by building
+      # `page.toc` by hand and simply not adding them; now that the headings are
+      # real, `toc_depth` is what draws the same line. The h5 anchors still
+      # exist and are still linkable -- this only controls what the sidebar lists.
+      toc_depth: 4
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.betterem:
@@ -68,10 +92,27 @@ markdown_extensions:
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.keys
-  - pymdownx.magiclink
+  - pymdownx.magiclink:
+      # Without these two, `#12` and `@octocat` render as literal text. The
+      # extension was declared bare, so only bare-URL autolinking worked and
+      # the issue/PR/user shorthand -- the reason to enable magiclink on a
+      # project that lives on GitHub -- silently did nothing.
+      repo_url_shorthand: true
+      social_url_shorthand: true
+      user: stateful-y
+      repo: sklearn-wrap
   - pymdownx.mark
   - pymdownx.smartsymbols
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      # Ordered: docs-relative includes win, but a page can still reach the
+      # repo root (e.g. CHANGELOG.md).  Do not narrow this to [docs] -- a
+      # project may legitimately include a file from src/ or the repo root.
+      base_path:
+        - docs
+        - .
+      # Without this a missing include is dropped silently, rendering a page
+      # that looks deliberate and is empty.
+      check_paths: true
   - pymdownx.superfences:
       custom_fences:
         - class: mermaid
@@ -81,7 +122,30 @@ markdown_extensions:
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.tilde
-  - pymdownx.emoji
+  - pymdownx.emoji:
+      # `pymdownx.emoji` declared bare defaults to the EmojiOne index, which
+      # points at `cdnjs.cloudflare.com/.../emojione/2.2.7/` -- a CDN path that
+      # has been dead since 2017. Every emoji on every generated site was a
+      # broken image, in every engine, and nothing warned.
+      #
+      # Deliberately `pymdownx.emoji.twemoji`, not `material.extensions.emoji.
+      # twemoji`. Material's index adds `:material-*:` icon shortcodes, which
+      # this template does not use anywhere, and naming it would bind the
+      # markdown config to the theme package. The pymdownx index ships with a
+      # dependency the template already declares.
+      emoji_index: !!python/name:pymdownx.emoji.twemoji
+      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+  # Resolves the docs markers (<!-- API_TABLE -->, <!-- SUBPAGES -->, gallery and
+  # companion placeholders) at markdown level, so they render under any engine --
+  # the `hooks:` key that used to do this is not executed by the successor engine.
+  # Loaded by module name at config time, which the `dev-mode-dirs = ["."]` wheel
+  # target makes possible (it puts the repo root on the editable install's path).
+  - docs_build._markers
+  # Links the first occurrence of each opted-in glossary term to its definition,
+  # at markdown level so it runs under any engine (this replaced the on_page_content
+  # hook). Registers above the markers so it only ever links author prose, never
+  # the HTML tables and cards they inject.
+  - docs_build._glossary
 
 extra_javascript:
   - javascripts/readthedocs.js
@@ -97,7 +161,20 @@ extra_css:
 
 
 exclude_docs: |
-  api-submodule.html
+  # No build tooling is listed here any more, and that is deliberate. The theme
+  # overrides, the mkdocstrings templates and the api-submodule scaffold all
+  # live in docs_build/, a single directory outside docs_dir, so nothing under docs/ is
+  # build tooling. The successor engine (Zensical) ignores exclude_docs entirely,
+  # so location -- not this key -- is what keeps tooling out of the built site,
+  # under either engine.
+  #
+  # What remains is content exclusion mkdocs still needs: a project may keep its
+  # OWN script under docs/ (e.g. docs/precache_datasets.py), which mkdocs would
+  # otherwise publish as a static asset. `__pycache__/` is the compiled form of
+  # the same. (Zensical ignores these too, so such a script leaks under Zensical;
+  # move it to docs_build/ if that matters.)
+  *.py
+  __pycache__/
   examples/**/CLAUDE.md
 
 
@@ -122,10 +199,35 @@ plugins:
   - tags
   - autorefs
   - mkdocstrings:
+      custom_templates: docs_build/templates
+      # Overrides live in docs_build/templates/python/material/. Each one is a
+      # thin `{% extends %}` over the shipped `_base/` template, so upstream
+      # fixes keep arriving -- see the header comments in those files for why the
+      # dispatcher is overridden rather than the nine section templates.
+      #
+      # NOTE: this is a PLUGIN-level key, not a handler option. Putting it under
+      # `handlers.python.options` fails the build with
+      # `PythonOptions.__init__() got an unexpected keyword argument`.
       handlers:
         python:
           paths: [src]
+          inventories:
+            # Resolves standard-library types in signatures and See Also
+            # entries.  Add your dependencies' inventories here too, e.g.
+            #   - https://numpy.org/doc/stable/objects.inv
+            - https://docs.python.org/3/objects.inv
           options:
+            # Griffe extensions run during collection. `_see_also` rewrites
+            # numpydoc "See Also" blocks into markdown cross-references before the
+            # docstring is rendered, so autorefs links them -- replacing the HTML
+            # post-processing the docs hooks used to do. `_references` is its twin
+            # for the "References" section: it normalizes RST citation syntax
+            # (`.. [1]`) and bare-bracket entries into a markdown ordered list, so
+            # neither renders as literal text or a run-on paragraph.
+            extensions:
+              - docs_build/_see_also.py
+              - docs_build/_references.py
+              - docs_build/_source_links.py
             docstring_style: numpy
             show_source: true
             show_root_heading: true
@@ -142,7 +244,6 @@ nav:
     - pages/tutorials/index.md
     - Getting Started: pages/tutorials/getting-started.md
     - Wrapping Functions: pages/tutorials/wrapping-functions.md
-    - Examples: pages/tutorials/examples.md
   - How-to Guides:
     - pages/how-to/index.md
     - Wrap a Class: pages/how-to/wrap-a-class.md
@@ -156,10 +257,8 @@ nav:
     - Test Your Wrapper: pages/how-to/test-wrappers.md
     - Troubleshooting: pages/how-to/troubleshooting.md
     - Contributing: pages/how-to/contribute.md
-  - Reference:
-    - pages/reference/index.md
-    - API: pages/reference/api.md
-    - Configuration: pages/reference/configuration.md
+  - Examples:
+    - pages/examples/index.md
   - Explanation:
     - pages/explanation/index.md
     - The Delegation Pattern: pages/explanation/delegation-pattern.md
@@ -167,6 +266,18 @@ nav:
     - The Fit Context Lifecycle: pages/explanation/fit-context-lifecycle.md
     - Trade-offs and Limitations: pages/explanation/trade-offs.md
     - YAML Configuration Design: pages/explanation/yaml-config-design.md
+    - Security: pages/explanation/security.md
+  # Reference is last on purpose: it is the section you arrive at knowing what
+  # you want, so it earns its place by being findable, not by being passed
+  # through. Everything above it is read in roughly the order a newcomer needs
+  # it -- learn, do, see, understand -- and reference is where you stop reading
+  # and start looking things up.
+  - Reference:
+    - pages/reference/index.md
+    - API: pages/reference/api.md
+    - Changelog: pages/reference/changelog.md
+    - Configuration: pages/reference/configuration.md
+    - Citation: pages/reference/citation.md
 
 extra:
   social:
@@ -174,6 +285,18 @@ extra:
       link: https://github.com/stateful-y/sklearn-wrap
 
 watch:
-  - mkdocs.yml
+  # Just `docs`, on purpose. The engine watches only its own source directory;
+  # the live-preview watcher in docs_build/serve.py owns `src/` (a source edit
+  # regenerates the API pages under docs/pages/api/, which are in `docs` and so
+  # trigger a rebuild). Watching `src` here too would fire a second, stale
+  # rebuild before regeneration completes -- and the successor engine cannot
+  # watch `src` at all (it refuses paths outside the project folder), so an
+  # engine that watches `src` was never the portable answer. Run `just serve`
+  # (which runs the watcher); raw `mkdocs serve` gives a static preview.
+  #
+  # Deliberately NOT `mkdocs.yml`. MkDocs already watches its own config during
+  # `serve`, so listing it buys nothing -- and under Zensical a config file
+  # naming itself in `watch:` makes the build emit ZERO html, silently, at
+  # exit 0, even under `--strict`. Re-adding it would publish an empty site
+  # from a green build, in every repo at once.
   - docs
-  - examples

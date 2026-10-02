@@ -5,6 +5,10 @@ on:
     types: [opened, edited, synchronize, reopened]
     branches: [main]
 
+# Least-privilege default: read-only token; the job below widens to pull-requests:read.
+permissions:
+  contents: read
+
 jobs:
   validate-pr-title:
     name: Validate PR Title
@@ -13,7 +17,7 @@ jobs:
       pull-requests: read
     steps:
       - name: Validate PR title follows conventional commit format
-        uses: amannn/action-semantic-pull-request@v6
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

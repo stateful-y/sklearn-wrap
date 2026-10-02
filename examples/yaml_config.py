@@ -87,7 +87,13 @@ def _(mo):
     ## 2. Capture a Config from an Existing Estimator
 
     Use `EstimatorConfig.from_estimator()` to inspect any sklearn-compatible
-    estimator and produce a reproducible config.
+    estimator and produce a config.
+
+    The capture records only the parameters you set. Ones left at their
+    constructor default are omitted, so the result reads like a config you
+    would have written by hand. The cost is that an omitted parameter is no
+    longer pinned: it takes whatever the installed scikit-learn makes the
+    default. Pass `prune_defaults=False` when you need every value fixed.
     """)
     return
 
@@ -99,6 +105,9 @@ def _(EstimatorConfig, Ridge):
     captured = EstimatorConfig.from_estimator(original)
     print(f"estimator_class: {captured.estimator_class}")
     print(f"params: {captured.params}")
+
+    pinned = EstimatorConfig.from_estimator(original, prune_defaults=False)
+    print(f"params with prune_defaults=False: {len(pinned.params)} entries")
     return captured, original
 
 

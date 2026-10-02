@@ -78,6 +78,16 @@ Both can be combined: an included file can use anchors internally, and a parent 
 
 The `from_estimator()` method ensures that any estimator you can build in Python can be serialized to YAML, and `from_yaml()` ensures any valid YAML config produces a working estimator. This round-trip guarantee is what makes the two approaches interchangeable.
 
+### What the round trip does and does not preserve
+
+The guarantee is about structure, not about pinning every value. By default `from_estimator()` records only the parameters you set, omitting those left at their constructor default, because a config that restates every library default is roughly twice as long and diffs against a hand-written config as almost pure noise. A capture is meant to be reviewed, and review is what verbosity destroys.
+
+The trade is deliberate. What a captured config preserves is the shape of the estimator: which classes, nested how, with which parameters chosen. What it no longer preserves is the *value* of a parameter you never chose. Those track the installed library, so an upgrade that changes a default changes what the config builds, without an error to warn you.
+
+For most workflows that is the behavior you want, since it is also what a hand-written config does. Where it is not, `prune_defaults=False` captures the full parameter set and pins every value at the cost of readability. The choice belongs at capture time rather than in a global setting, because the same project usually wants readable configs in review and pinned configs in a release artifact.
+
+Class paths follow the same reasoning. A capture records the shortest public import path for a class, not the private module it happens to be defined in, so a config does not pin a library's internal layout. A library is free to move a class between private modules as long as the public re-export holds, and configs written against the old private path still build.
+
 ## See Also
 
 - [How to Use YAML Configuration](../how-to/yaml-configuration.md): core YAML workflow

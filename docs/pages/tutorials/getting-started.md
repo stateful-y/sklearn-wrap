@@ -2,12 +2,7 @@
 
 In this tutorial, we will wrap a custom polynomial regression class into a Scikit-Learn compatible estimator. Along the way, we will define a wrapper class, use the `@_fit_context` decorator, and run hyperparameter tuning with `GridSearchCV`.
 
-!!! tip "Interactive notebooks available"
-
-    Try the concepts from this tutorial as interactive notebooks:
-    [A First Wrapper](/examples/first_wrapper/) |
-    [The Fit Context Decorator](/examples/fit_context/) |
-    [The Parameter Interface](/examples/parameter_interface/)
+<!-- COMPANION_NOTEBOOKS -->
 
 ## Prerequisites
 
@@ -181,4 +176,4 @@ The wrapper is ready to use with any Scikit-Learn tool that accepts an estimator
 - [How to Wrap a Class](../how-to/wrap-a-class.md): detailed reference for regressor, classifier, and transformer wrappers
 - [About the Delegation Pattern](../explanation/delegation-pattern.md): understand the delegation pattern and architecture
 - [API Reference](../reference/api.md): full `BaseClassWrapper` documentation
-- [Examples](examples.md): interactive notebooks demonstrating all features
+- [Examples](../examples/index.md): interactive notebooks demonstrating all features

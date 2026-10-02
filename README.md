@@ -113,7 +113,7 @@ Full documentation is available at [https://sklearn-wrap.readthedocs.io/](https:
 
 Interactive examples are available in the `examples/` directory:
 
-- **Online**: [https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/)
+- **Online**: [https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/)
 - **Locally**: Run `just example first_wrapper.py` or `uv run marimo edit examples/first_wrapper.py` to open an interactive notebook
 
 ## Can I contribute?
@@ -129,13 +129,32 @@ If you are interested in becoming a maintainer or taking a more active role, ple
 ## Where can I learn more?
 
 - Full documentation: [https://sklearn-wrap.readthedocs.io/](https://sklearn-wrap.readthedocs.io/)
-- Interactive Examples: [https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/tutorials/examples/)
+- Interactive Examples: [https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/](https://sklearn-wrap.readthedocs.io/en/latest/pages/examples/)
 
 For questions and discussions, you can also open a [discussion](https://github.com/stateful-y/sklearn-wrap/discussions).
 
 ## License
 
 This project is licensed under the terms of the [Apache-2.0 License](https://github.com/stateful-y/sklearn-wrap/blob/main/LICENSE).
+
+## How do I cite Sklearn-Wrap?
+
+If you use Sklearn-Wrap in work you publish, please cite it:
+
+Guillaume Tauzin. Sklearn-Wrap: A Package for wrapping Python classes into Scikit-Learn estimators. https://github.com/stateful-y/sklearn-wrap
+
+Or in BibTeX:
+
+```bibtex
+@software{sklearn_wrap,
+  author  = "Guillaume Tauzin",
+  title   = "{Sklearn-Wrap: A Package for wrapping Python classes into Scikit-Learn estimators}",
+  url     = "https://github.com/stateful-y/sklearn-wrap",
+  license = "Apache-2.0"
+}
+```
+
+Reference managers can read [CITATION.cff](https://github.com/stateful-y/sklearn-wrap/blob/main/CITATION.cff) directly. To cite a specific version, see the [citation page](https://sklearn-wrap.readthedocs.io/en/latest/pages/reference/citation/).
 
 ## Acknowledgements
 

@@ -1,7 +1,7 @@
 ![](assets/logo_dark.png#only-dark){width=800}
 ![](assets/logo_light.png#only-light){width=800}
 
-# Welcome to Sklearn-Wrap's documentation
+# Welcome to Sklearn-Wrap's documentation!
 
 Sklearn-wrap enables you to wrap any Python class into a Scikit-Learn compatible estimator without rewriting your code. Whether you're integrating XGBoost's Booster API, custom gradient descent algorithms, or third-party machine learning libraries, Sklearn-Wrap provides the glue layer that makes them work seamlessly with Scikit-Learn's ecosystem.
 

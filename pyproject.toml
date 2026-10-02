@@ -38,32 +38,94 @@ dev = [
     {include-group = "docs"},
     {include-group = "fix"},
     {include-group = "examples"},
+
 ]
 tests = [
-    "covdefaults>=2.3",
-    "hypothesis>=6.100",
     "pytest>=8.3",
     "pytest-cov>=7.0",
     "pytest-mock>=3.14",
     "pytest-xdist>=3.8",
+    "covdefaults>=2.3",
+    "hypothesis>=6.100",
 ]
 lint = [
+    "interrogate>=1.7.0",
     "ruff>=0.8.0",
+    "rumdl>=0.1.33",
     "ty>=0.0.12",
 ]
 docs = [
+    # Griffe is imported directly by docs_build/_api_pages.py to discover the package's
+    # public surface -- the same analysis mkdocstrings renders the API pages from,
+    # so the two cannot disagree about what is public. Declaring it records a
+    # dependency that is real: relying on it arriving transitively is how a future
+    # mkdocstrings release breaks every generated project at once.
+    #
+    # It is NOT free, contrary to what this comment claimed until a fan-out
+    # measured it. Griffe 2.x is split across three distributions and
+    # mkdocstrings[python] pulls only `griffelib`, which is what actually provides
+    # the `griffe` module. Declaring `griffe` therefore adds two packages the docs
+    # build does not use -- the `griffe` metapackage and `griffecli` (~15 KB total).
+    # Kept anyway, and the reason is a file collision, not taste. `griffe` 1.x
+    # OWNS the `griffe/` module directory; `griffelib` 2.x provides that same
+    # path. Naming `griffelib` in a project whose mkdocstrings still resolves to
+    # the 1.x line would install two distributions owning one import path.
+    # Depending on `griffe` cannot do that: it resolves either to 1.x, which owns
+    # the module, or to the 2.x metapackage, which defers to griffelib. Exactly
+    # one distribution owns `griffe/` in both cases, and ~15 KB is a cheap price
+    # for that.
+    #
+    # Deliberately NOT pinned tighter than mkdocstrings pins it (`>=1.13`): two
+    # floors on one package is a resolver conflict waiting for a release.
+    "griffe>=1.0",
     "mkdocs>=1.6.0",
     "mkdocs-autorefs>=1.0",
     "mkdocs-material>=9.7",
     "mkdocstrings[python]>=0.26.0",
-    "pygments>=2.18,<2.21",
-    "pymdown-extensions>=10.20.1",
+    "pygments>=2.21,<2.22",
+    # The documentation engine. Zensical is the maintained successor to Material
+    # for MkDocs (which reaches a hard EOL on 2026-11-05); it reads this project's
+    # mkdocs.yml natively and forwards the API reference to the real mkdocstrings
+    # package. `mkdocs`/`mkdocs-material` above are kept so CI can still run a
+    # MkDocs build as a comparison during the engine transition.
+    "zensical>=0.0.51",
+    # Floor is a security floor: 10.x carries a path traversal in the b64 extension
+    # (GHSA-9xwg-3r6f-jcx2, fixed in 11.0.0) and 11.0.0 carries a ReDoS in four inline
+    # processors (GHSA-gm37-52c6-37mw, fixed in 11.0.1). Zensical works with either
+    # major, so nothing here argues for staying on 10.
+    #
+    # This floor used to read >=10.21.3 with a comment forbidding >=11, because the
+    # examples group's notebook runtime capped it at <11 and a project with examples
+    # could not resolve otherwise. That is what let a known-vulnerable version sit in
+    # five repositories: the cap was real, the CVEs landed behind it, and nothing
+    # rechecked the cap afterwards. That runtime has since relaxed its cap, and the
+    # examples group floors at the first release that did -- the two must move together.
+    "pymdown-extensions>=11.0.1",
+    # Also a direct import of docs_build/_api_pages.py, which reads mkdocstrings'
+    # `preload_modules` out of mkdocs.yml so that list has one definition rather
+    # than two. Same argument as griffe above: it arrives via mkdocs anyway, but
+    # relying on a transitive dependency is how a future release breaks this.
+    "pyyaml>=6.0",
+    # Imported by docs_build/serve.py to watch src/ and regenerate the API pages
+    # during a live preview, so a new class appears without a restart. mkdocs
+    # already pulls watchdog transitively (its livereload uses it), so declaring
+    # it adds no install today -- but the preview watcher must keep working when
+    # the engine changes to one that does not bundle it, and an explicit
+    # declaration is what survives that. Same reasoning as griffe/pyyaml above.
+    "watchdog>=4.0",
 ]
 fix = [
-  "pre-commit-uv>=4.1",
+  # prek runs the hooks. Pinned here, never invoked via `uvx`: prek substitutes its
+  # own Rust implementations for the `repo: builtin` hooks, so an unpinned prek would
+  # mean unpinned hook code -- exactly what the config comment below rules out.
+  "prek>=0.4.10",
 ]
 examples = [
-    "marimo>=0.19.0",
+    # Floor is set by the docs group, not by anything marimo does. marimo caps
+    # pymdown-extensions, and every release before 0.23.16 capped it at <11 -- below
+    # the version that fixes two published advisories. Lowering this floor puts those
+    # CVEs back in the lockfile of every project that generates examples.
+    "marimo>=0.23.16",
     "numpy>=2.3.0", # required by plotly
     "pandas>=2.2.0", # required by plotly
     "plotly>=6.5.0",
@@ -81,6 +143,20 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sklearn_wrap"]
+# Puts the repo root AND src/ on the EDITABLE install's sys.path (dev mode only,
+# nothing changes in the wheel). The repo root is the loading gate for
+# `docs_build/`-local markdown extensions: mkdocs and its successor load
+# `markdown_extensions` by module name at config time, before any hook runs, when
+# `docs_build/` is not otherwise importable -- with this, `docs_build._markers`
+# loads on a plain `mkdocs build` with no PYTHONPATH.
+#
+# `src` is NOT optional here: naming `dev-mode-dirs` at all REPLACES hatchling's
+# default editable path (which was `src/`), so listing only `["."]` silently stops
+# exposing the package itself -- `import sklearn_wrap` then fails, which a
+# notebook cell (`from sklearn_wrap... import ...`) and any runtime import
+# hit at build time, while a `--strict` docs build stays green because mkdocstrings
+# reads the source via `paths: [src]`, not by importing. Both dirs, always.
+dev-mode-dirs = [".", "src"]
 
 [tool.hatch.version]
 source = "vcs"
@@ -94,6 +170,10 @@ line-length = 120
 target-version = "py311"
 src = ["src", "tests"]
 show-fixes = true
+# Every tool that writes throwaway output writes it under `.artifacts/` rather
+# than dropping a directory at the repo root. See the same key in the pytest and
+# coverage sections, `envdir` in the noxfile, and `site_dir` in mkdocs.yml.
+cache-dir = ".artifacts/ruff"
 exclude = ["src/sklearn_wrap/_version.py", "examples/"]
 
 [tool.ruff.format]
@@ -113,12 +193,15 @@ select = [
     "ARG", # flake8-unused-arguments
     "SIM", # flake8-simplify
     "PL",  # Pylint
+    "S",   # flake8-bandit (security)
+    "T10", # flake8-debugger
     "T201", # Print statement
 ]
 ignore = [
     "E203",   # space before : (needed for how black formats slicing)
     "E501",   # line too long (handled by formatter)
     "B008",   # do not perform function calls in argument defaults
+    "PLC0415", # import not at top-level (lazy imports are intentional, e.g. docs hooks)
     "PLR0913", # too many args in func def
     "PLR0915", # too many statements
     "PLR0912", # too many branches
@@ -126,8 +209,18 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*" = ["ARG", "S101", "T201", "PLR2004"]  # Allow assert statements, prints, and magic values in tests
-"docs/**/*" = ["T201", "ARG001", "PLW0603", "SIM105", "SIM108"]  # Allow prints, unused args, globals, and simplifiable patterns in documentation hooks
+"tests/**/*" = ["ARG", "S101", "S104", "S105", "S106", "S107", "S108", "S110", "S112", "S301", "S311", "S603", "S607", "T201", "PLR2004"]  # Insecure-looking patterns that are legitimate in tests: asserts; bind-all-interfaces; hardcoded passwords/temp paths; try/except pass/continue; pickle; non-crypto random; subprocess; prints; magic values
+# The template's documentation build tooling lives in docs_build/. Every script
+# there prints build progress and may hold per-build caches.
+#
+# Deliberately `docs_build/*.py`, NOT `docs_build/_*.py`: the narrower glob would
+# silently drop coverage for any un-underscored script, which is the failure
+# shape this fleet specialises in. The pattern matches what the directory is for.
+"docs_build/*.py" = ["T201", "PLW0603", "S506", "S603", "S112"]  # Build tooling: prints, per-build cache globals, mkdocs.yml full-loader, subprocess to run notebooks, and skip-on-error loops over controlled input
+# `docs/*.py` is kept too, for a project's OWN scripts under docs/ (yohou has
+# docs/precache_datasets.py) -- the template ships none there any more, but a
+# project script prints progress the same way and should not lose its exemption.
+"docs/*.py" = ["T201", "PLW0603", "S506", "S603", "S112"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["sklearn_wrap"]
@@ -144,7 +237,7 @@ ignore-nested-functions = false
 ignore-nested-classes = true
 ignore-setters = false
 fail-under = 75
-exclude = ["setup.py", "docs", "build", "tests", "*_version.py"]
+exclude = ["setup.py", "docs", "docs_build", "build", "tests", "*_version.py"]
 ignore-regex = ["^get$", "^mock_.*", ".*BaseClass.*"]
 verbose = 0
 quiet = false
@@ -154,6 +247,7 @@ omit-covered-files = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+cache_dir = ".artifacts/pytest"
 addopts = [
     "--strict-markers",
     "--strict-config",
@@ -174,6 +268,10 @@ source = ["src/sklearn_wrap"]
 
 [tool.coverage.run]
 source = ["sklearn_wrap"]
+# `parallel = true` writes `<data_file>.<host>.<pid>.<random>` siblings, so this
+# keeps the whole family under `.artifacts/` rather than scattering `.coverage.*`
+# across the repo root.
+data_file = ".artifacts/.coverage"
 branch = true
 parallel = true
 sigterm = true
@@ -193,6 +291,15 @@ fail_under = 100
 include_namespace_packages = true
 
 [tool.coverage.html]
+directory = ".artifacts/htmlcov"
+
+[tool.coverage.xml]
+# The ONLY place the coverage XML path is written. `addopts` carries a bare
+# `--cov-report=xml`, which defers to this key; an explicit `--cov-report=xml:PATH`
+# on a command line would override it instead, which is how the CI upload path and
+# the produced filename silently drifted apart before. Nothing else names this file
+# except the Codecov upload step, and a test asserts the two agree.
+output = ".artifacts/coverage.xml"
 
 [tool.rumdl]
 flavor = "mkdocs"
@@ -209,13 +316,19 @@ disable = [
     "MD046",  # Code block style (indented blocks required inside MkDocs tabs)
     "MD051",  # Link fragments (cross-doc references resolved at MkDocs build time)
 ]
-exclude = ["CHANGELOG.md", "site", "htmlcov", ".nox", ".venv"]
+exclude = ["CHANGELOG.md", ".artifacts", ".venv", "openspec"]
 
 [tool.rumdl.per-file-ignores]
+".claude/skills/**" = ["MD007"]  # Nested lists in skill files use variable indent
 ".github/PULL_REQUEST_TEMPLATE.md" = ["MD041"]  # PR template starts with checklist
 ".github/skills/**" = ["MD007"]  # Nested lists in skill files use variable indent
 "README.md" = ["MD041"]  # README starts with logo, not heading
-"docs/index.md" = ["MD041"]  # Landing page starts with logo, not heading
+# The page is a bare `--8<--` include; the included CHANGELOG.md supplies the
+# H1. Adding one here would render two H1s and, because Material's ToC takes
+# first.children when the first heading is level 1, an empty ToC on the one
+# page that most needs one.
+"docs/pages/reference/changelog.md" = ["MD041"]
+"docs/index.md" = ["MD041", "MD026"]  # + welcome H1 intentionally ends with "!"
 "CONTRIBUTING.md" = ["MD057"]  # Relative link to docs/ is valid at project level
 
 

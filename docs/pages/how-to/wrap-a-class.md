@@ -2,15 +2,12 @@
 
 This guide shows you how to wrap any Python class into a Scikit-Learn compatible estimator. Use this when you have an existing class with a custom API that you want to use with `GridSearchCV`, `Pipeline`, or other Scikit-Learn tools.
 
-!!! tip "Interactive notebook available"
-
-    Try this guide as an interactive notebook:
-    [How to Wrap XGBoost](/examples/xgboost_wrapper/)
-
 ## Prerequisites
 
 - sklearn-wrap installed ([Getting Started](../tutorials/getting-started.md))
 - Familiarity with Scikit-Learn's `fit`/`predict` pattern
+
+<!-- COMPANION_NOTEBOOKS -->
 
 ## Wrapping a Regressor
 

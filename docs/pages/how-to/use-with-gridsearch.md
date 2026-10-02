@@ -2,15 +2,12 @@
 
 This guide shows you how to tune hyperparameters of wrapped estimators using Scikit-Learn's `GridSearchCV`, `Pipeline`, and `cross_val_score`.
 
-!!! tip "Interactive notebook available"
-
-    Try this guide as an interactive notebook:
-    [Grid Search Integration](/examples/grid_search/)
-
 ## Prerequisites
 
 - sklearn-wrap installed ([Getting Started](../tutorials/getting-started.md))
 - A working wrapper class ([How to Wrap a Class](wrap-a-class.md))
+
+<!-- COMPANION_NOTEBOOKS -->
 
 ## Define a Parameter Grid
 
