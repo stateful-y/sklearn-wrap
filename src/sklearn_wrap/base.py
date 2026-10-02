@@ -2,7 +2,7 @@ import abc
 import functools
 import inspect
 from collections import defaultdict
-from typing import Any
+from typing import Any, cast
 
 from sklearn._config import config_context, get_config
 from sklearn.base import BaseEstimator
@@ -810,7 +810,8 @@ class FunctionWrapper(BaseEstimator):
                 out.update((key + "__" + k, val) for k, val in deep_items)
             out[key] = value
 
-        out[self._callable_name] = self.callable_fn
+        # __init__ rejects a missing `_callable_name`, so it is always a str here
+        out[cast(str, self._callable_name)] = self.callable_fn
 
         return out
 
