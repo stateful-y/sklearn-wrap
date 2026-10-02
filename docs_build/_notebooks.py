@@ -136,7 +136,6 @@ def export(project_root):
                     "-m",
                     "marimo",
                     "-y",
-                    "-q",
                     "export",
                     "html",
                     "--no-sandbox",
@@ -156,6 +155,8 @@ def export(project_root):
         except subprocess.CalledProcessError as e:
             failed.append(str(rel_path))
             print(f"[docs] FAILED html {rel_path}: {e}", file=sys.stderr)
+            if e.stdout:
+                print(e.stdout, file=sys.stderr)
             if e.stderr:
                 print(e.stderr, file=sys.stderr)
             continue
