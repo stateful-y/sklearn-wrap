@@ -577,7 +577,11 @@ class FunctionWrapper(BaseEstimator):
     See Also
     --------
     BaseClassWrapper : Wraps a class (with instance lifecycle) into an sklearn estimator.
-    _fit_context : Decorator for automatic validation during fit.
+
+    Notes
+    -----
+    `_fit_context` decorates a subclass's `fit` to validate the parameters
+    automatically; the example above shows its use.
     """
 
     _required_parameters: list[str] = []
@@ -594,7 +598,7 @@ class FunctionWrapper(BaseEstimator):
 
         See Also
         --------
-        FunctionWrapper.__init__ : Constructor that consumes the required parameter.
+        FunctionWrapper : The wrapper whose constructor consumes the required parameter.
         """
         super().__init_subclass__(**kwargs)
         name = getattr(cls, "_callable_name", None)
@@ -710,7 +714,12 @@ class FunctionWrapper(BaseEstimator):
 
         See Also
         --------
-        _fit_context : Decorator that sets the fitted state after successful fit.
+        FunctionWrapper.instantiate : Validates parameters (does not mark as fitted).
+
+        Notes
+        -----
+        The fitted state is set by the `_fit_context` decorator after a
+        successful `fit`.
         """
         if getattr(self, "_fitted", False):
             return True
@@ -736,8 +745,12 @@ class FunctionWrapper(BaseEstimator):
 
         See Also
         --------
-        _fit_context : Decorator that calls instantiate automatically during fit.
-        FunctionWrapper._validate_params : Parameter validation called by this method.
+        FunctionWrapper.get_params : Parameters this method validates.
+
+        Notes
+        -----
+        Called automatically during `fit` by the `_fit_context` decorator, and
+        validates parameters via `_validate_params`.
         """
         self._validate_params()
 
