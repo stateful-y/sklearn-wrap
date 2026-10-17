@@ -2,13 +2,14 @@
 
 from importlib.metadata import version
 
-from .base import REQUIRED_PARAM_VALUE, BaseClassWrapper
+from .base import REQUIRED_PARAM_VALUE, BaseClassWrapper, FunctionWrapper
 
 __version__ = version(__name__)
 
 __all__ = [
     "__version__",
     "BaseClassWrapper",
+    "FunctionWrapper",
     "REQUIRED_PARAM_VALUE",
 ]
 
