@@ -2,7 +2,7 @@
 
 import pytest
 
-from sklearn_wrap._validation import validate_class_params, validate_dotted_path
+from sklearn_wrap._validation import validate_class_params, validate_dotted_path, validate_function_params
 
 
 class TestValidateDottedPath:
@@ -111,3 +111,16 @@ class TestValidateClassParams:
 
         result = validate_class_params(Foo, {})
         assert result == {"x": 10, "y": 20}
+
+
+class TestValidateFunctionParams:
+    """Tests for the validate_function_params utility."""
+
+    def test_uninspectable_callable_raises(self):
+        class BadCallable:
+            def __call__(self): ...
+
+            __signature__ = property(lambda self: (_ for _ in ()).throw(ValueError("no sig")))
+
+        with pytest.raises(TypeError, match="Cannot inspect signature"):
+            validate_function_params(BadCallable(), {})
